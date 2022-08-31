@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["DebugIgnore","A newtype wrapper that causes the field within to be ignored while printing out `Debug` output."]]});
+window.SIDEBAR_ITEMS = {"struct":[["DebugIgnore","A newtype wrapper that causes the field within to be ignored while printing out `Debug` output."]]};

@@ -1,1 +1,1 @@
-initSidebarItems({"derive":[["Arbitrary","See module level documentation for more information."]]});
+window.SIDEBAR_ITEMS = {"derive":[["Arbitrary","See module level documentation for more information."]]};

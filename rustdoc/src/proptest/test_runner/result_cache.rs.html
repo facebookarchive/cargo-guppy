@@ -1,11 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/proptest-1.0.0/src/test_runner/result_cache.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>result_cache.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../proptest/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../proptest/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../proptest/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><div id="settings-menu" tabindex="-1">
-                                <a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div>
-                        </div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/proptest-1.0.0/src/test_runner/result_cache.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>result_cache.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../proptest/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../proptest/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../proptest/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -125,126 +118,125 @@
 <span id="118">118</span>
 <span id="119">119</span>
 <span id="120">120</span>
-</pre><pre class="rust"><code><span class="comment">//-</span>
-<span class="comment">// Copyright 2018 The proptest developers</span>
-<span class="comment">//</span>
-<span class="comment">// Licensed under the Apache License, Version 2.0 &lt;LICENSE-APACHE or</span>
-<span class="comment">// http://www.apache.org/licenses/LICENSE-2.0&gt; or the MIT license</span>
-<span class="comment">// &lt;LICENSE-MIT or http://opensource.org/licenses/MIT&gt;, at your</span>
-<span class="comment">// option. This file may not be copied, modified, or distributed</span>
-<span class="comment">// except according to those terms.</span>
+</pre><pre class="rust"><code><span class="comment">//-
+// Copyright 2018 The proptest developers
+//
+// Licensed under the Apache License, Version 2.0 &lt;LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0&gt; or the MIT license
+// &lt;LICENSE-MIT or http://opensource.org/licenses/MIT&gt;, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::std_facade::fmt</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::std_facade::Box</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">std::collections::HashMap</span>;
+</span><span class="kw">use </span><span class="kw">crate</span>::std_facade::fmt;
+<span class="kw">use </span><span class="kw">crate</span>::std_facade::Box;
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">use </span>std::collections::HashMap;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::test_runner::errors::TestCaseResult</span>;
+<span class="kw">use </span><span class="kw">crate</span>::test_runner::errors::TestCaseResult;
 
-<span class="doccomment">/// A key used for the result cache.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The capabilities of this structure are currently quite limited; all one can</span>
-<span class="doccomment">/// do with safe code is get the `&amp;dyn Debug` of the test input value. This may</span>
-<span class="doccomment">/// improve in the future, particularly at such a time that specialisation</span>
-<span class="doccomment">/// becomes stable.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ResultCacheKey</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="ident">value</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw">dyn</span> <span class="ident">fmt::Debug</span>,
+<span class="doccomment">/// A key used for the result cache.
+///
+/// The capabilities of this structure are currently quite limited; all one can
+/// do with safe code is get the `&amp;dyn Debug` of the test input value. This may
+/// improve in the future, particularly at such a time that specialisation
+/// becomes stable.
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub struct </span>ResultCacheKey&lt;<span class="lifetime">&#39;a</span>&gt; {
+    value: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw">dyn </span>fmt::Debug,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">ResultCacheKey</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">value</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw">dyn</span> <span class="ident">fmt::Debug</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> { <span class="ident">value</span> }
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; ResultCacheKey&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(value: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw">dyn </span>fmt::Debug) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ value }
     }
 
-    <span class="doccomment">/// Return the test input value as an `&amp;dyn Debug`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">value_debug</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">fmt::Debug</span> {
-        <span class="self">self</span>.<span class="ident">value</span>
+    <span class="doccomment">/// Return the test input value as an `&amp;dyn Debug`.
+    </span><span class="kw">pub fn </span>value_debug(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>fmt::Debug {
+        <span class="self">self</span>.value
     }
 }
 
-<span class="doccomment">/// An object which can cache the outcomes of tests.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ResultCache</span> {
-    <span class="doccomment">/// Convert the given cache key into a `u64` representing that value. The</span>
-    <span class="doccomment">/// u64 is used as the key below.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is a separate step so that ownership of the key value can be</span>
-    <span class="doccomment">/// handed off to user code without needing to be able to clone it.</span>
-    <span class="kw">fn</span> <span class="ident">key</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident">ResultCacheKey</span>) -&gt; <span class="ident">u64</span>;
-    <span class="doccomment">/// Save `result` as the outcome associated with the test input in `key`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// `result` is passed as a reference so that the decision to clone depends</span>
-    <span class="doccomment">/// on whether the cache actually plans on storing it.</span>
-    <span class="kw">fn</span> <span class="ident">put</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">key</span>: <span class="ident">u64</span>, <span class="ident">result</span>: <span class="kw-2">&amp;</span><span class="ident">TestCaseResult</span>);
-    <span class="doccomment">/// If `put()` has been called with a semantically equivalent `key`, return</span>
-    <span class="doccomment">/// the saved result. Otherwise, return `None`.</span>
-    <span class="kw">fn</span> <span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key</span>: <span class="ident">u64</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">TestCaseResult</span><span class="op">&gt;</span>;
+<span class="doccomment">/// An object which can cache the outcomes of tests.
+</span><span class="kw">pub trait </span>ResultCache {
+    <span class="doccomment">/// Convert the given cache key into a `u64` representing that value. The
+    /// u64 is used as the key below.
+    ///
+    /// This is a separate step so that ownership of the key value can be
+    /// handed off to user code without needing to be able to clone it.
+    </span><span class="kw">fn </span>key(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>ResultCacheKey) -&gt; u64;
+    <span class="doccomment">/// Save `result` as the outcome associated with the test input in `key`.
+    ///
+    /// `result` is passed as a reference so that the decision to clone depends
+    /// on whether the cache actually plans on storing it.
+    </span><span class="kw">fn </span>put(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: u64, result: <span class="kw-2">&amp;</span>TestCaseResult);
+    <span class="doccomment">/// If `put()` has been called with a semantically equivalent `key`, return
+    /// the saved result. Otherwise, return `None`.
+    </span><span class="kw">fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, key: u64) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>TestCaseResult&gt;;
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">struct</span> <span class="ident">BasicResultCache</span> {
-    <span class="ident">entries</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">TestCaseResult</span><span class="op">&gt;</span>,
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+#[derive(Debug, Default, Clone)]
+</span><span class="kw">struct </span>BasicResultCache {
+    entries: HashMap&lt;u64, TestCaseResult&gt;,
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span> <span class="ident">ResultCache</span> <span class="kw">for</span> <span class="ident">BasicResultCache</span> {
-    <span class="kw">fn</span> <span class="ident">key</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">val</span>: <span class="kw-2">&amp;</span><span class="ident">ResultCacheKey</span>) -&gt; <span class="ident">u64</span> {
-        <span class="kw">use</span> <span class="ident">std::collections::hash_map::DefaultHasher</span>;
-        <span class="kw">use</span> <span class="ident">std::hash::Hasher</span>;
-        <span class="kw">use</span> <span class="ident">std::io</span>::{<span class="self">self</span>, <span class="ident">Write</span>};
+<span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">impl </span>ResultCache <span class="kw">for </span>BasicResultCache {
+    <span class="kw">fn </span>key(<span class="kw-2">&amp;</span><span class="self">self</span>, val: <span class="kw-2">&amp;</span>ResultCacheKey) -&gt; u64 {
+        <span class="kw">use </span>std::collections::hash_map::DefaultHasher;
+        <span class="kw">use </span>std::hash::Hasher;
+        <span class="kw">use </span>std::io::{<span class="self">self</span>, Write};
 
-        <span class="kw">struct</span> <span class="ident">HashWriter</span>(<span class="ident">DefaultHasher</span>);
-        <span class="kw">impl</span> <span class="ident">io::Write</span> <span class="kw">for</span> <span class="ident">HashWriter</span> {
-            <span class="kw">fn</span> <span class="ident">write</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-                <span class="self">self</span>.<span class="number">0</span>.<span class="ident">write</span>(<span class="ident">buf</span>);
-                <span class="prelude-val">Ok</span>(<span class="ident">buf</span>.<span class="ident">len</span>())
+        <span class="kw">struct </span>HashWriter(DefaultHasher);
+        <span class="kw">impl </span>io::Write <span class="kw">for </span>HashWriter {
+            <span class="kw">fn </span>write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buf: <span class="kw-2">&amp;</span>[u8]) -&gt; io::Result&lt;usize&gt; {
+                <span class="self">self</span>.<span class="number">0</span>.write(buf);
+                <span class="prelude-val">Ok</span>(buf.len())
             }
 
-            <span class="kw">fn</span> <span class="ident">flush</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+            <span class="kw">fn </span>flush(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; io::Result&lt;()&gt; {
                 <span class="prelude-val">Ok</span>(())
             }
         }
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">hash</span> <span class="op">=</span> <span class="ident">HashWriter</span>(<span class="ident">DefaultHasher::default</span>());
-        <span class="macro">write!</span>(<span class="ident">hash</span>, <span class="string">&quot;{:?}&quot;</span>, <span class="ident">val</span>).<span class="ident">expect</span>(<span class="string">&quot;Debug format returned Err&quot;</span>);
-        <span class="ident">hash</span>.<span class="number">0</span>.<span class="ident">finish</span>()
+        <span class="kw">let </span><span class="kw-2">mut </span>hash = HashWriter(DefaultHasher::default());
+        <span class="macro">write!</span>(hash, <span class="string">&quot;{:?}&quot;</span>, val).expect(<span class="string">&quot;Debug format returned Err&quot;</span>);
+        hash.<span class="number">0</span>.finish()
     }
 
-    <span class="kw">fn</span> <span class="ident">put</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">key</span>: <span class="ident">u64</span>, <span class="ident">result</span>: <span class="kw-2">&amp;</span><span class="ident">TestCaseResult</span>) {
-        <span class="self">self</span>.<span class="ident">entries</span>.<span class="ident">insert</span>(<span class="ident">key</span>, <span class="ident">result</span>.<span class="ident">clone</span>());
+    <span class="kw">fn </span>put(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: u64, result: <span class="kw-2">&amp;</span>TestCaseResult) {
+        <span class="self">self</span>.entries.insert(key, result.clone());
     }
 
-    <span class="kw">fn</span> <span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key</span>: <span class="ident">u64</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">TestCaseResult</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">entries</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">key</span>)
-    }
-}
-
-<span class="doccomment">/// A basic result cache.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Values are identified by their `Debug` string representation.</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">basic_result_cache</span>() -&gt; <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ResultCache</span><span class="op">&gt;</span> {
-    <span class="ident">Box::new</span>(<span class="ident">BasicResultCache::default</span>())
-}
-
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">NoOpResultCache</span>;
-<span class="kw">impl</span> <span class="ident">ResultCache</span> <span class="kw">for</span> <span class="ident">NoOpResultCache</span> {
-    <span class="kw">fn</span> <span class="ident">key</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="ident">ResultCacheKey</span>) -&gt; <span class="ident">u64</span> {
-        <span class="number">0</span>
-    }
-    <span class="kw">fn</span> <span class="ident">put</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="kw">_</span>: <span class="ident">u64</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="ident">TestCaseResult</span>) {}
-    <span class="kw">fn</span> <span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="ident">u64</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">TestCaseResult</span><span class="op">&gt;</span> {
-        <span class="prelude-val">None</span>
+    <span class="kw">fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, key: u64) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>TestCaseResult&gt; {
+        <span class="self">self</span>.entries.get(<span class="kw-2">&amp;</span>key)
     }
 }
 
-<span class="doccomment">/// A result cache that does nothing.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This is the default value of `ProptestConfig.result_cache`.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">noop_result_cache</span>() -&gt; <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ResultCache</span><span class="op">&gt;</span> {
-    <span class="ident">Box::new</span>(<span class="ident">NoOpResultCache</span>)
+<span class="doccomment">/// A basic result cache.
+///
+/// Values are identified by their `Debug` string representation.
+</span><span class="attribute">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">pub fn </span>basic_result_cache() -&gt; Box&lt;<span class="kw">dyn </span>ResultCache&gt; {
+    Box::new(BasicResultCache::default())
+}
+
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>NoOpResultCache;
+<span class="kw">impl </span>ResultCache <span class="kw">for </span>NoOpResultCache {
+    <span class="kw">fn </span>key(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>ResultCacheKey) -&gt; u64 {
+        <span class="number">0
+    </span>}
+    <span class="kw">fn </span>put(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw">_</span>: u64, <span class="kw">_</span>: <span class="kw-2">&amp;</span>TestCaseResult) {}
+    <span class="kw">fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: u64) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>TestCaseResult&gt; {
+        <span class="prelude-val">None
+    </span>}
+}
+
+<span class="doccomment">/// A result cache that does nothing.
+///
+/// This is the default value of `ProptestConfig.result_cache`.
+</span><span class="kw">pub fn </span>noop_result_cache() -&gt; Box&lt;<span class="kw">dyn </span>ResultCache&gt; {
+    Box::new(NoOpResultCache)
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="proptest" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.63.0-nightly (fee3a459d 2022-06-05)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="proptest" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (02654a084 2022-08-30)" ></div></body></html>

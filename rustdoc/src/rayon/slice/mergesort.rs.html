@@ -1,11 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/rayon-1.5.3/src/slice/mergesort.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mergesort.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../rayon/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><div id="settings-menu" tabindex="-1">
-                                <a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div>
-                        </div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/rayon-1.5.3/src/slice/mergesort.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mergesort.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../rayon/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -760,761 +753,760 @@
 <span id="753">753</span>
 <span id="754">754</span>
 <span id="755">755</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Parallel merge sort.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! This implementation is copied verbatim from `std::slice::sort` and then parallelized.</span>
-<span class="doccomment">//! The only difference from the original is that the sequential `mergesort` returns</span>
-<span class="doccomment">//! `MergesortResult` and leaves descending arrays intact.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Parallel merge sort.
+//!
+//! This implementation is copied verbatim from `std::slice::sort` and then parallelized.
+//! The only difference from the original is that the sequential `mergesort` returns
+//! `MergesortResult` and leaves descending arrays intact.
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::iter</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::slice::ParallelSliceMut</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::SendPtr</span>;
-<span class="kw">use</span> <span class="ident">std::mem</span>;
-<span class="kw">use</span> <span class="ident">std::mem::size_of</span>;
-<span class="kw">use</span> <span class="ident">std::ptr</span>;
-<span class="kw">use</span> <span class="ident">std::slice</span>;
+</span><span class="kw">use </span><span class="kw">crate</span>::iter::<span class="kw-2">*</span>;
+<span class="kw">use </span><span class="kw">crate</span>::slice::ParallelSliceMut;
+<span class="kw">use </span><span class="kw">crate</span>::SendPtr;
+<span class="kw">use </span>std::mem;
+<span class="kw">use </span>std::mem::size_of;
+<span class="kw">use </span>std::ptr;
+<span class="kw">use </span>std::slice;
 
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">get_and_increment</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">ptr</span>: <span class="kw-2">&amp;mut</span> <span class="kw-2">*mut</span> <span class="ident">T</span>) -&gt; <span class="kw-2">*mut</span> <span class="ident">T</span> {
-    <span class="kw">let</span> <span class="ident">old</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">ptr</span>;
-    <span class="kw-2">*</span><span class="ident">ptr</span> <span class="op">=</span> <span class="ident">ptr</span>.<span class="ident">offset</span>(<span class="number">1</span>);
-    <span class="ident">old</span>
+<span class="kw">unsafe fn </span>get_and_increment&lt;T&gt;(ptr: <span class="kw-2">&amp;mut *mut </span>T) -&gt; <span class="kw-2">*mut </span>T {
+    <span class="kw">let </span>old = <span class="kw-2">*</span>ptr;
+    <span class="kw-2">*</span>ptr = ptr.offset(<span class="number">1</span>);
+    old
 }
 
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">decrement_and_get</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">ptr</span>: <span class="kw-2">&amp;mut</span> <span class="kw-2">*mut</span> <span class="ident">T</span>) -&gt; <span class="kw-2">*mut</span> <span class="ident">T</span> {
-    <span class="kw-2">*</span><span class="ident">ptr</span> <span class="op">=</span> <span class="ident">ptr</span>.<span class="ident">offset</span>(<span class="op">-</span><span class="number">1</span>);
-    <span class="kw-2">*</span><span class="ident">ptr</span>
+<span class="kw">unsafe fn </span>decrement_and_get&lt;T&gt;(ptr: <span class="kw-2">&amp;mut *mut </span>T) -&gt; <span class="kw-2">*mut </span>T {
+    <span class="kw-2">*</span>ptr = ptr.offset(-<span class="number">1</span>);
+    <span class="kw-2">*</span>ptr
 }
 
-<span class="doccomment">/// When dropped, copies from `src` into `dest` a sequence of length `len`.</span>
-<span class="kw">struct</span> <span class="ident">CopyOnDrop</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="ident">src</span>: <span class="kw-2">*const</span> <span class="ident">T</span>,
-    <span class="ident">dest</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>,
-    <span class="ident">len</span>: <span class="ident">usize</span>,
+<span class="doccomment">/// When dropped, copies from `src` into `dest` a sequence of length `len`.
+</span><span class="kw">struct </span>CopyOnDrop&lt;T&gt; {
+    src: <span class="kw-2">*const </span>T,
+    dest: <span class="kw-2">*mut </span>T,
+    len: usize,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">CopyOnDrop</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="kw">unsafe</span> {
-            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="self">self</span>.<span class="ident">src</span>, <span class="self">self</span>.<span class="ident">dest</span>, <span class="self">self</span>.<span class="ident">len</span>);
+<span class="kw">impl</span>&lt;T&gt; Drop <span class="kw">for </span>CopyOnDrop&lt;T&gt; {
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">unsafe </span>{
+            ptr::copy_nonoverlapping(<span class="self">self</span>.src, <span class="self">self</span>.dest, <span class="self">self</span>.len);
         }
     }
 }
 
-<span class="doccomment">/// Inserts `v[0]` into pre-sorted sequence `v[1..]` so that whole `v[..]` becomes sorted.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This is the integral subroutine of insertion sort.</span>
-<span class="kw">fn</span> <span class="ident">insert_head</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">v</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">T</span>], <span class="ident">is_less</span>: <span class="kw-2">&amp;</span><span class="ident">F</span>)
-<span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="kw-2">&amp;</span><span class="ident">T</span>) -&gt; <span class="ident">bool</span>,
+<span class="doccomment">/// Inserts `v[0]` into pre-sorted sequence `v[1..]` so that whole `v[..]` becomes sorted.
+///
+/// This is the integral subroutine of insertion sort.
+</span><span class="kw">fn </span>insert_head&lt;T, F&gt;(v: <span class="kw-2">&amp;mut </span>[T], is_less: <span class="kw-2">&amp;</span>F)
+<span class="kw">where
+    </span>F: Fn(<span class="kw-2">&amp;</span>T, <span class="kw-2">&amp;</span>T) -&gt; bool,
 {
-    <span class="kw">if</span> <span class="ident">v</span>.<span class="ident">len</span>() <span class="op">&gt;</span><span class="op">=</span> <span class="number">2</span> <span class="op">&amp;&amp;</span> <span class="ident">is_less</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>[<span class="number">1</span>], <span class="kw-2">&amp;</span><span class="ident">v</span>[<span class="number">0</span>]) {
-        <span class="kw">unsafe</span> {
-            <span class="comment">// There are three ways to implement insertion here:</span>
-            <span class="comment">//</span>
-            <span class="comment">// 1. Swap adjacent elements until the first one gets to its final destination.</span>
-            <span class="comment">//    However, this way we copy data around more than is necessary. If elements are big</span>
-            <span class="comment">//    structures (costly to copy), this method will be slow.</span>
-            <span class="comment">//</span>
-            <span class="comment">// 2. Iterate until the right place for the first element is found. Then shift the</span>
-            <span class="comment">//    elements succeeding it to make room for it and finally place it into the</span>
-            <span class="comment">//    remaining hole. This is a good method.</span>
-            <span class="comment">//</span>
-            <span class="comment">// 3. Copy the first element into a temporary variable. Iterate until the right place</span>
-            <span class="comment">//    for it is found. As we go along, copy every traversed element into the slot</span>
-            <span class="comment">//    preceding it. Finally, copy data from the temporary variable into the remaining</span>
-            <span class="comment">//    hole. This method is very good. Benchmarks demonstrated slightly better</span>
-            <span class="comment">//    performance than with the 2nd method.</span>
-            <span class="comment">//</span>
-            <span class="comment">// All methods were benchmarked, and the 3rd showed best results. So we chose that one.</span>
-            <span class="kw">let</span> <span class="ident">tmp</span> <span class="op">=</span> <span class="ident">mem::ManuallyDrop::new</span>(<span class="ident">ptr::read</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>[<span class="number">0</span>]));
+    <span class="kw">if </span>v.len() &gt;= <span class="number">2 </span>&amp;&amp; is_less(<span class="kw-2">&amp;</span>v[<span class="number">1</span>], <span class="kw-2">&amp;</span>v[<span class="number">0</span>]) {
+        <span class="kw">unsafe </span>{
+            <span class="comment">// There are three ways to implement insertion here:
+            //
+            // 1. Swap adjacent elements until the first one gets to its final destination.
+            //    However, this way we copy data around more than is necessary. If elements are big
+            //    structures (costly to copy), this method will be slow.
+            //
+            // 2. Iterate until the right place for the first element is found. Then shift the
+            //    elements succeeding it to make room for it and finally place it into the
+            //    remaining hole. This is a good method.
+            //
+            // 3. Copy the first element into a temporary variable. Iterate until the right place
+            //    for it is found. As we go along, copy every traversed element into the slot
+            //    preceding it. Finally, copy data from the temporary variable into the remaining
+            //    hole. This method is very good. Benchmarks demonstrated slightly better
+            //    performance than with the 2nd method.
+            //
+            // All methods were benchmarked, and the 3rd showed best results. So we chose that one.
+            </span><span class="kw">let </span>tmp = mem::ManuallyDrop::new(ptr::read(<span class="kw-2">&amp;</span>v[<span class="number">0</span>]));
 
-            <span class="comment">// Intermediate state of the insertion process is always tracked by `hole`, which</span>
-            <span class="comment">// serves two purposes:</span>
-            <span class="comment">// 1. Protects integrity of `v` from panics in `is_less`.</span>
-            <span class="comment">// 2. Fills the remaining hole in `v` in the end.</span>
-            <span class="comment">//</span>
-            <span class="comment">// Panic safety:</span>
-            <span class="comment">//</span>
-            <span class="comment">// If `is_less` panics at any point during the process, `hole` will get dropped and</span>
-            <span class="comment">// fill the hole in `v` with `tmp`, thus ensuring that `v` still holds every object it</span>
-            <span class="comment">// initially held exactly once.</span>
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">hole</span> <span class="op">=</span> <span class="ident">InsertionHole</span> {
-                <span class="ident">src</span>: <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">tmp</span>,
-                <span class="ident">dest</span>: <span class="kw-2">&amp;mut</span> <span class="ident">v</span>[<span class="number">1</span>],
+            <span class="comment">// Intermediate state of the insertion process is always tracked by `hole`, which
+            // serves two purposes:
+            // 1. Protects integrity of `v` from panics in `is_less`.
+            // 2. Fills the remaining hole in `v` in the end.
+            //
+            // Panic safety:
+            //
+            // If `is_less` panics at any point during the process, `hole` will get dropped and
+            // fill the hole in `v` with `tmp`, thus ensuring that `v` still holds every object it
+            // initially held exactly once.
+            </span><span class="kw">let </span><span class="kw-2">mut </span>hole = InsertionHole {
+                src: <span class="kw-2">&amp;*</span>tmp,
+                dest: <span class="kw-2">&amp;mut </span>v[<span class="number">1</span>],
             };
-            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>[<span class="number">1</span>], <span class="kw-2">&amp;mut</span> <span class="ident">v</span>[<span class="number">0</span>], <span class="number">1</span>);
+            ptr::copy_nonoverlapping(<span class="kw-2">&amp;</span>v[<span class="number">1</span>], <span class="kw-2">&amp;mut </span>v[<span class="number">0</span>], <span class="number">1</span>);
 
-            <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">2</span>..<span class="ident">v</span>.<span class="ident">len</span>() {
-                <span class="kw">if</span> <span class="op">!</span><span class="ident">is_less</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>[<span class="ident">i</span>], <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">tmp</span>) {
+            <span class="kw">for </span>i <span class="kw">in </span><span class="number">2</span>..v.len() {
+                <span class="kw">if </span>!is_less(<span class="kw-2">&amp;</span>v[i], <span class="kw-2">&amp;*</span>tmp) {
                     <span class="kw">break</span>;
                 }
-                <span class="ident">ptr::copy_nonoverlapping</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>[<span class="ident">i</span>], <span class="kw-2">&amp;mut</span> <span class="ident">v</span>[<span class="ident">i</span> <span class="op">-</span> <span class="number">1</span>], <span class="number">1</span>);
-                <span class="ident">hole</span>.<span class="ident">dest</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="ident">v</span>[<span class="ident">i</span>];
+                ptr::copy_nonoverlapping(<span class="kw-2">&amp;</span>v[i], <span class="kw-2">&amp;mut </span>v[i - <span class="number">1</span>], <span class="number">1</span>);
+                hole.dest = <span class="kw-2">&amp;mut </span>v[i];
             }
-            <span class="comment">// `hole` gets dropped and thus copies `tmp` into the remaining hole in `v`.</span>
-        }
+            <span class="comment">// `hole` gets dropped and thus copies `tmp` into the remaining hole in `v`.
+        </span>}
     }
 
-    <span class="comment">// When dropped, copies from `src` into `dest`.</span>
-    <span class="kw">struct</span> <span class="ident">InsertionHole</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="ident">src</span>: <span class="kw-2">*const</span> <span class="ident">T</span>,
-        <span class="ident">dest</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>,
+    <span class="comment">// When dropped, copies from `src` into `dest`.
+    </span><span class="kw">struct </span>InsertionHole&lt;T&gt; {
+        src: <span class="kw-2">*const </span>T,
+        dest: <span class="kw-2">*mut </span>T,
     }
 
-    <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">InsertionHole</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-            <span class="kw">unsafe</span> {
-                <span class="ident">ptr::copy_nonoverlapping</span>(<span class="self">self</span>.<span class="ident">src</span>, <span class="self">self</span>.<span class="ident">dest</span>, <span class="number">1</span>);
+    <span class="kw">impl</span>&lt;T&gt; Drop <span class="kw">for </span>InsertionHole&lt;T&gt; {
+        <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+            <span class="kw">unsafe </span>{
+                ptr::copy_nonoverlapping(<span class="self">self</span>.src, <span class="self">self</span>.dest, <span class="number">1</span>);
             }
         }
     }
 }
 
-<span class="doccomment">/// Merges non-decreasing runs `v[..mid]` and `v[mid..]` using `buf` as temporary storage, and</span>
-<span class="doccomment">/// stores the result into `v[..]`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The two slices must be non-empty and `mid` must be in bounds. Buffer `buf` must be long enough</span>
-<span class="doccomment">/// to hold a copy of the shorter slice. Also, `T` must not be a zero-sized type.</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">merge</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">v</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">T</span>], <span class="ident">mid</span>: <span class="ident">usize</span>, <span class="ident">buf</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>, <span class="ident">is_less</span>: <span class="kw-2">&amp;</span><span class="ident">F</span>)
-<span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="kw-2">&amp;</span><span class="ident">T</span>) -&gt; <span class="ident">bool</span>,
+<span class="doccomment">/// Merges non-decreasing runs `v[..mid]` and `v[mid..]` using `buf` as temporary storage, and
+/// stores the result into `v[..]`.
+///
+/// # Safety
+///
+/// The two slices must be non-empty and `mid` must be in bounds. Buffer `buf` must be long enough
+/// to hold a copy of the shorter slice. Also, `T` must not be a zero-sized type.
+</span><span class="kw">unsafe fn </span>merge&lt;T, F&gt;(v: <span class="kw-2">&amp;mut </span>[T], mid: usize, buf: <span class="kw-2">*mut </span>T, is_less: <span class="kw-2">&amp;</span>F)
+<span class="kw">where
+    </span>F: Fn(<span class="kw-2">&amp;</span>T, <span class="kw-2">&amp;</span>T) -&gt; bool,
 {
-    <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">len</span>();
-    <span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">as_mut_ptr</span>();
-    <span class="kw">let</span> <span class="ident">v_mid</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">add</span>(<span class="ident">mid</span>);
-    <span class="kw">let</span> <span class="ident">v_end</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">add</span>(<span class="ident">len</span>);
+    <span class="kw">let </span>len = v.len();
+    <span class="kw">let </span>v = v.as_mut_ptr();
+    <span class="kw">let </span>v_mid = v.add(mid);
+    <span class="kw">let </span>v_end = v.add(len);
 
-    <span class="comment">// The merge process first copies the shorter run into `buf`. Then it traces the newly copied</span>
-    <span class="comment">// run and the longer run forwards (or backwards), comparing their next unconsumed elements and</span>
-    <span class="comment">// copying the lesser (or greater) one into `v`.</span>
-    <span class="comment">//</span>
-    <span class="comment">// As soon as the shorter run is fully consumed, the process is done. If the longer run gets</span>
-    <span class="comment">// consumed first, then we must copy whatever is left of the shorter run into the remaining</span>
-    <span class="comment">// hole in `v`.</span>
-    <span class="comment">//</span>
-    <span class="comment">// Intermediate state of the process is always tracked by `hole`, which serves two purposes:</span>
-    <span class="comment">// 1. Protects integrity of `v` from panics in `is_less`.</span>
-    <span class="comment">// 2. Fills the remaining hole in `v` if the longer run gets consumed first.</span>
-    <span class="comment">//</span>
-    <span class="comment">// Panic safety:</span>
-    <span class="comment">//</span>
-    <span class="comment">// If `is_less` panics at any point during the process, `hole` will get dropped and fill the</span>
-    <span class="comment">// hole in `v` with the unconsumed range in `buf`, thus ensuring that `v` still holds every</span>
-    <span class="comment">// object it initially held exactly once.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">hole</span>;
+    <span class="comment">// The merge process first copies the shorter run into `buf`. Then it traces the newly copied
+    // run and the longer run forwards (or backwards), comparing their next unconsumed elements and
+    // copying the lesser (or greater) one into `v`.
+    //
+    // As soon as the shorter run is fully consumed, the process is done. If the longer run gets
+    // consumed first, then we must copy whatever is left of the shorter run into the remaining
+    // hole in `v`.
+    //
+    // Intermediate state of the process is always tracked by `hole`, which serves two purposes:
+    // 1. Protects integrity of `v` from panics in `is_less`.
+    // 2. Fills the remaining hole in `v` if the longer run gets consumed first.
+    //
+    // Panic safety:
+    //
+    // If `is_less` panics at any point during the process, `hole` will get dropped and fill the
+    // hole in `v` with the unconsumed range in `buf`, thus ensuring that `v` still holds every
+    // object it initially held exactly once.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>hole;
 
-    <span class="kw">if</span> <span class="ident">mid</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">len</span> <span class="op">-</span> <span class="ident">mid</span> {
-        <span class="comment">// The left run is shorter.</span>
-        <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">v</span>, <span class="ident">buf</span>, <span class="ident">mid</span>);
-        <span class="ident">hole</span> <span class="op">=</span> <span class="ident">MergeHole</span> {
-            <span class="ident">start</span>: <span class="ident">buf</span>,
-            <span class="ident">end</span>: <span class="ident">buf</span>.<span class="ident">add</span>(<span class="ident">mid</span>),
-            <span class="ident">dest</span>: <span class="ident">v</span>,
+    <span class="kw">if </span>mid &lt;= len - mid {
+        <span class="comment">// The left run is shorter.
+        </span>ptr::copy_nonoverlapping(v, buf, mid);
+        hole = MergeHole {
+            start: buf,
+            end: buf.add(mid),
+            dest: v,
         };
 
-        <span class="comment">// Initially, these pointers point to the beginnings of their arrays.</span>
-        <span class="kw">let</span> <span class="ident">left</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="ident">hole</span>.<span class="ident">start</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">right</span> <span class="op">=</span> <span class="ident">v_mid</span>;
-        <span class="kw">let</span> <span class="ident">out</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="ident">hole</span>.<span class="ident">dest</span>;
+        <span class="comment">// Initially, these pointers point to the beginnings of their arrays.
+        </span><span class="kw">let </span>left = <span class="kw-2">&amp;mut </span>hole.start;
+        <span class="kw">let </span><span class="kw-2">mut </span>right = v_mid;
+        <span class="kw">let </span>out = <span class="kw-2">&amp;mut </span>hole.dest;
 
-        <span class="kw">while</span> <span class="kw-2">*</span><span class="ident">left</span> <span class="op">&lt;</span> <span class="ident">hole</span>.<span class="ident">end</span> <span class="op">&amp;&amp;</span> <span class="ident">right</span> <span class="op">&lt;</span> <span class="ident">v_end</span> {
-            <span class="comment">// Consume the lesser side.</span>
-            <span class="comment">// If equal, prefer the left run to maintain stability.</span>
-            <span class="kw">let</span> <span class="ident">to_copy</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">is_less</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">right</span>, <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="kw-2">*</span><span class="ident">left</span>) {
-                <span class="ident">get_and_increment</span>(<span class="kw-2">&amp;mut</span> <span class="ident">right</span>)
-            } <span class="kw">else</span> {
-                <span class="ident">get_and_increment</span>(<span class="ident">left</span>)
+        <span class="kw">while </span><span class="kw-2">*</span>left &lt; hole.end &amp;&amp; right &lt; v_end {
+            <span class="comment">// Consume the lesser side.
+            // If equal, prefer the left run to maintain stability.
+            </span><span class="kw">let </span>to_copy = <span class="kw">if </span>is_less(<span class="kw-2">&amp;*</span>right, <span class="kw-2">&amp;**</span>left) {
+                get_and_increment(<span class="kw-2">&amp;mut </span>right)
+            } <span class="kw">else </span>{
+                get_and_increment(left)
             };
-            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">to_copy</span>, <span class="ident">get_and_increment</span>(<span class="ident">out</span>), <span class="number">1</span>);
+            ptr::copy_nonoverlapping(to_copy, get_and_increment(out), <span class="number">1</span>);
         }
-    } <span class="kw">else</span> {
-        <span class="comment">// The right run is shorter.</span>
-        <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">v_mid</span>, <span class="ident">buf</span>, <span class="ident">len</span> <span class="op">-</span> <span class="ident">mid</span>);
-        <span class="ident">hole</span> <span class="op">=</span> <span class="ident">MergeHole</span> {
-            <span class="ident">start</span>: <span class="ident">buf</span>,
-            <span class="ident">end</span>: <span class="ident">buf</span>.<span class="ident">add</span>(<span class="ident">len</span> <span class="op">-</span> <span class="ident">mid</span>),
-            <span class="ident">dest</span>: <span class="ident">v_mid</span>,
+    } <span class="kw">else </span>{
+        <span class="comment">// The right run is shorter.
+        </span>ptr::copy_nonoverlapping(v_mid, buf, len - mid);
+        hole = MergeHole {
+            start: buf,
+            end: buf.add(len - mid),
+            dest: v_mid,
         };
 
-        <span class="comment">// Initially, these pointers point past the ends of their arrays.</span>
-        <span class="kw">let</span> <span class="ident">left</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="ident">hole</span>.<span class="ident">dest</span>;
-        <span class="kw">let</span> <span class="ident">right</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="ident">hole</span>.<span class="ident">end</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> <span class="op">=</span> <span class="ident">v_end</span>;
+        <span class="comment">// Initially, these pointers point past the ends of their arrays.
+        </span><span class="kw">let </span>left = <span class="kw-2">&amp;mut </span>hole.dest;
+        <span class="kw">let </span>right = <span class="kw-2">&amp;mut </span>hole.end;
+        <span class="kw">let </span><span class="kw-2">mut </span>out = v_end;
 
-        <span class="kw">while</span> <span class="ident">v</span> <span class="op">&lt;</span> <span class="kw-2">*</span><span class="ident">left</span> <span class="op">&amp;&amp;</span> <span class="ident">buf</span> <span class="op">&lt;</span> <span class="kw-2">*</span><span class="ident">right</span> {
-            <span class="comment">// Consume the greater side.</span>
-            <span class="comment">// If equal, prefer the right run to maintain stability.</span>
-            <span class="kw">let</span> <span class="ident">to_copy</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">is_less</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">right</span>.<span class="ident">offset</span>(<span class="op">-</span><span class="number">1</span>), <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">left</span>.<span class="ident">offset</span>(<span class="op">-</span><span class="number">1</span>)) {
-                <span class="ident">decrement_and_get</span>(<span class="ident">left</span>)
-            } <span class="kw">else</span> {
-                <span class="ident">decrement_and_get</span>(<span class="ident">right</span>)
+        <span class="kw">while </span>v &lt; <span class="kw-2">*</span>left &amp;&amp; buf &lt; <span class="kw-2">*</span>right {
+            <span class="comment">// Consume the greater side.
+            // If equal, prefer the right run to maintain stability.
+            </span><span class="kw">let </span>to_copy = <span class="kw">if </span>is_less(<span class="kw-2">&amp;*</span>right.offset(-<span class="number">1</span>), <span class="kw-2">&amp;*</span>left.offset(-<span class="number">1</span>)) {
+                decrement_and_get(left)
+            } <span class="kw">else </span>{
+                decrement_and_get(right)
             };
-            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">to_copy</span>, <span class="ident">decrement_and_get</span>(<span class="kw-2">&amp;mut</span> <span class="ident">out</span>), <span class="number">1</span>);
+            ptr::copy_nonoverlapping(to_copy, decrement_and_get(<span class="kw-2">&amp;mut </span>out), <span class="number">1</span>);
         }
     }
-    <span class="comment">// Finally, `hole` gets dropped. If the shorter run was not fully consumed, whatever remains of</span>
-    <span class="comment">// it will now be copied into the hole in `v`.</span>
+    <span class="comment">// Finally, `hole` gets dropped. If the shorter run was not fully consumed, whatever remains of
+    // it will now be copied into the hole in `v`.
 
-    <span class="comment">// When dropped, copies the range `start..end` into `dest..`.</span>
-    <span class="kw">struct</span> <span class="ident">MergeHole</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="ident">start</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>,
-        <span class="ident">end</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>,
-        <span class="ident">dest</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>,
+    // When dropped, copies the range `start..end` into `dest..`.
+    </span><span class="kw">struct </span>MergeHole&lt;T&gt; {
+        start: <span class="kw-2">*mut </span>T,
+        end: <span class="kw-2">*mut </span>T,
+        dest: <span class="kw-2">*mut </span>T,
     }
 
-    <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">MergeHole</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-            <span class="comment">// `T` is not a zero-sized type, so it&#39;s okay to divide by its size.</span>
-            <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> (<span class="self">self</span>.<span class="ident">end</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">-</span> <span class="self">self</span>.<span class="ident">start</span> <span class="kw">as</span> <span class="ident">usize</span>) <span class="op">/</span> <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>();
-            <span class="kw">unsafe</span> {
-                <span class="comment">// TODO 1.47: let len = self.end.offset_from(self.start) as usize;</span>
-                <span class="ident">ptr::copy_nonoverlapping</span>(<span class="self">self</span>.<span class="ident">start</span>, <span class="self">self</span>.<span class="ident">dest</span>, <span class="ident">len</span>);
+    <span class="kw">impl</span>&lt;T&gt; Drop <span class="kw">for </span>MergeHole&lt;T&gt; {
+        <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+            <span class="comment">// `T` is not a zero-sized type, so it&#39;s okay to divide by its size.
+            </span><span class="kw">let </span>len = (<span class="self">self</span>.end <span class="kw">as </span>usize - <span class="self">self</span>.start <span class="kw">as </span>usize) / size_of::&lt;T&gt;();
+            <span class="kw">unsafe </span>{
+                <span class="comment">// TODO 1.47: let len = self.end.offset_from(self.start) as usize;
+                </span>ptr::copy_nonoverlapping(<span class="self">self</span>.start, <span class="self">self</span>.dest, len);
             }
         }
     }
 }
 
-<span class="doccomment">/// The result of merge sort.</span>
-<span class="attribute">#[<span class="ident">must_use</span>]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">enum</span> <span class="ident">MergesortResult</span> {
-    <span class="doccomment">/// The slice has already been sorted.</span>
-    <span class="ident">NonDescending</span>,
-    <span class="doccomment">/// The slice has been descending and therefore it was left intact.</span>
-    <span class="ident">Descending</span>,
-    <span class="doccomment">/// The slice was sorted.</span>
-    <span class="ident">Sorted</span>,
+<span class="doccomment">/// The result of merge sort.
+</span><span class="attribute">#[must_use]
+#[derive(Clone, Copy, PartialEq, Eq)]
+</span><span class="kw">enum </span>MergesortResult {
+    <span class="doccomment">/// The slice has already been sorted.
+    </span>NonDescending,
+    <span class="doccomment">/// The slice has been descending and therefore it was left intact.
+    </span>Descending,
+    <span class="doccomment">/// The slice was sorted.
+    </span>Sorted,
 }
 
-<span class="doccomment">/// A sorted run that starts at index `start` and is of length `len`.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>)]</span>
-<span class="kw">struct</span> <span class="ident">Run</span> {
-    <span class="ident">start</span>: <span class="ident">usize</span>,
-    <span class="ident">len</span>: <span class="ident">usize</span>,
+<span class="doccomment">/// A sorted run that starts at index `start` and is of length `len`.
+</span><span class="attribute">#[derive(Clone, Copy)]
+</span><span class="kw">struct </span>Run {
+    start: usize,
+    len: usize,
 }
 
-<span class="doccomment">/// Examines the stack of runs and identifies the next pair of runs to merge. More specifically,</span>
-<span class="doccomment">/// if `Some(r)` is returned, that means `runs[r]` and `runs[r + 1]` must be merged next. If the</span>
-<span class="doccomment">/// algorithm should continue building a new run instead, `None` is returned.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// TimSort is infamous for its buggy implementations, as described here:</span>
-<span class="doccomment">/// http://envisage-project.eu/timsort-specification-and-verification/</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The gist of the story is: we must enforce the invariants on the top four runs on the stack.</span>
-<span class="doccomment">/// Enforcing them on just top three is not sufficient to ensure that the invariants will still</span>
-<span class="doccomment">/// hold for *all* runs in the stack.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This function correctly checks invariants for the top four runs. Additionally, if the top</span>
-<span class="doccomment">/// run starts at index 0, it will always demand a merge operation until the stack is fully</span>
-<span class="doccomment">/// collapsed, in order to complete the sort.</span>
-<span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">fn</span> <span class="ident">collapse</span>(<span class="ident">runs</span>: <span class="kw-2">&amp;</span>[<span class="ident">Run</span>]) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="ident">runs</span>.<span class="ident">len</span>();
+<span class="doccomment">/// Examines the stack of runs and identifies the next pair of runs to merge. More specifically,
+/// if `Some(r)` is returned, that means `runs[r]` and `runs[r + 1]` must be merged next. If the
+/// algorithm should continue building a new run instead, `None` is returned.
+///
+/// TimSort is infamous for its buggy implementations, as described here:
+/// http://envisage-project.eu/timsort-specification-and-verification/
+///
+/// The gist of the story is: we must enforce the invariants on the top four runs on the stack.
+/// Enforcing them on just top three is not sufficient to ensure that the invariants will still
+/// hold for *all* runs in the stack.
+///
+/// This function correctly checks invariants for the top four runs. Additionally, if the top
+/// run starts at index 0, it will always demand a merge operation until the stack is fully
+/// collapsed, in order to complete the sort.
+</span><span class="attribute">#[inline]
+</span><span class="kw">fn </span>collapse(runs: <span class="kw-2">&amp;</span>[Run]) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
+    <span class="kw">let </span>n = runs.len();
 
-    <span class="kw">if</span> <span class="ident">n</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">2</span>
-        <span class="op">&amp;&amp;</span> (<span class="ident">runs</span>[<span class="ident">n</span> <span class="op">-</span> <span class="number">1</span>].<span class="ident">start</span> <span class="op">==</span> <span class="number">0</span>
-            <span class="op">|</span><span class="op">|</span> <span class="ident">runs</span>[<span class="ident">n</span> <span class="op">-</span> <span class="number">2</span>].<span class="ident">len</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">runs</span>[<span class="ident">n</span> <span class="op">-</span> <span class="number">1</span>].<span class="ident">len</span>
-            <span class="op">|</span><span class="op">|</span> (<span class="ident">n</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">3</span> <span class="op">&amp;&amp;</span> <span class="ident">runs</span>[<span class="ident">n</span> <span class="op">-</span> <span class="number">3</span>].<span class="ident">len</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">runs</span>[<span class="ident">n</span> <span class="op">-</span> <span class="number">2</span>].<span class="ident">len</span> <span class="op">+</span> <span class="ident">runs</span>[<span class="ident">n</span> <span class="op">-</span> <span class="number">1</span>].<span class="ident">len</span>)
-            <span class="op">|</span><span class="op">|</span> (<span class="ident">n</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">4</span> <span class="op">&amp;&amp;</span> <span class="ident">runs</span>[<span class="ident">n</span> <span class="op">-</span> <span class="number">4</span>].<span class="ident">len</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">runs</span>[<span class="ident">n</span> <span class="op">-</span> <span class="number">3</span>].<span class="ident">len</span> <span class="op">+</span> <span class="ident">runs</span>[<span class="ident">n</span> <span class="op">-</span> <span class="number">2</span>].<span class="ident">len</span>))
+    <span class="kw">if </span>n &gt;= <span class="number">2
+        </span>&amp;&amp; (runs[n - <span class="number">1</span>].start == <span class="number">0
+            </span>|| runs[n - <span class="number">2</span>].len &lt;= runs[n - <span class="number">1</span>].len
+            || (n &gt;= <span class="number">3 </span>&amp;&amp; runs[n - <span class="number">3</span>].len &lt;= runs[n - <span class="number">2</span>].len + runs[n - <span class="number">1</span>].len)
+            || (n &gt;= <span class="number">4 </span>&amp;&amp; runs[n - <span class="number">4</span>].len &lt;= runs[n - <span class="number">3</span>].len + runs[n - <span class="number">2</span>].len))
     {
-        <span class="kw">if</span> <span class="ident">n</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">3</span> <span class="op">&amp;&amp;</span> <span class="ident">runs</span>[<span class="ident">n</span> <span class="op">-</span> <span class="number">3</span>].<span class="ident">len</span> <span class="op">&lt;</span> <span class="ident">runs</span>[<span class="ident">n</span> <span class="op">-</span> <span class="number">1</span>].<span class="ident">len</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">n</span> <span class="op">-</span> <span class="number">3</span>)
-        } <span class="kw">else</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">n</span> <span class="op">-</span> <span class="number">2</span>)
+        <span class="kw">if </span>n &gt;= <span class="number">3 </span>&amp;&amp; runs[n - <span class="number">3</span>].len &lt; runs[n - <span class="number">1</span>].len {
+            <span class="prelude-val">Some</span>(n - <span class="number">3</span>)
+        } <span class="kw">else </span>{
+            <span class="prelude-val">Some</span>(n - <span class="number">2</span>)
         }
-    } <span class="kw">else</span> {
-        <span class="prelude-val">None</span>
-    }
+    } <span class="kw">else </span>{
+        <span class="prelude-val">None
+    </span>}
 }
 
-<span class="doccomment">/// Sorts a slice using merge sort, unless it is already in descending order.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This function doesn&#39;t modify the slice if it is already non-descending or descending.</span>
-<span class="doccomment">/// Otherwise, it sorts the slice into non-descending order.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This merge sort borrows some (but not all) ideas from TimSort, which is described in detail</span>
-<span class="doccomment">/// [here](https://github.com/python/cpython/blob/main/Objects/listsort.txt).</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The algorithm identifies strictly descending and non-descending subsequences, which are called</span>
-<span class="doccomment">/// natural runs. There is a stack of pending runs yet to be merged. Each newly found run is pushed</span>
-<span class="doccomment">/// onto the stack, and then some pairs of adjacent runs are merged until these two invariants are</span>
-<span class="doccomment">/// satisfied:</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// 1. for every `i` in `1..runs.len()`: `runs[i - 1].len &gt; runs[i].len`</span>
-<span class="doccomment">/// 2. for every `i` in `2..runs.len()`: `runs[i - 2].len &gt; runs[i - 1].len + runs[i].len`</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The invariants ensure that the total running time is *O*(*n* \* log(*n*)) worst-case.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The argument `buf` is used as a temporary buffer and must be at least as long as `v`.</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">mergesort</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">v</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">T</span>], <span class="ident">buf</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>, <span class="ident">is_less</span>: <span class="kw-2">&amp;</span><span class="ident">F</span>) -&gt; <span class="ident">MergesortResult</span>
-<span class="kw">where</span>
-    <span class="ident">T</span>: <span class="ident">Send</span>,
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="kw-2">&amp;</span><span class="ident">T</span>) -&gt; <span class="ident">bool</span> <span class="op">+</span> <span class="ident">Sync</span>,
+<span class="doccomment">/// Sorts a slice using merge sort, unless it is already in descending order.
+///
+/// This function doesn&#39;t modify the slice if it is already non-descending or descending.
+/// Otherwise, it sorts the slice into non-descending order.
+///
+/// This merge sort borrows some (but not all) ideas from TimSort, which is described in detail
+/// [here](https://github.com/python/cpython/blob/main/Objects/listsort.txt).
+///
+/// The algorithm identifies strictly descending and non-descending subsequences, which are called
+/// natural runs. There is a stack of pending runs yet to be merged. Each newly found run is pushed
+/// onto the stack, and then some pairs of adjacent runs are merged until these two invariants are
+/// satisfied:
+///
+/// 1. for every `i` in `1..runs.len()`: `runs[i - 1].len &gt; runs[i].len`
+/// 2. for every `i` in `2..runs.len()`: `runs[i - 2].len &gt; runs[i - 1].len + runs[i].len`
+///
+/// The invariants ensure that the total running time is *O*(*n* \* log(*n*)) worst-case.
+///
+/// # Safety
+///
+/// The argument `buf` is used as a temporary buffer and must be at least as long as `v`.
+</span><span class="kw">unsafe fn </span>mergesort&lt;T, F&gt;(v: <span class="kw-2">&amp;mut </span>[T], buf: <span class="kw-2">*mut </span>T, is_less: <span class="kw-2">&amp;</span>F) -&gt; MergesortResult
+<span class="kw">where
+    </span>T: Send,
+    F: Fn(<span class="kw-2">&amp;</span>T, <span class="kw-2">&amp;</span>T) -&gt; bool + Sync,
 {
-    <span class="comment">// Very short runs are extended using insertion sort to span at least this many elements.</span>
-    <span class="kw">const</span> <span class="ident">MIN_RUN</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">10</span>;
+    <span class="comment">// Very short runs are extended using insertion sort to span at least this many elements.
+    </span><span class="kw">const </span>MIN_RUN: usize = <span class="number">10</span>;
 
-    <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">len</span>();
+    <span class="kw">let </span>len = v.len();
 
-    <span class="comment">// In order to identify natural runs in `v`, we traverse it backwards. That might seem like a</span>
-    <span class="comment">// strange decision, but consider the fact that merges more often go in the opposite direction</span>
-    <span class="comment">// (forwards). According to benchmarks, merging forwards is slightly faster than merging</span>
-    <span class="comment">// backwards. To conclude, identifying runs by traversing backwards improves performance.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">runs</span> <span class="op">=</span> <span class="macro">vec!</span>[];
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">end</span> <span class="op">=</span> <span class="ident">len</span>;
-    <span class="kw">while</span> <span class="ident">end</span> <span class="op">&gt;</span> <span class="number">0</span> {
-        <span class="comment">// Find the next natural run, and reverse it if it&#39;s strictly descending.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">start</span> <span class="op">=</span> <span class="ident">end</span> <span class="op">-</span> <span class="number">1</span>;
+    <span class="comment">// In order to identify natural runs in `v`, we traverse it backwards. That might seem like a
+    // strange decision, but consider the fact that merges more often go in the opposite direction
+    // (forwards). According to benchmarks, merging forwards is slightly faster than merging
+    // backwards. To conclude, identifying runs by traversing backwards improves performance.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>runs = <span class="macro">vec!</span>[];
+    <span class="kw">let </span><span class="kw-2">mut </span>end = len;
+    <span class="kw">while </span>end &gt; <span class="number">0 </span>{
+        <span class="comment">// Find the next natural run, and reverse it if it&#39;s strictly descending.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>start = end - <span class="number">1</span>;
 
-        <span class="kw">if</span> <span class="ident">start</span> <span class="op">&gt;</span> <span class="number">0</span> {
-            <span class="ident">start</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
+        <span class="kw">if </span>start &gt; <span class="number">0 </span>{
+            start -= <span class="number">1</span>;
 
-            <span class="kw">if</span> <span class="ident">is_less</span>(<span class="ident">v</span>.<span class="ident">get_unchecked</span>(<span class="ident">start</span> <span class="op">+</span> <span class="number">1</span>), <span class="ident">v</span>.<span class="ident">get_unchecked</span>(<span class="ident">start</span>)) {
-                <span class="kw">while</span> <span class="ident">start</span> <span class="op">&gt;</span> <span class="number">0</span> <span class="op">&amp;&amp;</span> <span class="ident">is_less</span>(<span class="ident">v</span>.<span class="ident">get_unchecked</span>(<span class="ident">start</span>), <span class="ident">v</span>.<span class="ident">get_unchecked</span>(<span class="ident">start</span> <span class="op">-</span> <span class="number">1</span>)) {
-                    <span class="ident">start</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
+            <span class="kw">if </span>is_less(v.get_unchecked(start + <span class="number">1</span>), v.get_unchecked(start)) {
+                <span class="kw">while </span>start &gt; <span class="number">0 </span>&amp;&amp; is_less(v.get_unchecked(start), v.get_unchecked(start - <span class="number">1</span>)) {
+                    start -= <span class="number">1</span>;
                 }
 
-                <span class="comment">// If this descending run covers the whole slice, return immediately.</span>
-                <span class="kw">if</span> <span class="ident">start</span> <span class="op">==</span> <span class="number">0</span> <span class="op">&amp;&amp;</span> <span class="ident">end</span> <span class="op">==</span> <span class="ident">len</span> {
-                    <span class="kw">return</span> <span class="ident">MergesortResult::Descending</span>;
-                } <span class="kw">else</span> {
-                    <span class="ident">v</span>[<span class="ident">start</span>..<span class="ident">end</span>].<span class="ident">reverse</span>();
+                <span class="comment">// If this descending run covers the whole slice, return immediately.
+                </span><span class="kw">if </span>start == <span class="number">0 </span>&amp;&amp; end == len {
+                    <span class="kw">return </span>MergesortResult::Descending;
+                } <span class="kw">else </span>{
+                    v[start..end].reverse();
                 }
-            } <span class="kw">else</span> {
-                <span class="kw">while</span> <span class="ident">start</span> <span class="op">&gt;</span> <span class="number">0</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="ident">is_less</span>(<span class="ident">v</span>.<span class="ident">get_unchecked</span>(<span class="ident">start</span>), <span class="ident">v</span>.<span class="ident">get_unchecked</span>(<span class="ident">start</span> <span class="op">-</span> <span class="number">1</span>)) {
-                    <span class="ident">start</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
+            } <span class="kw">else </span>{
+                <span class="kw">while </span>start &gt; <span class="number">0 </span>&amp;&amp; !is_less(v.get_unchecked(start), v.get_unchecked(start - <span class="number">1</span>)) {
+                    start -= <span class="number">1</span>;
                 }
 
-                <span class="comment">// If this non-descending run covers the whole slice, return immediately.</span>
-                <span class="kw">if</span> <span class="ident">end</span> <span class="op">-</span> <span class="ident">start</span> <span class="op">==</span> <span class="ident">len</span> {
-                    <span class="kw">return</span> <span class="ident">MergesortResult::NonDescending</span>;
+                <span class="comment">// If this non-descending run covers the whole slice, return immediately.
+                </span><span class="kw">if </span>end - start == len {
+                    <span class="kw">return </span>MergesortResult::NonDescending;
                 }
             }
         }
 
-        <span class="comment">// Insert some more elements into the run if it&#39;s too short. Insertion sort is faster than</span>
-        <span class="comment">// merge sort on short sequences, so this significantly improves performance.</span>
-        <span class="kw">while</span> <span class="ident">start</span> <span class="op">&gt;</span> <span class="number">0</span> <span class="op">&amp;&amp;</span> <span class="ident">end</span> <span class="op">-</span> <span class="ident">start</span> <span class="op">&lt;</span> <span class="ident">MIN_RUN</span> {
-            <span class="ident">start</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
-            <span class="ident">insert_head</span>(<span class="kw-2">&amp;mut</span> <span class="ident">v</span>[<span class="ident">start</span>..<span class="ident">end</span>], <span class="kw-2">&amp;</span><span class="ident">is_less</span>);
+        <span class="comment">// Insert some more elements into the run if it&#39;s too short. Insertion sort is faster than
+        // merge sort on short sequences, so this significantly improves performance.
+        </span><span class="kw">while </span>start &gt; <span class="number">0 </span>&amp;&amp; end - start &lt; MIN_RUN {
+            start -= <span class="number">1</span>;
+            insert_head(<span class="kw-2">&amp;mut </span>v[start..end], <span class="kw-2">&amp;</span>is_less);
         }
 
-        <span class="comment">// Push this run onto the stack.</span>
-        <span class="ident">runs</span>.<span class="ident">push</span>(<span class="ident">Run</span> {
-            <span class="ident">start</span>,
-            <span class="ident">len</span>: <span class="ident">end</span> <span class="op">-</span> <span class="ident">start</span>,
+        <span class="comment">// Push this run onto the stack.
+        </span>runs.push(Run {
+            start,
+            len: end - start,
         });
-        <span class="ident">end</span> <span class="op">=</span> <span class="ident">start</span>;
+        end = start;
 
-        <span class="comment">// Merge some pairs of adjacent runs to satisfy the invariants.</span>
-        <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">r</span>) <span class="op">=</span> <span class="ident">collapse</span>(<span class="kw-2">&amp;</span><span class="ident">runs</span>) {
-            <span class="kw">let</span> <span class="ident">left</span> <span class="op">=</span> <span class="ident">runs</span>[<span class="ident">r</span> <span class="op">+</span> <span class="number">1</span>];
-            <span class="kw">let</span> <span class="ident">right</span> <span class="op">=</span> <span class="ident">runs</span>[<span class="ident">r</span>];
-            <span class="ident">merge</span>(
-                <span class="kw-2">&amp;mut</span> <span class="ident">v</span>[<span class="ident">left</span>.<span class="ident">start</span>..<span class="ident">right</span>.<span class="ident">start</span> <span class="op">+</span> <span class="ident">right</span>.<span class="ident">len</span>],
-                <span class="ident">left</span>.<span class="ident">len</span>,
-                <span class="ident">buf</span>,
-                <span class="kw-2">&amp;</span><span class="ident">is_less</span>,
+        <span class="comment">// Merge some pairs of adjacent runs to satisfy the invariants.
+        </span><span class="kw">while let </span><span class="prelude-val">Some</span>(r) = collapse(<span class="kw-2">&amp;</span>runs) {
+            <span class="kw">let </span>left = runs[r + <span class="number">1</span>];
+            <span class="kw">let </span>right = runs[r];
+            merge(
+                <span class="kw-2">&amp;mut </span>v[left.start..right.start + right.len],
+                left.len,
+                buf,
+                <span class="kw-2">&amp;</span>is_less,
             );
 
-            <span class="ident">runs</span>[<span class="ident">r</span>] <span class="op">=</span> <span class="ident">Run</span> {
-                <span class="ident">start</span>: <span class="ident">left</span>.<span class="ident">start</span>,
-                <span class="ident">len</span>: <span class="ident">left</span>.<span class="ident">len</span> <span class="op">+</span> <span class="ident">right</span>.<span class="ident">len</span>,
+            runs[r] = Run {
+                start: left.start,
+                len: left.len + right.len,
             };
-            <span class="ident">runs</span>.<span class="ident">remove</span>(<span class="ident">r</span> <span class="op">+</span> <span class="number">1</span>);
+            runs.remove(r + <span class="number">1</span>);
         }
     }
 
-    <span class="comment">// Finally, exactly one run must remain in the stack.</span>
-    <span class="macro">debug_assert!</span>(<span class="ident">runs</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="number">1</span> <span class="op">&amp;&amp;</span> <span class="ident">runs</span>[<span class="number">0</span>].<span class="ident">start</span> <span class="op">==</span> <span class="number">0</span> <span class="op">&amp;&amp;</span> <span class="ident">runs</span>[<span class="number">0</span>].<span class="ident">len</span> <span class="op">==</span> <span class="ident">len</span>);
+    <span class="comment">// Finally, exactly one run must remain in the stack.
+    </span><span class="macro">debug_assert!</span>(runs.len() == <span class="number">1 </span>&amp;&amp; runs[<span class="number">0</span>].start == <span class="number">0 </span>&amp;&amp; runs[<span class="number">0</span>].len == len);
 
-    <span class="comment">// The original order of the slice was neither non-descending nor descending.</span>
-    <span class="ident">MergesortResult::Sorted</span>
+    <span class="comment">// The original order of the slice was neither non-descending nor descending.
+    </span>MergesortResult::Sorted
 }
 
-<span class="comment">////////////////////////////////////////////////////////////////////////////</span>
-<span class="comment">// Everything above this line is copied from `std::slice::sort` (with very minor tweaks).</span>
-<span class="comment">// Everything below this line is parallelization.</span>
-<span class="comment">////////////////////////////////////////////////////////////////////////////</span>
+<span class="comment">////////////////////////////////////////////////////////////////////////////
+// Everything above this line is copied from `std::slice::sort` (with very minor tweaks).
+// Everything below this line is parallelization.
+////////////////////////////////////////////////////////////////////////////
 
-<span class="doccomment">/// Splits two sorted slices so that they can be merged in parallel.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Returns two indices `(a, b)` so that slices `left[..a]` and `right[..b]` come before</span>
-<span class="doccomment">/// `left[a..]` and `right[b..]`.</span>
-<span class="kw">fn</span> <span class="ident">split_for_merge</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">left</span>: <span class="kw-2">&amp;</span>[<span class="ident">T</span>], <span class="ident">right</span>: <span class="kw-2">&amp;</span>[<span class="ident">T</span>], <span class="ident">is_less</span>: <span class="kw-2">&amp;</span><span class="ident">F</span>) -&gt; (<span class="ident">usize</span>, <span class="ident">usize</span>)
-<span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="kw-2">&amp;</span><span class="ident">T</span>) -&gt; <span class="ident">bool</span>,
+</span><span class="doccomment">/// Splits two sorted slices so that they can be merged in parallel.
+///
+/// Returns two indices `(a, b)` so that slices `left[..a]` and `right[..b]` come before
+/// `left[a..]` and `right[b..]`.
+</span><span class="kw">fn </span>split_for_merge&lt;T, F&gt;(left: <span class="kw-2">&amp;</span>[T], right: <span class="kw-2">&amp;</span>[T], is_less: <span class="kw-2">&amp;</span>F) -&gt; (usize, usize)
+<span class="kw">where
+    </span>F: Fn(<span class="kw-2">&amp;</span>T, <span class="kw-2">&amp;</span>T) -&gt; bool,
 {
-    <span class="kw">let</span> <span class="ident">left_len</span> <span class="op">=</span> <span class="ident">left</span>.<span class="ident">len</span>();
-    <span class="kw">let</span> <span class="ident">right_len</span> <span class="op">=</span> <span class="ident">right</span>.<span class="ident">len</span>();
+    <span class="kw">let </span>left_len = left.len();
+    <span class="kw">let </span>right_len = right.len();
 
-    <span class="kw">if</span> <span class="ident">left_len</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">right_len</span> {
-        <span class="kw">let</span> <span class="ident">left_mid</span> <span class="op">=</span> <span class="ident">left_len</span> <span class="op">/</span> <span class="number">2</span>;
+    <span class="kw">if </span>left_len &gt;= right_len {
+        <span class="kw">let </span>left_mid = left_len / <span class="number">2</span>;
 
-        <span class="comment">// Find the first element in `right` that is greater than or equal to `left[left_mid]`.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">a</span> <span class="op">=</span> <span class="number">0</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">right_len</span>;
-        <span class="kw">while</span> <span class="ident">a</span> <span class="op">&lt;</span> <span class="ident">b</span> {
-            <span class="kw">let</span> <span class="ident">m</span> <span class="op">=</span> <span class="ident">a</span> <span class="op">+</span> (<span class="ident">b</span> <span class="op">-</span> <span class="ident">a</span>) <span class="op">/</span> <span class="number">2</span>;
-            <span class="kw">if</span> <span class="ident">is_less</span>(<span class="kw-2">&amp;</span><span class="ident">right</span>[<span class="ident">m</span>], <span class="kw-2">&amp;</span><span class="ident">left</span>[<span class="ident">left_mid</span>]) {
-                <span class="ident">a</span> <span class="op">=</span> <span class="ident">m</span> <span class="op">+</span> <span class="number">1</span>;
-            } <span class="kw">else</span> {
-                <span class="ident">b</span> <span class="op">=</span> <span class="ident">m</span>;
+        <span class="comment">// Find the first element in `right` that is greater than or equal to `left[left_mid]`.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>a = <span class="number">0</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>b = right_len;
+        <span class="kw">while </span>a &lt; b {
+            <span class="kw">let </span>m = a + (b - a) / <span class="number">2</span>;
+            <span class="kw">if </span>is_less(<span class="kw-2">&amp;</span>right[m], <span class="kw-2">&amp;</span>left[left_mid]) {
+                a = m + <span class="number">1</span>;
+            } <span class="kw">else </span>{
+                b = m;
             }
         }
 
-        (<span class="ident">left_mid</span>, <span class="ident">a</span>)
-    } <span class="kw">else</span> {
-        <span class="kw">let</span> <span class="ident">right_mid</span> <span class="op">=</span> <span class="ident">right_len</span> <span class="op">/</span> <span class="number">2</span>;
+        (left_mid, a)
+    } <span class="kw">else </span>{
+        <span class="kw">let </span>right_mid = right_len / <span class="number">2</span>;
 
-        <span class="comment">// Find the first element in `left` that is greater than `right[right_mid]`.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">a</span> <span class="op">=</span> <span class="number">0</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">left_len</span>;
-        <span class="kw">while</span> <span class="ident">a</span> <span class="op">&lt;</span> <span class="ident">b</span> {
-            <span class="kw">let</span> <span class="ident">m</span> <span class="op">=</span> <span class="ident">a</span> <span class="op">+</span> (<span class="ident">b</span> <span class="op">-</span> <span class="ident">a</span>) <span class="op">/</span> <span class="number">2</span>;
-            <span class="kw">if</span> <span class="ident">is_less</span>(<span class="kw-2">&amp;</span><span class="ident">right</span>[<span class="ident">right_mid</span>], <span class="kw-2">&amp;</span><span class="ident">left</span>[<span class="ident">m</span>]) {
-                <span class="ident">b</span> <span class="op">=</span> <span class="ident">m</span>;
-            } <span class="kw">else</span> {
-                <span class="ident">a</span> <span class="op">=</span> <span class="ident">m</span> <span class="op">+</span> <span class="number">1</span>;
+        <span class="comment">// Find the first element in `left` that is greater than `right[right_mid]`.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>a = <span class="number">0</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>b = left_len;
+        <span class="kw">while </span>a &lt; b {
+            <span class="kw">let </span>m = a + (b - a) / <span class="number">2</span>;
+            <span class="kw">if </span>is_less(<span class="kw-2">&amp;</span>right[right_mid], <span class="kw-2">&amp;</span>left[m]) {
+                b = m;
+            } <span class="kw">else </span>{
+                a = m + <span class="number">1</span>;
             }
         }
 
-        (<span class="ident">a</span>, <span class="ident">right_mid</span>)
+        (a, right_mid)
     }
 }
 
-<span class="doccomment">/// Merges slices `left` and `right` in parallel and stores the result into `dest`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The `dest` pointer must have enough space to store the result.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Even if `is_less` panics at any point during the merge process, this function will fully copy</span>
-<span class="doccomment">/// all elements from `left` and `right` into `dest` (not necessarily in sorted order).</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">par_merge</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">left</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">T</span>], <span class="ident">right</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">T</span>], <span class="ident">dest</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>, <span class="ident">is_less</span>: <span class="kw-2">&amp;</span><span class="ident">F</span>)
-<span class="kw">where</span>
-    <span class="ident">T</span>: <span class="ident">Send</span>,
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="kw-2">&amp;</span><span class="ident">T</span>) -&gt; <span class="ident">bool</span> <span class="op">+</span> <span class="ident">Sync</span>,
+<span class="doccomment">/// Merges slices `left` and `right` in parallel and stores the result into `dest`.
+///
+/// # Safety
+///
+/// The `dest` pointer must have enough space to store the result.
+///
+/// Even if `is_less` panics at any point during the merge process, this function will fully copy
+/// all elements from `left` and `right` into `dest` (not necessarily in sorted order).
+</span><span class="kw">unsafe fn </span>par_merge&lt;T, F&gt;(left: <span class="kw-2">&amp;mut </span>[T], right: <span class="kw-2">&amp;mut </span>[T], dest: <span class="kw-2">*mut </span>T, is_less: <span class="kw-2">&amp;</span>F)
+<span class="kw">where
+    </span>T: Send,
+    F: Fn(<span class="kw-2">&amp;</span>T, <span class="kw-2">&amp;</span>T) -&gt; bool + Sync,
 {
-    <span class="comment">// Slices whose lengths sum up to this value are merged sequentially. This number is slightly</span>
-    <span class="comment">// larger than `CHUNK_LENGTH`, and the reason is that merging is faster than merge sorting, so</span>
-    <span class="comment">// merging needs a bit coarser granularity in order to hide the overhead of Rayon&#39;s task</span>
-    <span class="comment">// scheduling.</span>
-    <span class="kw">const</span> <span class="ident">MAX_SEQUENTIAL</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">5000</span>;
+    <span class="comment">// Slices whose lengths sum up to this value are merged sequentially. This number is slightly
+    // larger than `CHUNK_LENGTH`, and the reason is that merging is faster than merge sorting, so
+    // merging needs a bit coarser granularity in order to hide the overhead of Rayon&#39;s task
+    // scheduling.
+    </span><span class="kw">const </span>MAX_SEQUENTIAL: usize = <span class="number">5000</span>;
 
-    <span class="kw">let</span> <span class="ident">left_len</span> <span class="op">=</span> <span class="ident">left</span>.<span class="ident">len</span>();
-    <span class="kw">let</span> <span class="ident">right_len</span> <span class="op">=</span> <span class="ident">right</span>.<span class="ident">len</span>();
+    <span class="kw">let </span>left_len = left.len();
+    <span class="kw">let </span>right_len = right.len();
 
-    <span class="comment">// Intermediate state of the merge process, which serves two purposes:</span>
-    <span class="comment">// 1. Protects integrity of `dest` from panics in `is_less`.</span>
-    <span class="comment">// 2. Copies the remaining elements as soon as one of the two sides is exhausted.</span>
-    <span class="comment">//</span>
-    <span class="comment">// Panic safety:</span>
-    <span class="comment">//</span>
-    <span class="comment">// If `is_less` panics at any point during the merge process, `s` will get dropped and copy the</span>
-    <span class="comment">// remaining parts of `left` and `right` into `dest`.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">s</span> <span class="op">=</span> <span class="ident">State</span> {
-        <span class="ident">left_start</span>: <span class="ident">left</span>.<span class="ident">as_mut_ptr</span>(),
-        <span class="ident">left_end</span>: <span class="ident">left</span>.<span class="ident">as_mut_ptr</span>().<span class="ident">add</span>(<span class="ident">left_len</span>),
-        <span class="ident">right_start</span>: <span class="ident">right</span>.<span class="ident">as_mut_ptr</span>(),
-        <span class="ident">right_end</span>: <span class="ident">right</span>.<span class="ident">as_mut_ptr</span>().<span class="ident">add</span>(<span class="ident">right_len</span>),
-        <span class="ident">dest</span>,
+    <span class="comment">// Intermediate state of the merge process, which serves two purposes:
+    // 1. Protects integrity of `dest` from panics in `is_less`.
+    // 2. Copies the remaining elements as soon as one of the two sides is exhausted.
+    //
+    // Panic safety:
+    //
+    // If `is_less` panics at any point during the merge process, `s` will get dropped and copy the
+    // remaining parts of `left` and `right` into `dest`.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>s = State {
+        left_start: left.as_mut_ptr(),
+        left_end: left.as_mut_ptr().add(left_len),
+        right_start: right.as_mut_ptr(),
+        right_end: right.as_mut_ptr().add(right_len),
+        dest,
     };
 
-    <span class="kw">if</span> <span class="ident">left_len</span> <span class="op">==</span> <span class="number">0</span> <span class="op">|</span><span class="op">|</span> <span class="ident">right_len</span> <span class="op">==</span> <span class="number">0</span> <span class="op">|</span><span class="op">|</span> <span class="ident">left_len</span> <span class="op">+</span> <span class="ident">right_len</span> <span class="op">&lt;</span> <span class="ident">MAX_SEQUENTIAL</span> {
-        <span class="kw">while</span> <span class="ident">s</span>.<span class="ident">left_start</span> <span class="op">&lt;</span> <span class="ident">s</span>.<span class="ident">left_end</span> <span class="op">&amp;&amp;</span> <span class="ident">s</span>.<span class="ident">right_start</span> <span class="op">&lt;</span> <span class="ident">s</span>.<span class="ident">right_end</span> {
-            <span class="comment">// Consume the lesser side.</span>
-            <span class="comment">// If equal, prefer the left run to maintain stability.</span>
-            <span class="kw">let</span> <span class="ident">to_copy</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">is_less</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">s</span>.<span class="ident">right_start</span>, <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">s</span>.<span class="ident">left_start</span>) {
-                <span class="ident">get_and_increment</span>(<span class="kw-2">&amp;mut</span> <span class="ident">s</span>.<span class="ident">right_start</span>)
-            } <span class="kw">else</span> {
-                <span class="ident">get_and_increment</span>(<span class="kw-2">&amp;mut</span> <span class="ident">s</span>.<span class="ident">left_start</span>)
+    <span class="kw">if </span>left_len == <span class="number">0 </span>|| right_len == <span class="number">0 </span>|| left_len + right_len &lt; MAX_SEQUENTIAL {
+        <span class="kw">while </span>s.left_start &lt; s.left_end &amp;&amp; s.right_start &lt; s.right_end {
+            <span class="comment">// Consume the lesser side.
+            // If equal, prefer the left run to maintain stability.
+            </span><span class="kw">let </span>to_copy = <span class="kw">if </span>is_less(<span class="kw-2">&amp;*</span>s.right_start, <span class="kw-2">&amp;*</span>s.left_start) {
+                get_and_increment(<span class="kw-2">&amp;mut </span>s.right_start)
+            } <span class="kw">else </span>{
+                get_and_increment(<span class="kw-2">&amp;mut </span>s.left_start)
             };
-            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">to_copy</span>, <span class="ident">get_and_increment</span>(<span class="kw-2">&amp;mut</span> <span class="ident">s</span>.<span class="ident">dest</span>), <span class="number">1</span>);
+            ptr::copy_nonoverlapping(to_copy, get_and_increment(<span class="kw-2">&amp;mut </span>s.dest), <span class="number">1</span>);
         }
-    } <span class="kw">else</span> {
-        <span class="comment">// Function `split_for_merge` might panic. If that happens, `s` will get destructed and copy</span>
-        <span class="comment">// the whole `left` and `right` into `dest`.</span>
-        <span class="kw">let</span> (<span class="ident">left_mid</span>, <span class="ident">right_mid</span>) <span class="op">=</span> <span class="ident">split_for_merge</span>(<span class="ident">left</span>, <span class="ident">right</span>, <span class="ident">is_less</span>);
-        <span class="kw">let</span> (<span class="ident">left_l</span>, <span class="ident">left_r</span>) <span class="op">=</span> <span class="ident">left</span>.<span class="ident">split_at_mut</span>(<span class="ident">left_mid</span>);
-        <span class="kw">let</span> (<span class="ident">right_l</span>, <span class="ident">right_r</span>) <span class="op">=</span> <span class="ident">right</span>.<span class="ident">split_at_mut</span>(<span class="ident">right_mid</span>);
+    } <span class="kw">else </span>{
+        <span class="comment">// Function `split_for_merge` might panic. If that happens, `s` will get destructed and copy
+        // the whole `left` and `right` into `dest`.
+        </span><span class="kw">let </span>(left_mid, right_mid) = split_for_merge(left, right, is_less);
+        <span class="kw">let </span>(left_l, left_r) = left.split_at_mut(left_mid);
+        <span class="kw">let </span>(right_l, right_r) = right.split_at_mut(right_mid);
 
-        <span class="comment">// Prevent the destructor of `s` from running. Rayon will ensure that both calls to</span>
-        <span class="comment">// `par_merge` happen. If one of the two calls panics, they will ensure that elements still</span>
-        <span class="comment">// get copied into `dest_left` and `dest_right``.</span>
-        <span class="ident">mem::forget</span>(<span class="ident">s</span>);
+        <span class="comment">// Prevent the destructor of `s` from running. Rayon will ensure that both calls to
+        // `par_merge` happen. If one of the two calls panics, they will ensure that elements still
+        // get copied into `dest_left` and `dest_right``.
+        </span>mem::forget(s);
 
-        <span class="comment">// Wrap pointers in SendPtr so that they can be sent to another thread</span>
-        <span class="comment">// See the documentation of SendPtr for a full explanation</span>
-        <span class="kw">let</span> <span class="ident">dest_l</span> <span class="op">=</span> <span class="ident">SendPtr</span>(<span class="ident">dest</span>);
-        <span class="kw">let</span> <span class="ident">dest_r</span> <span class="op">=</span> <span class="ident">SendPtr</span>(<span class="ident">dest</span>.<span class="ident">add</span>(<span class="ident">left_l</span>.<span class="ident">len</span>() <span class="op">+</span> <span class="ident">right_l</span>.<span class="ident">len</span>()));
-        <span class="ident">rayon_core::join</span>(
-            <span class="op">|</span><span class="op">|</span> <span class="ident">par_merge</span>(<span class="ident">left_l</span>, <span class="ident">right_l</span>, <span class="ident">dest_l</span>.<span class="number">0</span>, <span class="ident">is_less</span>),
-            <span class="op">|</span><span class="op">|</span> <span class="ident">par_merge</span>(<span class="ident">left_r</span>, <span class="ident">right_r</span>, <span class="ident">dest_r</span>.<span class="number">0</span>, <span class="ident">is_less</span>),
+        <span class="comment">// Wrap pointers in SendPtr so that they can be sent to another thread
+        // See the documentation of SendPtr for a full explanation
+        </span><span class="kw">let </span>dest_l = SendPtr(dest);
+        <span class="kw">let </span>dest_r = SendPtr(dest.add(left_l.len() + right_l.len()));
+        rayon_core::join(
+            || par_merge(left_l, right_l, dest_l.<span class="number">0</span>, is_less),
+            || par_merge(left_r, right_r, dest_r.<span class="number">0</span>, is_less),
         );
     }
-    <span class="comment">// Finally, `s` gets dropped if we used sequential merge, thus copying the remaining elements</span>
-    <span class="comment">// all at once.</span>
+    <span class="comment">// Finally, `s` gets dropped if we used sequential merge, thus copying the remaining elements
+    // all at once.
 
-    <span class="comment">// When dropped, copies arrays `left_start..left_end` and `right_start..right_end` into `dest`,</span>
-    <span class="comment">// in that order.</span>
-    <span class="kw">struct</span> <span class="ident">State</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="ident">left_start</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>,
-        <span class="ident">left_end</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>,
-        <span class="ident">right_start</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>,
-        <span class="ident">right_end</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>,
-        <span class="ident">dest</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>,
+    // When dropped, copies arrays `left_start..left_end` and `right_start..right_end` into `dest`,
+    // in that order.
+    </span><span class="kw">struct </span>State&lt;T&gt; {
+        left_start: <span class="kw-2">*mut </span>T,
+        left_end: <span class="kw-2">*mut </span>T,
+        right_start: <span class="kw-2">*mut </span>T,
+        right_end: <span class="kw-2">*mut </span>T,
+        dest: <span class="kw-2">*mut </span>T,
     }
 
-    <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">State</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-            <span class="kw">let</span> <span class="ident">size</span> <span class="op">=</span> <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>();
-            <span class="kw">let</span> <span class="ident">left_len</span> <span class="op">=</span> (<span class="self">self</span>.<span class="ident">left_end</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">-</span> <span class="self">self</span>.<span class="ident">left_start</span> <span class="kw">as</span> <span class="ident">usize</span>) <span class="op">/</span> <span class="ident">size</span>;
-            <span class="kw">let</span> <span class="ident">right_len</span> <span class="op">=</span> (<span class="self">self</span>.<span class="ident">right_end</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">-</span> <span class="self">self</span>.<span class="ident">right_start</span> <span class="kw">as</span> <span class="ident">usize</span>) <span class="op">/</span> <span class="ident">size</span>;
+    <span class="kw">impl</span>&lt;T&gt; Drop <span class="kw">for </span>State&lt;T&gt; {
+        <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+            <span class="kw">let </span>size = size_of::&lt;T&gt;();
+            <span class="kw">let </span>left_len = (<span class="self">self</span>.left_end <span class="kw">as </span>usize - <span class="self">self</span>.left_start <span class="kw">as </span>usize) / size;
+            <span class="kw">let </span>right_len = (<span class="self">self</span>.right_end <span class="kw">as </span>usize - <span class="self">self</span>.right_start <span class="kw">as </span>usize) / size;
 
-            <span class="comment">// Copy array `left`, followed by `right`.</span>
-            <span class="kw">unsafe</span> {
-                <span class="ident">ptr::copy_nonoverlapping</span>(<span class="self">self</span>.<span class="ident">left_start</span>, <span class="self">self</span>.<span class="ident">dest</span>, <span class="ident">left_len</span>);
-                <span class="self">self</span>.<span class="ident">dest</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">dest</span>.<span class="ident">add</span>(<span class="ident">left_len</span>);
-                <span class="ident">ptr::copy_nonoverlapping</span>(<span class="self">self</span>.<span class="ident">right_start</span>, <span class="self">self</span>.<span class="ident">dest</span>, <span class="ident">right_len</span>);
+            <span class="comment">// Copy array `left`, followed by `right`.
+            </span><span class="kw">unsafe </span>{
+                ptr::copy_nonoverlapping(<span class="self">self</span>.left_start, <span class="self">self</span>.dest, left_len);
+                <span class="self">self</span>.dest = <span class="self">self</span>.dest.add(left_len);
+                ptr::copy_nonoverlapping(<span class="self">self</span>.right_start, <span class="self">self</span>.dest, right_len);
             }
         }
     }
 }
 
-<span class="doccomment">/// Recursively merges pre-sorted chunks inside `v`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Chunks of `v` are stored in `chunks` as intervals (inclusive left and exclusive right bound).</span>
-<span class="doccomment">/// Argument `buf` is an auxiliary buffer that will be used during the procedure.</span>
-<span class="doccomment">/// If `into_buf` is true, the result will be stored into `buf`, otherwise it will be in `v`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The number of chunks must be positive and they must be adjacent: the right bound of each chunk</span>
-<span class="doccomment">/// must equal the left bound of the following chunk.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The buffer must be at least as long as `v`.</span>
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">recurse</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">F</span><span class="op">&gt;</span>(
-    <span class="ident">v</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>,
-    <span class="ident">buf</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>,
-    <span class="ident">chunks</span>: <span class="kw-2">&amp;</span>[(<span class="ident">usize</span>, <span class="ident">usize</span>)],
-    <span class="ident">into_buf</span>: <span class="ident">bool</span>,
-    <span class="ident">is_less</span>: <span class="kw-2">&amp;</span><span class="ident">F</span>,
-) <span class="kw">where</span>
-    <span class="ident">T</span>: <span class="ident">Send</span>,
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="kw-2">&amp;</span><span class="ident">T</span>) -&gt; <span class="ident">bool</span> <span class="op">+</span> <span class="ident">Sync</span>,
+<span class="doccomment">/// Recursively merges pre-sorted chunks inside `v`.
+///
+/// Chunks of `v` are stored in `chunks` as intervals (inclusive left and exclusive right bound).
+/// Argument `buf` is an auxiliary buffer that will be used during the procedure.
+/// If `into_buf` is true, the result will be stored into `buf`, otherwise it will be in `v`.
+///
+/// # Safety
+///
+/// The number of chunks must be positive and they must be adjacent: the right bound of each chunk
+/// must equal the left bound of the following chunk.
+///
+/// The buffer must be at least as long as `v`.
+</span><span class="kw">unsafe fn </span>recurse&lt;T, F&gt;(
+    v: <span class="kw-2">*mut </span>T,
+    buf: <span class="kw-2">*mut </span>T,
+    chunks: <span class="kw-2">&amp;</span>[(usize, usize)],
+    into_buf: bool,
+    is_less: <span class="kw-2">&amp;</span>F,
+) <span class="kw">where
+    </span>T: Send,
+    F: Fn(<span class="kw-2">&amp;</span>T, <span class="kw-2">&amp;</span>T) -&gt; bool + Sync,
 {
-    <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">chunks</span>.<span class="ident">len</span>();
-    <span class="macro">debug_assert!</span>(<span class="ident">len</span> <span class="op">&gt;</span> <span class="number">0</span>);
+    <span class="kw">let </span>len = chunks.len();
+    <span class="macro">debug_assert!</span>(len &gt; <span class="number">0</span>);
 
-    <span class="comment">// Base case of the algorithm.</span>
-    <span class="comment">// If only one chunk is remaining, there&#39;s no more work to split and merge.</span>
-    <span class="kw">if</span> <span class="ident">len</span> <span class="op">==</span> <span class="number">1</span> {
-        <span class="kw">if</span> <span class="ident">into_buf</span> {
-            <span class="comment">// Copy the chunk from `v` into `buf`.</span>
-            <span class="kw">let</span> (<span class="ident">start</span>, <span class="ident">end</span>) <span class="op">=</span> <span class="ident">chunks</span>[<span class="number">0</span>];
-            <span class="kw">let</span> <span class="ident">src</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">add</span>(<span class="ident">start</span>);
-            <span class="kw">let</span> <span class="ident">dest</span> <span class="op">=</span> <span class="ident">buf</span>.<span class="ident">add</span>(<span class="ident">start</span>);
-            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">src</span>, <span class="ident">dest</span>, <span class="ident">end</span> <span class="op">-</span> <span class="ident">start</span>);
+    <span class="comment">// Base case of the algorithm.
+    // If only one chunk is remaining, there&#39;s no more work to split and merge.
+    </span><span class="kw">if </span>len == <span class="number">1 </span>{
+        <span class="kw">if </span>into_buf {
+            <span class="comment">// Copy the chunk from `v` into `buf`.
+            </span><span class="kw">let </span>(start, end) = chunks[<span class="number">0</span>];
+            <span class="kw">let </span>src = v.add(start);
+            <span class="kw">let </span>dest = buf.add(start);
+            ptr::copy_nonoverlapping(src, dest, end - start);
         }
         <span class="kw">return</span>;
     }
 
-    <span class="comment">// Split the chunks into two halves.</span>
-    <span class="kw">let</span> (<span class="ident">start</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">chunks</span>[<span class="number">0</span>];
-    <span class="kw">let</span> (<span class="ident">mid</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">chunks</span>[<span class="ident">len</span> <span class="op">/</span> <span class="number">2</span>];
-    <span class="kw">let</span> (<span class="kw">_</span>, <span class="ident">end</span>) <span class="op">=</span> <span class="ident">chunks</span>[<span class="ident">len</span> <span class="op">-</span> <span class="number">1</span>];
-    <span class="kw">let</span> (<span class="ident">left</span>, <span class="ident">right</span>) <span class="op">=</span> <span class="ident">chunks</span>.<span class="ident">split_at</span>(<span class="ident">len</span> <span class="op">/</span> <span class="number">2</span>);
+    <span class="comment">// Split the chunks into two halves.
+    </span><span class="kw">let </span>(start, <span class="kw">_</span>) = chunks[<span class="number">0</span>];
+    <span class="kw">let </span>(mid, <span class="kw">_</span>) = chunks[len / <span class="number">2</span>];
+    <span class="kw">let </span>(<span class="kw">_</span>, end) = chunks[len - <span class="number">1</span>];
+    <span class="kw">let </span>(left, right) = chunks.split_at(len / <span class="number">2</span>);
 
-    <span class="comment">// After recursive calls finish we&#39;ll have to merge chunks `(start, mid)` and `(mid, end)` from</span>
-    <span class="comment">// `src` into `dest`. If the current invocation has to store the result into `buf`, we&#39;ll</span>
-    <span class="comment">// merge chunks from `v` into `buf`, and viceversa.</span>
-    <span class="comment">//</span>
-    <span class="comment">// Recursive calls flip `into_buf` at each level of recursion. More concretely, `par_merge`</span>
-    <span class="comment">// merges chunks from `buf` into `v` at the first level, from `v` into `buf` at the second</span>
-    <span class="comment">// level etc.</span>
-    <span class="kw">let</span> (<span class="ident">src</span>, <span class="ident">dest</span>) <span class="op">=</span> <span class="kw">if</span> <span class="ident">into_buf</span> { (<span class="ident">v</span>, <span class="ident">buf</span>) } <span class="kw">else</span> { (<span class="ident">buf</span>, <span class="ident">v</span>) };
+    <span class="comment">// After recursive calls finish we&#39;ll have to merge chunks `(start, mid)` and `(mid, end)` from
+    // `src` into `dest`. If the current invocation has to store the result into `buf`, we&#39;ll
+    // merge chunks from `v` into `buf`, and viceversa.
+    //
+    // Recursive calls flip `into_buf` at each level of recursion. More concretely, `par_merge`
+    // merges chunks from `buf` into `v` at the first level, from `v` into `buf` at the second
+    // level etc.
+    </span><span class="kw">let </span>(src, dest) = <span class="kw">if </span>into_buf { (v, buf) } <span class="kw">else </span>{ (buf, v) };
 
-    <span class="comment">// Panic safety:</span>
-    <span class="comment">//</span>
-    <span class="comment">// If `is_less` panics at any point during the recursive calls, the destructor of `guard` will</span>
-    <span class="comment">// be executed, thus copying everything from `src` into `dest`. This way we ensure that all</span>
-    <span class="comment">// chunks are in fact copied into `dest`, even if the merge process doesn&#39;t finish.</span>
-    <span class="kw">let</span> <span class="ident">guard</span> <span class="op">=</span> <span class="ident">CopyOnDrop</span> {
-        <span class="ident">src</span>: <span class="ident">src</span>.<span class="ident">add</span>(<span class="ident">start</span>),
-        <span class="ident">dest</span>: <span class="ident">dest</span>.<span class="ident">add</span>(<span class="ident">start</span>),
-        <span class="ident">len</span>: <span class="ident">end</span> <span class="op">-</span> <span class="ident">start</span>,
+    <span class="comment">// Panic safety:
+    //
+    // If `is_less` panics at any point during the recursive calls, the destructor of `guard` will
+    // be executed, thus copying everything from `src` into `dest`. This way we ensure that all
+    // chunks are in fact copied into `dest`, even if the merge process doesn&#39;t finish.
+    </span><span class="kw">let </span>guard = CopyOnDrop {
+        src: src.add(start),
+        dest: dest.add(start),
+        len: end - start,
     };
 
-    <span class="comment">// Wrap pointers in SendPtr so that they can be sent to another thread</span>
-    <span class="comment">// See the documentation of SendPtr for a full explanation</span>
-    <span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">SendPtr</span>(<span class="ident">v</span>);
-    <span class="kw">let</span> <span class="ident">buf</span> <span class="op">=</span> <span class="ident">SendPtr</span>(<span class="ident">buf</span>);
-    <span class="ident">rayon_core::join</span>(
-        <span class="op">|</span><span class="op">|</span> <span class="ident">recurse</span>(<span class="ident">v</span>.<span class="number">0</span>, <span class="ident">buf</span>.<span class="number">0</span>, <span class="ident">left</span>, <span class="op">!</span><span class="ident">into_buf</span>, <span class="ident">is_less</span>),
-        <span class="op">|</span><span class="op">|</span> <span class="ident">recurse</span>(<span class="ident">v</span>.<span class="number">0</span>, <span class="ident">buf</span>.<span class="number">0</span>, <span class="ident">right</span>, <span class="op">!</span><span class="ident">into_buf</span>, <span class="ident">is_less</span>),
+    <span class="comment">// Wrap pointers in SendPtr so that they can be sent to another thread
+    // See the documentation of SendPtr for a full explanation
+    </span><span class="kw">let </span>v = SendPtr(v);
+    <span class="kw">let </span>buf = SendPtr(buf);
+    rayon_core::join(
+        || recurse(v.<span class="number">0</span>, buf.<span class="number">0</span>, left, !into_buf, is_less),
+        || recurse(v.<span class="number">0</span>, buf.<span class="number">0</span>, right, !into_buf, is_less),
     );
 
-    <span class="comment">// Everything went all right - recursive calls didn&#39;t panic.</span>
-    <span class="comment">// Forget the guard in order to prevent its destructor from running.</span>
-    <span class="ident">mem::forget</span>(<span class="ident">guard</span>);
+    <span class="comment">// Everything went all right - recursive calls didn&#39;t panic.
+    // Forget the guard in order to prevent its destructor from running.
+    </span>mem::forget(guard);
 
-    <span class="comment">// Merge chunks `(start, mid)` and `(mid, end)` from `src` into `dest`.</span>
-    <span class="kw">let</span> <span class="ident">src_left</span> <span class="op">=</span> <span class="ident">slice::from_raw_parts_mut</span>(<span class="ident">src</span>.<span class="ident">add</span>(<span class="ident">start</span>), <span class="ident">mid</span> <span class="op">-</span> <span class="ident">start</span>);
-    <span class="kw">let</span> <span class="ident">src_right</span> <span class="op">=</span> <span class="ident">slice::from_raw_parts_mut</span>(<span class="ident">src</span>.<span class="ident">add</span>(<span class="ident">mid</span>), <span class="ident">end</span> <span class="op">-</span> <span class="ident">mid</span>);
-    <span class="ident">par_merge</span>(<span class="ident">src_left</span>, <span class="ident">src_right</span>, <span class="ident">dest</span>.<span class="ident">add</span>(<span class="ident">start</span>), <span class="ident">is_less</span>);
+    <span class="comment">// Merge chunks `(start, mid)` and `(mid, end)` from `src` into `dest`.
+    </span><span class="kw">let </span>src_left = slice::from_raw_parts_mut(src.add(start), mid - start);
+    <span class="kw">let </span>src_right = slice::from_raw_parts_mut(src.add(mid), end - mid);
+    par_merge(src_left, src_right, dest.add(start), is_less);
 }
 
-<span class="doccomment">/// Sorts `v` using merge sort in parallel.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The algorithm is stable, allocates memory, and `O(n log n)` worst-case.</span>
-<span class="doccomment">/// The allocated temporary buffer is of the same length as is `v`.</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">par_mergesort</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">v</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">T</span>], <span class="ident">is_less</span>: <span class="ident">F</span>)
-<span class="kw">where</span>
-    <span class="ident">T</span>: <span class="ident">Send</span>,
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="kw-2">&amp;</span><span class="ident">T</span>) -&gt; <span class="ident">bool</span> <span class="op">+</span> <span class="ident">Sync</span>,
+<span class="doccomment">/// Sorts `v` using merge sort in parallel.
+///
+/// The algorithm is stable, allocates memory, and `O(n log n)` worst-case.
+/// The allocated temporary buffer is of the same length as is `v`.
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>par_mergesort&lt;T, F&gt;(v: <span class="kw-2">&amp;mut </span>[T], is_less: F)
+<span class="kw">where
+    </span>T: Send,
+    F: Fn(<span class="kw-2">&amp;</span>T, <span class="kw-2">&amp;</span>T) -&gt; bool + Sync,
 {
-    <span class="comment">// Slices of up to this length get sorted using insertion sort in order to avoid the cost of</span>
-    <span class="comment">// buffer allocation.</span>
-    <span class="kw">const</span> <span class="ident">MAX_INSERTION</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">20</span>;
-    <span class="comment">// The length of initial chunks. This number is as small as possible but so that the overhead</span>
-    <span class="comment">// of Rayon&#39;s task scheduling is still negligible.</span>
-    <span class="kw">const</span> <span class="ident">CHUNK_LENGTH</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">2000</span>;
+    <span class="comment">// Slices of up to this length get sorted using insertion sort in order to avoid the cost of
+    // buffer allocation.
+    </span><span class="kw">const </span>MAX_INSERTION: usize = <span class="number">20</span>;
+    <span class="comment">// The length of initial chunks. This number is as small as possible but so that the overhead
+    // of Rayon&#39;s task scheduling is still negligible.
+    </span><span class="kw">const </span>CHUNK_LENGTH: usize = <span class="number">2000</span>;
 
-    <span class="comment">// Sorting has no meaningful behavior on zero-sized types.</span>
-    <span class="kw">if</span> <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>() <span class="op">==</span> <span class="number">0</span> {
+    <span class="comment">// Sorting has no meaningful behavior on zero-sized types.
+    </span><span class="kw">if </span>size_of::&lt;T&gt;() == <span class="number">0 </span>{
         <span class="kw">return</span>;
     }
 
-    <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">len</span>();
+    <span class="kw">let </span>len = v.len();
 
-    <span class="comment">// Short slices get sorted in-place via insertion sort to avoid allocations.</span>
-    <span class="kw">if</span> <span class="ident">len</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">MAX_INSERTION</span> {
-        <span class="kw">if</span> <span class="ident">len</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">2</span> {
-            <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> (<span class="number">0</span>..<span class="ident">len</span> <span class="op">-</span> <span class="number">1</span>).<span class="ident">rev</span>() {
-                <span class="ident">insert_head</span>(<span class="kw-2">&amp;mut</span> <span class="ident">v</span>[<span class="ident">i</span>..], <span class="kw-2">&amp;</span><span class="ident">is_less</span>);
+    <span class="comment">// Short slices get sorted in-place via insertion sort to avoid allocations.
+    </span><span class="kw">if </span>len &lt;= MAX_INSERTION {
+        <span class="kw">if </span>len &gt;= <span class="number">2 </span>{
+            <span class="kw">for </span>i <span class="kw">in </span>(<span class="number">0</span>..len - <span class="number">1</span>).rev() {
+                insert_head(<span class="kw-2">&amp;mut </span>v[i..], <span class="kw-2">&amp;</span>is_less);
             }
         }
         <span class="kw">return</span>;
     }
 
-    <span class="comment">// Allocate a buffer to use as scratch memory. We keep the length 0 so we can keep in it</span>
-    <span class="comment">// shallow copies of the contents of `v` without risking the dtors running on copies if</span>
-    <span class="comment">// `is_less` panics.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buf</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::with_capacity</span>(<span class="ident">len</span>);
-    <span class="kw">let</span> <span class="ident">buf</span> <span class="op">=</span> <span class="ident">buf</span>.<span class="ident">as_mut_ptr</span>();
+    <span class="comment">// Allocate a buffer to use as scratch memory. We keep the length 0 so we can keep in it
+    // shallow copies of the contents of `v` without risking the dtors running on copies if
+    // `is_less` panics.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>buf = Vec::&lt;T&gt;::with_capacity(len);
+    <span class="kw">let </span>buf = buf.as_mut_ptr();
 
-    <span class="comment">// If the slice is not longer than one chunk would be, do sequential merge sort and return.</span>
-    <span class="kw">if</span> <span class="ident">len</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">CHUNK_LENGTH</span> {
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">mergesort</span>(<span class="ident">v</span>, <span class="ident">buf</span>, <span class="kw-2">&amp;</span><span class="ident">is_less</span>) };
-        <span class="kw">if</span> <span class="ident">res</span> <span class="op">==</span> <span class="ident">MergesortResult::Descending</span> {
-            <span class="ident">v</span>.<span class="ident">reverse</span>();
+    <span class="comment">// If the slice is not longer than one chunk would be, do sequential merge sort and return.
+    </span><span class="kw">if </span>len &lt;= CHUNK_LENGTH {
+        <span class="kw">let </span>res = <span class="kw">unsafe </span>{ mergesort(v, buf, <span class="kw-2">&amp;</span>is_less) };
+        <span class="kw">if </span>res == MergesortResult::Descending {
+            v.reverse();
         }
         <span class="kw">return</span>;
     }
 
-    <span class="comment">// Split the slice into chunks and merge sort them in parallel.</span>
-    <span class="comment">// However, descending chunks will not be sorted - they will be simply left intact.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">iter</span> <span class="op">=</span> {
-        <span class="comment">// Wrap pointer in SendPtr so that it can be sent to another thread</span>
-        <span class="comment">// See the documentation of SendPtr for a full explanation</span>
-        <span class="kw">let</span> <span class="ident">buf</span> <span class="op">=</span> <span class="ident">SendPtr</span>(<span class="ident">buf</span>);
+    <span class="comment">// Split the slice into chunks and merge sort them in parallel.
+    // However, descending chunks will not be sorted - they will be simply left intact.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>iter = {
+        <span class="comment">// Wrap pointer in SendPtr so that it can be sent to another thread
+        // See the documentation of SendPtr for a full explanation
+        </span><span class="kw">let </span>buf = SendPtr(buf);
 
-        <span class="ident">v</span>.<span class="ident">par_chunks_mut</span>(<span class="ident">CHUNK_LENGTH</span>)
-            .<span class="ident">with_max_len</span>(<span class="number">1</span>)
-            .<span class="ident">enumerate</span>()
-            .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">i</span>, <span class="ident">chunk</span>)<span class="op">|</span> {
-                <span class="kw">let</span> <span class="ident">l</span> <span class="op">=</span> <span class="ident">CHUNK_LENGTH</span> <span class="op">*</span> <span class="ident">i</span>;
-                <span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> <span class="ident">l</span> <span class="op">+</span> <span class="ident">chunk</span>.<span class="ident">len</span>();
-                <span class="kw">unsafe</span> {
-                    <span class="kw">let</span> <span class="ident">buf</span> <span class="op">=</span> <span class="ident">buf</span>.<span class="number">0</span>.<span class="ident">add</span>(<span class="ident">l</span>);
-                    (<span class="ident">l</span>, <span class="ident">r</span>, <span class="ident">mergesort</span>(<span class="ident">chunk</span>, <span class="ident">buf</span>, <span class="kw-2">&amp;</span><span class="ident">is_less</span>))
+        v.par_chunks_mut(CHUNK_LENGTH)
+            .with_max_len(<span class="number">1</span>)
+            .enumerate()
+            .map(|(i, chunk)| {
+                <span class="kw">let </span>l = CHUNK_LENGTH * i;
+                <span class="kw">let </span>r = l + chunk.len();
+                <span class="kw">unsafe </span>{
+                    <span class="kw">let </span>buf = buf.<span class="number">0</span>.add(l);
+                    (l, r, mergesort(chunk, buf, <span class="kw-2">&amp;</span>is_less))
                 }
             })
-            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>()
-            .<span class="ident">into_iter</span>()
-            .<span class="ident">peekable</span>()
+            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
+            .into_iter()
+            .peekable()
     };
 
-    <span class="comment">// Now attempt to concatenate adjacent chunks that were left intact.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">chunks</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">iter</span>.<span class="ident">len</span>());
+    <span class="comment">// Now attempt to concatenate adjacent chunks that were left intact.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>chunks = Vec::with_capacity(iter.len());
 
-    <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">a</span>, <span class="kw-2">mut</span> <span class="ident">b</span>, <span class="ident">res</span>)) <span class="op">=</span> <span class="ident">iter</span>.<span class="ident">next</span>() {
-        <span class="comment">// If this chunk was not modified by the sort procedure...</span>
-        <span class="kw">if</span> <span class="ident">res</span> <span class="op">!</span><span class="op">=</span> <span class="ident">MergesortResult::Sorted</span> {
-            <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>(<span class="ident">x</span>, <span class="ident">y</span>, <span class="ident">r</span>)) <span class="op">=</span> <span class="ident">iter</span>.<span class="ident">peek</span>() {
-                <span class="comment">// If the following chunk is of the same type and can be concatenated...</span>
-                <span class="kw">if</span> <span class="ident">r</span> <span class="op">==</span> <span class="ident">res</span> <span class="op">&amp;&amp;</span> (<span class="ident">r</span> <span class="op">==</span> <span class="ident">MergesortResult::Descending</span>) <span class="op">==</span> <span class="ident">is_less</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>[<span class="ident">x</span>], <span class="kw-2">&amp;</span><span class="ident">v</span>[<span class="ident">x</span> <span class="op">-</span> <span class="number">1</span>]) {
-                    <span class="comment">// Concatenate them.</span>
-                    <span class="ident">b</span> <span class="op">=</span> <span class="ident">y</span>;
-                    <span class="ident">iter</span>.<span class="ident">next</span>();
-                } <span class="kw">else</span> {
+    <span class="kw">while let </span><span class="prelude-val">Some</span>((a, <span class="kw-2">mut </span>b, res)) = iter.next() {
+        <span class="comment">// If this chunk was not modified by the sort procedure...
+        </span><span class="kw">if </span>res != MergesortResult::Sorted {
+            <span class="kw">while let </span><span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>(x, y, r)) = iter.peek() {
+                <span class="comment">// If the following chunk is of the same type and can be concatenated...
+                </span><span class="kw">if </span>r == res &amp;&amp; (r == MergesortResult::Descending) == is_less(<span class="kw-2">&amp;</span>v[x], <span class="kw-2">&amp;</span>v[x - <span class="number">1</span>]) {
+                    <span class="comment">// Concatenate them.
+                    </span>b = y;
+                    iter.next();
+                } <span class="kw">else </span>{
                     <span class="kw">break</span>;
                 }
             }
         }
 
-        <span class="comment">// Descending chunks must be reversed.</span>
-        <span class="kw">if</span> <span class="ident">res</span> <span class="op">==</span> <span class="ident">MergesortResult::Descending</span> {
-            <span class="ident">v</span>[<span class="ident">a</span>..<span class="ident">b</span>].<span class="ident">reverse</span>();
+        <span class="comment">// Descending chunks must be reversed.
+        </span><span class="kw">if </span>res == MergesortResult::Descending {
+            v[a..b].reverse();
         }
 
-        <span class="ident">chunks</span>.<span class="ident">push</span>((<span class="ident">a</span>, <span class="ident">b</span>));
+        chunks.push((a, b));
     }
 
-    <span class="comment">// All chunks are properly sorted.</span>
-    <span class="comment">// Now we just have to merge them together.</span>
-    <span class="kw">unsafe</span> {
-        <span class="ident">recurse</span>(<span class="ident">v</span>.<span class="ident">as_mut_ptr</span>(), <span class="ident">buf</span>, <span class="kw-2">&amp;</span><span class="ident">chunks</span>, <span class="bool-val">false</span>, <span class="kw-2">&amp;</span><span class="ident">is_less</span>);
+    <span class="comment">// All chunks are properly sorted.
+    // Now we just have to merge them together.
+    </span><span class="kw">unsafe </span>{
+        recurse(v.as_mut_ptr(), buf, <span class="kw-2">&amp;</span>chunks, <span class="bool-val">false</span>, <span class="kw-2">&amp;</span>is_less);
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::split_for_merge</span>;
-    <span class="kw">use</span> <span class="ident">rand::distributions::Uniform</span>;
-    <span class="kw">use</span> <span class="ident">rand</span>::{<span class="ident">thread_rng</span>, <span class="ident">Rng</span>};
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use </span><span class="kw">super</span>::split_for_merge;
+    <span class="kw">use </span>rand::distributions::Uniform;
+    <span class="kw">use </span>rand::{thread_rng, Rng};
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_split_for_merge</span>() {
-        <span class="kw">fn</span> <span class="ident">check</span>(<span class="ident">left</span>: <span class="kw-2">&amp;</span>[<span class="ident">u32</span>], <span class="ident">right</span>: <span class="kw-2">&amp;</span>[<span class="ident">u32</span>]) {
-            <span class="kw">let</span> (<span class="ident">l</span>, <span class="ident">r</span>) <span class="op">=</span> <span class="ident">split_for_merge</span>(<span class="ident">left</span>, <span class="ident">right</span>, <span class="kw-2">&amp;</span><span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">a</span>, <span class="kw-2">&amp;</span><span class="ident">b</span><span class="op">|</span> <span class="ident">a</span> <span class="op">&lt;</span> <span class="ident">b</span>);
-            <span class="macro">assert!</span>(<span class="ident">left</span>[..<span class="ident">l</span>]
-                .<span class="ident">iter</span>()
-                .<span class="ident">all</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">x</span><span class="op">|</span> <span class="ident">right</span>[<span class="ident">r</span>..].<span class="ident">iter</span>().<span class="ident">all</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">y</span><span class="op">|</span> <span class="ident">x</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">y</span>)));
-            <span class="macro">assert!</span>(<span class="ident">right</span>[..<span class="ident">r</span>].<span class="ident">iter</span>().<span class="ident">all</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">x</span><span class="op">|</span> <span class="ident">left</span>[<span class="ident">l</span>..].<span class="ident">iter</span>().<span class="ident">all</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">y</span><span class="op">|</span> <span class="ident">x</span> <span class="op">&lt;</span> <span class="ident">y</span>)));
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_split_for_merge() {
+        <span class="kw">fn </span>check(left: <span class="kw-2">&amp;</span>[u32], right: <span class="kw-2">&amp;</span>[u32]) {
+            <span class="kw">let </span>(l, r) = split_for_merge(left, right, <span class="kw-2">&amp;</span>|<span class="kw-2">&amp;</span>a, <span class="kw-2">&amp;</span>b| a &lt; b);
+            <span class="macro">assert!</span>(left[..l]
+                .iter()
+                .all(|<span class="kw-2">&amp;</span>x| right[r..].iter().all(|<span class="kw-2">&amp;</span>y| x &lt;= y)));
+            <span class="macro">assert!</span>(right[..r].iter().all(|<span class="kw-2">&amp;</span>x| left[l..].iter().all(|<span class="kw-2">&amp;</span>y| x &lt; y)));
         }
 
-        <span class="ident">check</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">3</span>], <span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">3</span>]);
-        <span class="ident">check</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">3</span>], <span class="kw-2">&amp;</span>[]);
-        <span class="ident">check</span>(<span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">3</span>]);
+        check(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">3</span>], <span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">3</span>]);
+        check(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">3</span>], <span class="kw-2">&amp;</span>[]);
+        check(<span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">3</span>]);
 
-        <span class="kw">let</span> <span class="kw-2">ref</span> <span class="kw-2">mut</span> <span class="ident">rng</span> <span class="op">=</span> <span class="ident">thread_rng</span>();
+        <span class="kw">let </span><span class="kw-2">ref mut </span>rng = thread_rng();
 
-        <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">100</span> {
-            <span class="kw">let</span> <span class="ident">limit</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="ident">rng</span>.<span class="ident">gen_range</span>(<span class="number">1</span>..<span class="number">21</span>);
-            <span class="kw">let</span> <span class="ident">left_len</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">rng</span>.<span class="ident">gen_range</span>(<span class="number">0</span>..<span class="number">20</span>);
-            <span class="kw">let</span> <span class="ident">right_len</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">rng</span>.<span class="ident">gen_range</span>(<span class="number">0</span>..<span class="number">20</span>);
+        <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">100 </span>{
+            <span class="kw">let </span>limit: u32 = rng.gen_range(<span class="number">1</span>..<span class="number">21</span>);
+            <span class="kw">let </span>left_len: usize = rng.gen_range(<span class="number">0</span>..<span class="number">20</span>);
+            <span class="kw">let </span>right_len: usize = rng.gen_range(<span class="number">0</span>..<span class="number">20</span>);
 
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">left</span> <span class="op">=</span> <span class="ident">rng</span>
-                .<span class="ident">sample_iter</span>(<span class="kw-2">&amp;</span><span class="ident">Uniform::new</span>(<span class="number">0</span>, <span class="ident">limit</span>))
-                .<span class="ident">take</span>(<span class="ident">left_len</span>)
-                .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">right</span> <span class="op">=</span> <span class="ident">rng</span>
-                .<span class="ident">sample_iter</span>(<span class="kw-2">&amp;</span><span class="ident">Uniform::new</span>(<span class="number">0</span>, <span class="ident">limit</span>))
-                .<span class="ident">take</span>(<span class="ident">right_len</span>)
-                .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+            <span class="kw">let </span><span class="kw-2">mut </span>left = rng
+                .sample_iter(<span class="kw-2">&amp;</span>Uniform::new(<span class="number">0</span>, limit))
+                .take(left_len)
+                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+            <span class="kw">let </span><span class="kw-2">mut </span>right = rng
+                .sample_iter(<span class="kw-2">&amp;</span>Uniform::new(<span class="number">0</span>, limit))
+                .take(right_len)
+                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
-            <span class="ident">left</span>.<span class="ident">sort</span>();
-            <span class="ident">right</span>.<span class="ident">sort</span>();
-            <span class="ident">check</span>(<span class="kw-2">&amp;</span><span class="ident">left</span>, <span class="kw-2">&amp;</span><span class="ident">right</span>);
+            left.sort();
+            right.sort();
+            check(<span class="kw-2">&amp;</span>left, <span class="kw-2">&amp;</span>right);
         }
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="rayon" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.63.0-nightly (fee3a459d 2022-06-05)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="rayon" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (02654a084 2022-08-30)" ></div></body></html>

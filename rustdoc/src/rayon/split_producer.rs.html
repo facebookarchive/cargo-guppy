@@ -1,11 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/rayon-1.5.3/src/split_producer.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>split_producer.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../rayon/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><div id="settings-menu" tabindex="-1">
-                                <a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div>
-                        </div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/rayon-1.5.3/src/split_producer.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>split_producer.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../rayon/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -137,138 +130,137 @@
 <span id="130">130</span>
 <span id="131">131</span>
 <span id="132">132</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Common splitter for strings and slices</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! This module is private, so these items are effectively `pub(super)`</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Common splitter for strings and slices
+//!
+//! This module is private, so these items are effectively `pub(super)`
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::iter::plumbing</span>::{<span class="ident">Folder</span>, <span class="ident">UnindexedProducer</span>};
+</span><span class="kw">use </span><span class="kw">crate</span>::iter::plumbing::{Folder, UnindexedProducer};
 
-<span class="doccomment">/// Common producer for splitting on a predicate.</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">SplitProducer</span><span class="op">&lt;</span><span class="lifetime">&#39;p</span>, <span class="ident">P</span>, <span class="ident">V</span><span class="op">&gt;</span> {
-    <span class="ident">data</span>: <span class="ident">V</span>,
-    <span class="ident">separator</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;p</span> <span class="ident">P</span>,
+<span class="doccomment">/// Common producer for splitting on a predicate.
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>SplitProducer&lt;<span class="lifetime">&#39;p</span>, P, V&gt; {
+    data: V,
+    separator: <span class="kw-2">&amp;</span><span class="lifetime">&#39;p </span>P,
 
-    <span class="doccomment">/// Marks the endpoint beyond which we&#39;ve already found no separators.</span>
-    <span class="ident">tail</span>: <span class="ident">usize</span>,
+    <span class="doccomment">/// Marks the endpoint beyond which we&#39;ve already found no separators.
+    </span>tail: usize,
 }
 
-<span class="doccomment">/// Helper trait so `&amp;str`, `&amp;[T]`, and `&amp;mut [T]` can share `SplitProducer`.</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">trait</span> <span class="ident">Fissile</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>: <span class="ident">Sized</span> {
-    <span class="kw">fn</span> <span class="ident">length</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span>;
-    <span class="kw">fn</span> <span class="ident">midpoint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">end</span>: <span class="ident">usize</span>) -&gt; <span class="ident">usize</span>;
-    <span class="kw">fn</span> <span class="ident">find</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">separator</span>: <span class="kw-2">&amp;</span><span class="ident">P</span>, <span class="ident">start</span>: <span class="ident">usize</span>, <span class="ident">end</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>;
-    <span class="kw">fn</span> <span class="ident">rfind</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">separator</span>: <span class="kw-2">&amp;</span><span class="ident">P</span>, <span class="ident">end</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>;
-    <span class="kw">fn</span> <span class="ident">split_once</span>(<span class="self">self</span>, <span class="ident">index</span>: <span class="ident">usize</span>) -&gt; (<span class="self">Self</span>, <span class="self">Self</span>);
-    <span class="kw">fn</span> <span class="ident">fold_splits</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">separator</span>: <span class="kw-2">&amp;</span><span class="ident">P</span>, <span class="ident">folder</span>: <span class="ident">F</span>, <span class="ident">skip_last</span>: <span class="ident">bool</span>) -&gt; <span class="ident">F</span>
-    <span class="kw">where</span>
-        <span class="ident">F</span>: <span class="ident">Folder</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>,
-        <span class="self">Self</span>: <span class="ident">Send</span>;
+<span class="doccomment">/// Helper trait so `&amp;str`, `&amp;[T]`, and `&amp;mut [T]` can share `SplitProducer`.
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">trait </span>Fissile&lt;P&gt;: Sized {
+    <span class="kw">fn </span>length(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize;
+    <span class="kw">fn </span>midpoint(<span class="kw-2">&amp;</span><span class="self">self</span>, end: usize) -&gt; usize;
+    <span class="kw">fn </span>find(<span class="kw-2">&amp;</span><span class="self">self</span>, separator: <span class="kw-2">&amp;</span>P, start: usize, end: usize) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt;;
+    <span class="kw">fn </span>rfind(<span class="kw-2">&amp;</span><span class="self">self</span>, separator: <span class="kw-2">&amp;</span>P, end: usize) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt;;
+    <span class="kw">fn </span>split_once(<span class="self">self</span>, index: usize) -&gt; (<span class="self">Self</span>, <span class="self">Self</span>);
+    <span class="kw">fn </span>fold_splits&lt;F&gt;(<span class="self">self</span>, separator: <span class="kw-2">&amp;</span>P, folder: F, skip_last: bool) -&gt; F
+    <span class="kw">where
+        </span>F: Folder&lt;<span class="self">Self</span>&gt;,
+        <span class="self">Self</span>: Send;
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;p</span>, <span class="ident">P</span>, <span class="ident">V</span><span class="op">&gt;</span> <span class="ident">SplitProducer</span><span class="op">&lt;</span><span class="lifetime">&#39;p</span>, <span class="ident">P</span>, <span class="ident">V</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">V</span>: <span class="ident">Fissile</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;p</span>, P, V&gt; SplitProducer&lt;<span class="lifetime">&#39;p</span>, P, V&gt;
+<span class="kw">where
+    </span>V: Fissile&lt;P&gt; + Send,
 {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">data</span>: <span class="ident">V</span>, <span class="ident">separator</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;p</span> <span class="ident">P</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">SplitProducer</span> {
-            <span class="ident">tail</span>: <span class="ident">data</span>.<span class="ident">length</span>(),
-            <span class="ident">data</span>,
-            <span class="ident">separator</span>,
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new(data: V, separator: <span class="kw-2">&amp;</span><span class="lifetime">&#39;p </span>P) -&gt; <span class="self">Self </span>{
+        SplitProducer {
+            tail: data.length(),
+            data,
+            separator,
         }
     }
 
-    <span class="doccomment">/// Common `fold_with` implementation, integrating `SplitTerminator`&#39;s</span>
-    <span class="doccomment">/// need to sometimes skip its final empty item.</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">fold_with</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">folder</span>: <span class="ident">F</span>, <span class="ident">skip_last</span>: <span class="ident">bool</span>) -&gt; <span class="ident">F</span>
-    <span class="kw">where</span>
-        <span class="ident">F</span>: <span class="ident">Folder</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Common `fold_with` implementation, integrating `SplitTerminator`&#39;s
+    /// need to sometimes skip its final empty item.
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>fold_with&lt;F&gt;(<span class="self">self</span>, folder: F, skip_last: bool) -&gt; F
+    <span class="kw">where
+        </span>F: Folder&lt;V&gt;,
     {
-        <span class="kw">let</span> <span class="ident">SplitProducer</span> {
-            <span class="ident">data</span>,
-            <span class="ident">separator</span>,
-            <span class="ident">tail</span>,
-        } <span class="op">=</span> <span class="self">self</span>;
+        <span class="kw">let </span>SplitProducer {
+            data,
+            separator,
+            tail,
+        } = <span class="self">self</span>;
 
-        <span class="kw">if</span> <span class="ident">tail</span> <span class="op">==</span> <span class="ident">data</span>.<span class="ident">length</span>() {
-            <span class="comment">// No tail section, so just let `fold_splits` handle it.</span>
-            <span class="ident">data</span>.<span class="ident">fold_splits</span>(<span class="ident">separator</span>, <span class="ident">folder</span>, <span class="ident">skip_last</span>)
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">index</span>) <span class="op">=</span> <span class="ident">data</span>.<span class="ident">rfind</span>(<span class="ident">separator</span>, <span class="ident">tail</span>) {
-            <span class="comment">// We found the last separator to complete the tail, so</span>
-            <span class="comment">// end with that slice after `fold_splits` finds the rest.</span>
-            <span class="kw">let</span> (<span class="ident">left</span>, <span class="ident">right</span>) <span class="op">=</span> <span class="ident">data</span>.<span class="ident">split_once</span>(<span class="ident">index</span>);
-            <span class="kw">let</span> <span class="ident">folder</span> <span class="op">=</span> <span class="ident">left</span>.<span class="ident">fold_splits</span>(<span class="ident">separator</span>, <span class="ident">folder</span>, <span class="bool-val">false</span>);
-            <span class="kw">if</span> <span class="ident">skip_last</span> <span class="op">|</span><span class="op">|</span> <span class="ident">folder</span>.<span class="ident">full</span>() {
-                <span class="ident">folder</span>
-            } <span class="kw">else</span> {
-                <span class="ident">folder</span>.<span class="ident">consume</span>(<span class="ident">right</span>)
+        <span class="kw">if </span>tail == data.length() {
+            <span class="comment">// No tail section, so just let `fold_splits` handle it.
+            </span>data.fold_splits(separator, folder, skip_last)
+        } <span class="kw">else if let </span><span class="prelude-val">Some</span>(index) = data.rfind(separator, tail) {
+            <span class="comment">// We found the last separator to complete the tail, so
+            // end with that slice after `fold_splits` finds the rest.
+            </span><span class="kw">let </span>(left, right) = data.split_once(index);
+            <span class="kw">let </span>folder = left.fold_splits(separator, folder, <span class="bool-val">false</span>);
+            <span class="kw">if </span>skip_last || folder.full() {
+                folder
+            } <span class="kw">else </span>{
+                folder.consume(right)
             }
-        } <span class="kw">else</span> {
-            <span class="comment">// We know there are no separators at all.  Return our whole data.</span>
-            <span class="kw">if</span> <span class="ident">skip_last</span> {
-                <span class="ident">folder</span>
-            } <span class="kw">else</span> {
-                <span class="ident">folder</span>.<span class="ident">consume</span>(<span class="ident">data</span>)
+        } <span class="kw">else </span>{
+            <span class="comment">// We know there are no separators at all.  Return our whole data.
+            </span><span class="kw">if </span>skip_last {
+                folder
+            } <span class="kw">else </span>{
+                folder.consume(data)
             }
         }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;p</span>, <span class="ident">P</span>, <span class="ident">V</span><span class="op">&gt;</span> <span class="ident">UnindexedProducer</span> <span class="kw">for</span> <span class="ident">SplitProducer</span><span class="op">&lt;</span><span class="lifetime">&#39;p</span>, <span class="ident">P</span>, <span class="ident">V</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">V</span>: <span class="ident">Fissile</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span>,
-    <span class="ident">P</span>: <span class="ident">Sync</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;p</span>, P, V&gt; UnindexedProducer <span class="kw">for </span>SplitProducer&lt;<span class="lifetime">&#39;p</span>, P, V&gt;
+<span class="kw">where
+    </span>V: Fissile&lt;P&gt; + Send,
+    P: Sync,
 {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">V</span>;
+    <span class="kw">type </span>Item = V;
 
-    <span class="kw">fn</span> <span class="ident">split</span>(<span class="self">self</span>) -&gt; (<span class="self">Self</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>) {
-        <span class="comment">// Look forward for the separator, and failing that look backward.</span>
-        <span class="kw">let</span> <span class="ident">mid</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">midpoint</span>(<span class="self">self</span>.<span class="ident">tail</span>);
-        <span class="kw">let</span> <span class="ident">index</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">find</span>(<span class="self">self</span>.<span class="ident">separator</span>, <span class="ident">mid</span>, <span class="self">self</span>.<span class="ident">tail</span>) {
-            <span class="prelude-val">Some</span>(<span class="ident">i</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">mid</span> <span class="op">+</span> <span class="ident">i</span>),
-            <span class="prelude-val">None</span> =&gt; <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">rfind</span>(<span class="self">self</span>.<span class="ident">separator</span>, <span class="ident">mid</span>),
+    <span class="kw">fn </span>split(<span class="self">self</span>) -&gt; (<span class="self">Self</span>, <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt;) {
+        <span class="comment">// Look forward for the separator, and failing that look backward.
+        </span><span class="kw">let </span>mid = <span class="self">self</span>.data.midpoint(<span class="self">self</span>.tail);
+        <span class="kw">let </span>index = <span class="kw">match </span><span class="self">self</span>.data.find(<span class="self">self</span>.separator, mid, <span class="self">self</span>.tail) {
+            <span class="prelude-val">Some</span>(i) =&gt; <span class="prelude-val">Some</span>(mid + i),
+            <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.data.rfind(<span class="self">self</span>.separator, mid),
         };
 
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">index</span>) <span class="op">=</span> <span class="ident">index</span> {
-            <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">length</span>();
-            <span class="kw">let</span> (<span class="ident">left</span>, <span class="ident">right</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">split_once</span>(<span class="ident">index</span>);
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(index) = index {
+            <span class="kw">let </span>len = <span class="self">self</span>.data.length();
+            <span class="kw">let </span>(left, right) = <span class="self">self</span>.data.split_once(index);
 
-            <span class="kw">let</span> (<span class="ident">left_tail</span>, <span class="ident">right_tail</span>) <span class="op">=</span> <span class="kw">if</span> <span class="ident">index</span> <span class="op">&lt;</span> <span class="ident">mid</span> {
-                <span class="comment">// If we scanned backwards to find the separator, everything in</span>
-                <span class="comment">// the right side is exhausted, with no separators left to find.</span>
-                (<span class="ident">index</span>, <span class="number">0</span>)
-            } <span class="kw">else</span> {
-                <span class="kw">let</span> <span class="ident">right_index</span> <span class="op">=</span> <span class="ident">len</span> <span class="op">-</span> <span class="ident">right</span>.<span class="ident">length</span>();
-                (<span class="ident">mid</span>, <span class="self">self</span>.<span class="ident">tail</span> <span class="op">-</span> <span class="ident">right_index</span>)
+            <span class="kw">let </span>(left_tail, right_tail) = <span class="kw">if </span>index &lt; mid {
+                <span class="comment">// If we scanned backwards to find the separator, everything in
+                // the right side is exhausted, with no separators left to find.
+                </span>(index, <span class="number">0</span>)
+            } <span class="kw">else </span>{
+                <span class="kw">let </span>right_index = len - right.length();
+                (mid, <span class="self">self</span>.tail - right_index)
             };
 
-            <span class="comment">// Create the left split before the separator.</span>
-            <span class="kw">let</span> <span class="ident">left</span> <span class="op">=</span> <span class="ident">SplitProducer</span> {
-                <span class="ident">data</span>: <span class="ident">left</span>,
-                <span class="ident">tail</span>: <span class="ident">left_tail</span>,
-                ..<span class="self">self</span>
-            };
+            <span class="comment">// Create the left split before the separator.
+            </span><span class="kw">let </span>left = SplitProducer {
+                data: left,
+                tail: left_tail,
+                ..<span class="self">self
+            </span>};
 
-            <span class="comment">// Create the right split following the separator.</span>
-            <span class="kw">let</span> <span class="ident">right</span> <span class="op">=</span> <span class="ident">SplitProducer</span> {
-                <span class="ident">data</span>: <span class="ident">right</span>,
-                <span class="ident">tail</span>: <span class="ident">right_tail</span>,
-                ..<span class="self">self</span>
-            };
+            <span class="comment">// Create the right split following the separator.
+            </span><span class="kw">let </span>right = SplitProducer {
+                data: right,
+                tail: right_tail,
+                ..<span class="self">self
+            </span>};
 
-            (<span class="ident">left</span>, <span class="prelude-val">Some</span>(<span class="ident">right</span>))
-        } <span class="kw">else</span> {
-            <span class="comment">// The search is exhausted, no more separators...</span>
-            (<span class="ident">SplitProducer</span> { <span class="ident">tail</span>: <span class="number">0</span>, ..<span class="self">self</span> }, <span class="prelude-val">None</span>)
+            (left, <span class="prelude-val">Some</span>(right))
+        } <span class="kw">else </span>{
+            <span class="comment">// The search is exhausted, no more separators...
+            </span>(SplitProducer { tail: <span class="number">0</span>, ..<span class="self">self </span>}, <span class="prelude-val">None</span>)
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">fold_with</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">folder</span>: <span class="ident">F</span>) -&gt; <span class="ident">F</span>
-    <span class="kw">where</span>
-        <span class="ident">F</span>: <span class="ident">Folder</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span>,
+    <span class="kw">fn </span>fold_with&lt;F&gt;(<span class="self">self</span>, folder: F) -&gt; F
+    <span class="kw">where
+        </span>F: Folder&lt;<span class="self">Self</span>::Item&gt;,
     {
-        <span class="self">self</span>.<span class="ident">fold_with</span>(<span class="ident">folder</span>, <span class="bool-val">false</span>)
+        <span class="self">self</span>.fold_with(folder, <span class="bool-val">false</span>)
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="rayon" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.63.0-nightly (fee3a459d 2022-06-05)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="rayon" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (02654a084 2022-08-30)" ></div></body></html>

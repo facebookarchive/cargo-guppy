@@ -1,11 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/rayon-1.5.3/src/iter/chunks.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>chunks.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../rayon/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><div id="settings-menu" tabindex="-1">
-                                <a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div>
-                        </div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/rayon-1.5.3/src/iter/chunks.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>chunks.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../rayon/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -221,222 +214,221 @@
 <span id="214">214</span>
 <span id="215">215</span>
 <span id="216">216</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::cmp::min</span>;
+</pre><pre class="rust"><code><span class="kw">use </span>std::cmp::min;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::plumbing</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::math::div_round_up</span>;
+<span class="kw">use </span><span class="kw">super</span>::plumbing::<span class="kw-2">*</span>;
+<span class="kw">use super</span>::<span class="kw-2">*</span>;
+<span class="kw">use </span><span class="kw">crate</span>::math::div_round_up;
 
-<span class="doccomment">/// `Chunks` is an iterator that groups elements of an underlying iterator.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This struct is created by the [`chunks()`] method on [`IndexedParallelIterator`]</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [`chunks()`]: trait.IndexedParallelIterator.html#method.chunks</span>
-<span class="doccomment">/// [`IndexedParallelIterator`]: trait.IndexedParallelIterator.html</span>
-<span class="attribute">#[<span class="ident">must_use</span> <span class="op">=</span> <span class="string">&quot;iterator adaptors are lazy and do nothing unless consumed&quot;</span>]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Chunks</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">I</span>: <span class="ident">IndexedParallelIterator</span>,
+<span class="doccomment">/// `Chunks` is an iterator that groups elements of an underlying iterator.
+///
+/// This struct is created by the [`chunks()`] method on [`IndexedParallelIterator`]
+///
+/// [`chunks()`]: trait.IndexedParallelIterator.html#method.chunks
+/// [`IndexedParallelIterator`]: trait.IndexedParallelIterator.html
+</span><span class="attribute">#[must_use = <span class="string">&quot;iterator adaptors are lazy and do nothing unless consumed&quot;</span>]
+#[derive(Debug, Clone)]
+</span><span class="kw">pub struct </span>Chunks&lt;I&gt;
+<span class="kw">where
+    </span>I: IndexedParallelIterator,
 {
-    <span class="ident">size</span>: <span class="ident">usize</span>,
-    <span class="ident">i</span>: <span class="ident">I</span>,
+    size: usize,
+    i: I,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span> <span class="ident">Chunks</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">I</span>: <span class="ident">IndexedParallelIterator</span>,
+<span class="kw">impl</span>&lt;I&gt; Chunks&lt;I&gt;
+<span class="kw">where
+    </span>I: IndexedParallelIterator,
 {
-    <span class="doccomment">/// Creates a new `Chunks` iterator</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">i</span>: <span class="ident">I</span>, <span class="ident">size</span>: <span class="ident">usize</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">Chunks</span> { <span class="ident">i</span>, <span class="ident">size</span> }
-    }
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span> <span class="ident">ParallelIterator</span> <span class="kw">for</span> <span class="ident">Chunks</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">I</span>: <span class="ident">IndexedParallelIterator</span>,
-{
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">I::Item</span><span class="op">&gt;</span>;
-
-    <span class="kw">fn</span> <span class="ident">drive_unindexed</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">consumer</span>: <span class="ident">C</span>) -&gt; <span class="ident">C::Result</span>
-    <span class="kw">where</span>
-        <span class="ident">C</span>: <span class="ident">Consumer</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">I::Item</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    {
-        <span class="ident">bridge</span>(<span class="self">self</span>, <span class="ident">consumer</span>)
-    }
-
-    <span class="kw">fn</span> <span class="ident">opt_len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">len</span>())
+    <span class="doccomment">/// Creates a new `Chunks` iterator
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new(i: I, size: usize) -&gt; <span class="self">Self </span>{
+        Chunks { i, size }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span> <span class="ident">IndexedParallelIterator</span> <span class="kw">for</span> <span class="ident">Chunks</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">I</span>: <span class="ident">IndexedParallelIterator</span>,
+<span class="kw">impl</span>&lt;I&gt; ParallelIterator <span class="kw">for </span>Chunks&lt;I&gt;
+<span class="kw">where
+    </span>I: IndexedParallelIterator,
 {
-    <span class="kw">fn</span> <span class="ident">drive</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">consumer</span>: <span class="ident">C</span>) -&gt; <span class="ident">C::Result</span>
-    <span class="kw">where</span>
-        <span class="ident">C</span>: <span class="ident">Consumer</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span>,
+    <span class="kw">type </span>Item = Vec&lt;I::Item&gt;;
+
+    <span class="kw">fn </span>drive_unindexed&lt;C&gt;(<span class="self">self</span>, consumer: C) -&gt; C::Result
+    <span class="kw">where
+        </span>C: Consumer&lt;Vec&lt;I::Item&gt;&gt;,
     {
-        <span class="ident">bridge</span>(<span class="self">self</span>, <span class="ident">consumer</span>)
+        bridge(<span class="self">self</span>, consumer)
     }
 
-    <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="ident">div_round_up</span>(<span class="self">self</span>.<span class="ident">i</span>.<span class="ident">len</span>(), <span class="self">self</span>.<span class="ident">size</span>)
+    <span class="kw">fn </span>opt_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
+        <span class="prelude-val">Some</span>(<span class="self">self</span>.len())
+    }
+}
+
+<span class="kw">impl</span>&lt;I&gt; IndexedParallelIterator <span class="kw">for </span>Chunks&lt;I&gt;
+<span class="kw">where
+    </span>I: IndexedParallelIterator,
+{
+    <span class="kw">fn </span>drive&lt;C&gt;(<span class="self">self</span>, consumer: C) -&gt; C::Result
+    <span class="kw">where
+        </span>C: Consumer&lt;<span class="self">Self</span>::Item&gt;,
+    {
+        bridge(<span class="self">self</span>, consumer)
     }
 
-    <span class="kw">fn</span> <span class="ident">with_producer</span><span class="op">&lt;</span><span class="ident">CB</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">callback</span>: <span class="ident">CB</span>) -&gt; <span class="ident">CB::Output</span>
-    <span class="kw">where</span>
-        <span class="ident">CB</span>: <span class="ident">ProducerCallback</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span>,
+    <span class="kw">fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        div_round_up(<span class="self">self</span>.i.len(), <span class="self">self</span>.size)
+    }
+
+    <span class="kw">fn </span>with_producer&lt;CB&gt;(<span class="self">self</span>, callback: CB) -&gt; CB::Output
+    <span class="kw">where
+        </span>CB: ProducerCallback&lt;<span class="self">Self</span>::Item&gt;,
     {
-        <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">i</span>.<span class="ident">len</span>();
-        <span class="kw">return</span> <span class="self">self</span>.<span class="ident">i</span>.<span class="ident">with_producer</span>(<span class="ident">Callback</span> {
-            <span class="ident">size</span>: <span class="self">self</span>.<span class="ident">size</span>,
-            <span class="ident">len</span>,
-            <span class="ident">callback</span>,
+        <span class="kw">let </span>len = <span class="self">self</span>.i.len();
+        <span class="kw">return </span><span class="self">self</span>.i.with_producer(Callback {
+            size: <span class="self">self</span>.size,
+            len,
+            callback,
         });
 
-        <span class="kw">struct</span> <span class="ident">Callback</span><span class="op">&lt;</span><span class="ident">CB</span><span class="op">&gt;</span> {
-            <span class="ident">size</span>: <span class="ident">usize</span>,
-            <span class="ident">len</span>: <span class="ident">usize</span>,
-            <span class="ident">callback</span>: <span class="ident">CB</span>,
+        <span class="kw">struct </span>Callback&lt;CB&gt; {
+            size: usize,
+            len: usize,
+            callback: CB,
         }
 
-        <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">CB</span><span class="op">&gt;</span> <span class="ident">ProducerCallback</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Callback</span><span class="op">&lt;</span><span class="ident">CB</span><span class="op">&gt;</span>
-        <span class="kw">where</span>
-            <span class="ident">CB</span>: <span class="ident">ProducerCallback</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+        <span class="kw">impl</span>&lt;T, CB&gt; ProducerCallback&lt;T&gt; <span class="kw">for </span>Callback&lt;CB&gt;
+        <span class="kw">where
+            </span>CB: ProducerCallback&lt;Vec&lt;T&gt;&gt;,
         {
-            <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">CB::Output</span>;
+            <span class="kw">type </span>Output = CB::Output;
 
-            <span class="kw">fn</span> <span class="ident">callback</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">base</span>: <span class="ident">P</span>) -&gt; <span class="ident">CB::Output</span>
-            <span class="kw">where</span>
-                <span class="ident">P</span>: <span class="ident">Producer</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">T</span><span class="op">&gt;</span>,
+            <span class="kw">fn </span>callback&lt;P&gt;(<span class="self">self</span>, base: P) -&gt; CB::Output
+            <span class="kw">where
+                </span>P: Producer&lt;Item = T&gt;,
             {
-                <span class="self">self</span>.<span class="ident">callback</span>.<span class="ident">callback</span>(<span class="ident">ChunkProducer</span> {
-                    <span class="ident">chunk_size</span>: <span class="self">self</span>.<span class="ident">size</span>,
-                    <span class="ident">len</span>: <span class="self">self</span>.<span class="ident">len</span>,
-                    <span class="ident">base</span>,
+                <span class="self">self</span>.callback.callback(ChunkProducer {
+                    chunk_size: <span class="self">self</span>.size,
+                    len: <span class="self">self</span>.len,
+                    base,
                 })
             }
         }
     }
 }
 
-<span class="kw">struct</span> <span class="ident">ChunkProducer</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Producer</span>,
+<span class="kw">struct </span>ChunkProducer&lt;P&gt;
+<span class="kw">where
+    </span>P: Producer,
 {
-    <span class="ident">chunk_size</span>: <span class="ident">usize</span>,
-    <span class="ident">len</span>: <span class="ident">usize</span>,
-    <span class="ident">base</span>: <span class="ident">P</span>,
+    chunk_size: usize,
+    len: usize,
+    base: P,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> <span class="ident">Producer</span> <span class="kw">for</span> <span class="ident">ChunkProducer</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Producer</span>,
+<span class="kw">impl</span>&lt;P&gt; Producer <span class="kw">for </span>ChunkProducer&lt;P&gt;
+<span class="kw">where
+    </span>P: Producer,
 {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">P::Item</span><span class="op">&gt;</span>;
-    <span class="kw">type</span> <span class="ident">IntoIter</span> <span class="op">=</span> <span class="ident">ChunkSeq</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>;
+    <span class="kw">type </span>Item = Vec&lt;P::Item&gt;;
+    <span class="kw">type </span>IntoIter = ChunkSeq&lt;P&gt;;
 
-    <span class="kw">fn</span> <span class="ident">into_iter</span>(<span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::IntoIter</span> {
-        <span class="ident">ChunkSeq</span> {
-            <span class="ident">chunk_size</span>: <span class="self">self</span>.<span class="ident">chunk_size</span>,
-            <span class="ident">len</span>: <span class="self">self</span>.<span class="ident">len</span>,
-            <span class="ident">inner</span>: <span class="kw">if</span> <span class="self">self</span>.<span class="ident">len</span> <span class="op">&gt;</span> <span class="number">0</span> { <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">base</span>) } <span class="kw">else</span> { <span class="prelude-val">None</span> },
+    <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
+        ChunkSeq {
+            chunk_size: <span class="self">self</span>.chunk_size,
+            len: <span class="self">self</span>.len,
+            inner: <span class="kw">if </span><span class="self">self</span>.len &gt; <span class="number">0 </span>{ <span class="prelude-val">Some</span>(<span class="self">self</span>.base) } <span class="kw">else </span>{ <span class="prelude-val">None </span>},
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">split_at</span>(<span class="self">self</span>, <span class="ident">index</span>: <span class="ident">usize</span>) -&gt; (<span class="self">Self</span>, <span class="self">Self</span>) {
-        <span class="kw">let</span> <span class="ident">elem_index</span> <span class="op">=</span> <span class="ident">min</span>(<span class="ident">index</span> <span class="op">*</span> <span class="self">self</span>.<span class="ident">chunk_size</span>, <span class="self">self</span>.<span class="ident">len</span>);
-        <span class="kw">let</span> (<span class="ident">left</span>, <span class="ident">right</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">split_at</span>(<span class="ident">elem_index</span>);
+    <span class="kw">fn </span>split_at(<span class="self">self</span>, index: usize) -&gt; (<span class="self">Self</span>, <span class="self">Self</span>) {
+        <span class="kw">let </span>elem_index = min(index * <span class="self">self</span>.chunk_size, <span class="self">self</span>.len);
+        <span class="kw">let </span>(left, right) = <span class="self">self</span>.base.split_at(elem_index);
         (
-            <span class="ident">ChunkProducer</span> {
-                <span class="ident">chunk_size</span>: <span class="self">self</span>.<span class="ident">chunk_size</span>,
-                <span class="ident">len</span>: <span class="ident">elem_index</span>,
-                <span class="ident">base</span>: <span class="ident">left</span>,
+            ChunkProducer {
+                chunk_size: <span class="self">self</span>.chunk_size,
+                len: elem_index,
+                base: left,
             },
-            <span class="ident">ChunkProducer</span> {
-                <span class="ident">chunk_size</span>: <span class="self">self</span>.<span class="ident">chunk_size</span>,
-                <span class="ident">len</span>: <span class="self">self</span>.<span class="ident">len</span> <span class="op">-</span> <span class="ident">elem_index</span>,
-                <span class="ident">base</span>: <span class="ident">right</span>,
+            ChunkProducer {
+                chunk_size: <span class="self">self</span>.chunk_size,
+                len: <span class="self">self</span>.len - elem_index,
+                base: right,
             },
         )
     }
 
-    <span class="kw">fn</span> <span class="ident">min_len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="ident">div_round_up</span>(<span class="self">self</span>.<span class="ident">base</span>.<span class="ident">min_len</span>(), <span class="self">self</span>.<span class="ident">chunk_size</span>)
+    <span class="kw">fn </span>min_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        div_round_up(<span class="self">self</span>.base.min_len(), <span class="self">self</span>.chunk_size)
     }
 
-    <span class="kw">fn</span> <span class="ident">max_len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">max_len</span>() <span class="op">/</span> <span class="self">self</span>.<span class="ident">chunk_size</span>
+    <span class="kw">fn </span>max_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.base.max_len() / <span class="self">self</span>.chunk_size
     }
 }
 
-<span class="kw">struct</span> <span class="ident">ChunkSeq</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> {
-    <span class="ident">chunk_size</span>: <span class="ident">usize</span>,
-    <span class="ident">len</span>: <span class="ident">usize</span>,
-    <span class="ident">inner</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>,
+<span class="kw">struct </span>ChunkSeq&lt;P&gt; {
+    chunk_size: usize,
+    len: usize,
+    inner: <span class="prelude-ty">Option</span>&lt;P&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">ChunkSeq</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Producer</span>,
+<span class="kw">impl</span>&lt;P&gt; Iterator <span class="kw">for </span>ChunkSeq&lt;P&gt;
+<span class="kw">where
+    </span>P: Producer,
 {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">P::Item</span><span class="op">&gt;</span>;
+    <span class="kw">type </span>Item = Vec&lt;P::Item&gt;;
 
-    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">producer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">take</span>()<span class="question-mark">?</span>;
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">len</span> <span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">chunk_size</span> {
-            <span class="kw">let</span> (<span class="ident">left</span>, <span class="ident">right</span>) <span class="op">=</span> <span class="ident">producer</span>.<span class="ident">split_at</span>(<span class="self">self</span>.<span class="ident">chunk_size</span>);
-            <span class="self">self</span>.<span class="ident">inner</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">right</span>);
-            <span class="self">self</span>.<span class="ident">len</span> <span class="op">-</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">chunk_size</span>;
-            <span class="prelude-val">Some</span>(<span class="ident">left</span>.<span class="ident">into_iter</span>().<span class="ident">collect</span>())
-        } <span class="kw">else</span> {
-            <span class="macro">debug_assert!</span>(<span class="self">self</span>.<span class="ident">len</span> <span class="op">&gt;</span> <span class="number">0</span>);
-            <span class="self">self</span>.<span class="ident">len</span> <span class="op">=</span> <span class="number">0</span>;
-            <span class="prelude-val">Some</span>(<span class="ident">producer</span>.<span class="ident">into_iter</span>().<span class="ident">collect</span>())
+    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
+        <span class="kw">let </span>producer = <span class="self">self</span>.inner.take()<span class="question-mark">?</span>;
+        <span class="kw">if </span><span class="self">self</span>.len &gt; <span class="self">self</span>.chunk_size {
+            <span class="kw">let </span>(left, right) = producer.split_at(<span class="self">self</span>.chunk_size);
+            <span class="self">self</span>.inner = <span class="prelude-val">Some</span>(right);
+            <span class="self">self</span>.len -= <span class="self">self</span>.chunk_size;
+            <span class="prelude-val">Some</span>(left.into_iter().collect())
+        } <span class="kw">else </span>{
+            <span class="macro">debug_assert!</span>(<span class="self">self</span>.len &gt; <span class="number">0</span>);
+            <span class="self">self</span>.len = <span class="number">0</span>;
+            <span class="prelude-val">Some</span>(producer.into_iter().collect())
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">size_hint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) {
-        <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">len</span>();
-        (<span class="ident">len</span>, <span class="prelude-val">Some</span>(<span class="ident">len</span>))
+    <span class="kw">fn </span>size_hint(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (usize, <span class="prelude-ty">Option</span>&lt;usize&gt;) {
+        <span class="kw">let </span>len = <span class="self">self</span>.len();
+        (len, <span class="prelude-val">Some</span>(len))
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> <span class="ident">ExactSizeIterator</span> <span class="kw">for</span> <span class="ident">ChunkSeq</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Producer</span>,
+<span class="kw">impl</span>&lt;P&gt; ExactSizeIterator <span class="kw">for </span>ChunkSeq&lt;P&gt;
+<span class="kw">where
+    </span>P: Producer,
 {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="ident">div_round_up</span>(<span class="self">self</span>.<span class="ident">len</span>, <span class="self">self</span>.<span class="ident">chunk_size</span>)
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        div_round_up(<span class="self">self</span>.len, <span class="self">self</span>.chunk_size)
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> <span class="ident">DoubleEndedIterator</span> <span class="kw">for</span> <span class="ident">ChunkSeq</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Producer</span>,
+<span class="kw">impl</span>&lt;P&gt; DoubleEndedIterator <span class="kw">for </span>ChunkSeq&lt;P&gt;
+<span class="kw">where
+    </span>P: Producer,
 {
-    <span class="kw">fn</span> <span class="ident">next_back</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">producer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">take</span>()<span class="question-mark">?</span>;
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">len</span> <span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">chunk_size</span> {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">size</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">len</span> <span class="op">%</span> <span class="self">self</span>.<span class="ident">chunk_size</span>;
-            <span class="kw">if</span> <span class="ident">size</span> <span class="op">==</span> <span class="number">0</span> {
-                <span class="ident">size</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">chunk_size</span>;
+    <span class="kw">fn </span>next_back(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
+        <span class="kw">let </span>producer = <span class="self">self</span>.inner.take()<span class="question-mark">?</span>;
+        <span class="kw">if </span><span class="self">self</span>.len &gt; <span class="self">self</span>.chunk_size {
+            <span class="kw">let </span><span class="kw-2">mut </span>size = <span class="self">self</span>.len % <span class="self">self</span>.chunk_size;
+            <span class="kw">if </span>size == <span class="number">0 </span>{
+                size = <span class="self">self</span>.chunk_size;
             }
-            <span class="kw">let</span> (<span class="ident">left</span>, <span class="ident">right</span>) <span class="op">=</span> <span class="ident">producer</span>.<span class="ident">split_at</span>(<span class="self">self</span>.<span class="ident">len</span> <span class="op">-</span> <span class="ident">size</span>);
-            <span class="self">self</span>.<span class="ident">inner</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">left</span>);
-            <span class="self">self</span>.<span class="ident">len</span> <span class="op">-</span><span class="op">=</span> <span class="ident">size</span>;
-            <span class="prelude-val">Some</span>(<span class="ident">right</span>.<span class="ident">into_iter</span>().<span class="ident">collect</span>())
-        } <span class="kw">else</span> {
-            <span class="macro">debug_assert!</span>(<span class="self">self</span>.<span class="ident">len</span> <span class="op">&gt;</span> <span class="number">0</span>);
-            <span class="self">self</span>.<span class="ident">len</span> <span class="op">=</span> <span class="number">0</span>;
-            <span class="prelude-val">Some</span>(<span class="ident">producer</span>.<span class="ident">into_iter</span>().<span class="ident">collect</span>())
+            <span class="kw">let </span>(left, right) = producer.split_at(<span class="self">self</span>.len - size);
+            <span class="self">self</span>.inner = <span class="prelude-val">Some</span>(left);
+            <span class="self">self</span>.len -= size;
+            <span class="prelude-val">Some</span>(right.into_iter().collect())
+        } <span class="kw">else </span>{
+            <span class="macro">debug_assert!</span>(<span class="self">self</span>.len &gt; <span class="number">0</span>);
+            <span class="self">self</span>.len = <span class="number">0</span>;
+            <span class="prelude-val">Some</span>(producer.into_iter().collect())
         }
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="rayon" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.63.0-nightly (fee3a459d 2022-06-05)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="rayon" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (02654a084 2022-08-30)" ></div></body></html>

@@ -1,1 +1,1 @@
-initSidebarItems({"trait":[["HandleExt",""]]});
+window.SIDEBAR_ITEMS = {"trait":[["HandleExt",""]]};

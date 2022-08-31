@@ -1,11 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/rayon-1.5.3/src/slice/chunks.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>chunks.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../rayon/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><div id="settings-menu" tabindex="-1">
-                                <a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div>
-                        </div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/rayon-1.5.3/src/slice/chunks.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>chunks.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../rayon/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -394,395 +387,394 @@
 <span id="387">387</span>
 <span id="388">388</span>
 <span id="389">389</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::iter::plumbing</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::iter</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::math::div_round_up</span>;
-<span class="kw">use</span> <span class="ident">std::cmp</span>;
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::iter::plumbing::<span class="kw-2">*</span>;
+<span class="kw">use </span><span class="kw">crate</span>::iter::<span class="kw-2">*</span>;
+<span class="kw">use </span><span class="kw">crate</span>::math::div_round_up;
+<span class="kw">use </span>std::cmp;
 
-<span class="doccomment">/// Parallel iterator over immutable non-overlapping chunks of a slice</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Chunks</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="ident">Sync</span><span class="op">&gt;</span> {
-    <span class="ident">chunk_size</span>: <span class="ident">usize</span>,
-    <span class="ident">slice</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> [<span class="ident">T</span>],
+<span class="doccomment">/// Parallel iterator over immutable non-overlapping chunks of a slice
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub struct </span>Chunks&lt;<span class="lifetime">&#39;data</span>, T: Sync&gt; {
+    chunk_size: usize,
+    slice: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span>[T],
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="ident">Sync</span><span class="op">&gt;</span> <span class="ident">Chunks</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">chunk_size</span>: <span class="ident">usize</span>, <span class="ident">slice</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> [<span class="ident">T</span>]) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> { <span class="ident">chunk_size</span>, <span class="ident">slice</span> }
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;data</span>, T: Sync&gt; Chunks&lt;<span class="lifetime">&#39;data</span>, T&gt; {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new(chunk_size: usize, slice: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span>[T]) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ chunk_size, slice }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="ident">Sync</span><span class="op">&gt;</span> <span class="ident">Clone</span> <span class="kw">for</span> <span class="ident">Chunks</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">Chunks</span> { ..<span class="kw-2">*</span><span class="self">self</span> }
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;data</span>, T: Sync&gt; Clone <span class="kw">for </span>Chunks&lt;<span class="lifetime">&#39;data</span>, T&gt; {
+    <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        Chunks { ..<span class="kw-2">*</span><span class="self">self </span>}
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="ident">Sync</span> <span class="op">+</span> <span class="lifetime">&#39;data</span><span class="op">&gt;</span> <span class="ident">ParallelIterator</span> <span class="kw">for</span> <span class="ident">Chunks</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> [<span class="ident">T</span>];
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;data</span>, T: Sync + <span class="lifetime">&#39;data</span>&gt; ParallelIterator <span class="kw">for </span>Chunks&lt;<span class="lifetime">&#39;data</span>, T&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span>[T];
 
-    <span class="kw">fn</span> <span class="ident">drive_unindexed</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">consumer</span>: <span class="ident">C</span>) -&gt; <span class="ident">C::Result</span>
-    <span class="kw">where</span>
-        <span class="ident">C</span>: <span class="ident">UnindexedConsumer</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span>,
+    <span class="kw">fn </span>drive_unindexed&lt;C&gt;(<span class="self">self</span>, consumer: C) -&gt; C::Result
+    <span class="kw">where
+        </span>C: UnindexedConsumer&lt;<span class="self">Self</span>::Item&gt;,
     {
-        <span class="ident">bridge</span>(<span class="self">self</span>, <span class="ident">consumer</span>)
+        bridge(<span class="self">self</span>, consumer)
     }
 
-    <span class="kw">fn</span> <span class="ident">opt_len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">len</span>())
+    <span class="kw">fn </span>opt_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
+        <span class="prelude-val">Some</span>(<span class="self">self</span>.len())
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="ident">Sync</span> <span class="op">+</span> <span class="lifetime">&#39;data</span><span class="op">&gt;</span> <span class="ident">IndexedParallelIterator</span> <span class="kw">for</span> <span class="ident">Chunks</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">drive</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">consumer</span>: <span class="ident">C</span>) -&gt; <span class="ident">C::Result</span>
-    <span class="kw">where</span>
-        <span class="ident">C</span>: <span class="ident">Consumer</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;data</span>, T: Sync + <span class="lifetime">&#39;data</span>&gt; IndexedParallelIterator <span class="kw">for </span>Chunks&lt;<span class="lifetime">&#39;data</span>, T&gt; {
+    <span class="kw">fn </span>drive&lt;C&gt;(<span class="self">self</span>, consumer: C) -&gt; C::Result
+    <span class="kw">where
+        </span>C: Consumer&lt;<span class="self">Self</span>::Item&gt;,
     {
-        <span class="ident">bridge</span>(<span class="self">self</span>, <span class="ident">consumer</span>)
+        bridge(<span class="self">self</span>, consumer)
     }
 
-    <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="ident">div_round_up</span>(<span class="self">self</span>.<span class="ident">slice</span>.<span class="ident">len</span>(), <span class="self">self</span>.<span class="ident">chunk_size</span>)
+    <span class="kw">fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        div_round_up(<span class="self">self</span>.slice.len(), <span class="self">self</span>.chunk_size)
     }
 
-    <span class="kw">fn</span> <span class="ident">with_producer</span><span class="op">&lt;</span><span class="ident">CB</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">callback</span>: <span class="ident">CB</span>) -&gt; <span class="ident">CB::Output</span>
-    <span class="kw">where</span>
-        <span class="ident">CB</span>: <span class="ident">ProducerCallback</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span>,
+    <span class="kw">fn </span>with_producer&lt;CB&gt;(<span class="self">self</span>, callback: CB) -&gt; CB::Output
+    <span class="kw">where
+        </span>CB: ProducerCallback&lt;<span class="self">Self</span>::Item&gt;,
     {
-        <span class="ident">callback</span>.<span class="ident">callback</span>(<span class="ident">ChunksProducer</span> {
-            <span class="ident">chunk_size</span>: <span class="self">self</span>.<span class="ident">chunk_size</span>,
-            <span class="ident">slice</span>: <span class="self">self</span>.<span class="ident">slice</span>,
+        callback.callback(ChunksProducer {
+            chunk_size: <span class="self">self</span>.chunk_size,
+            slice: <span class="self">self</span>.slice,
         })
     }
 }
 
-<span class="kw">struct</span> <span class="ident">ChunksProducer</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="ident">Sync</span><span class="op">&gt;</span> {
-    <span class="ident">chunk_size</span>: <span class="ident">usize</span>,
-    <span class="ident">slice</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> [<span class="ident">T</span>],
+<span class="kw">struct </span>ChunksProducer&lt;<span class="lifetime">&#39;data</span>, T: Sync&gt; {
+    chunk_size: usize,
+    slice: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span>[T],
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="lifetime">&#39;data</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span> <span class="ident">Producer</span> <span class="kw">for</span> <span class="ident">ChunksProducer</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> [<span class="ident">T</span>];
-    <span class="kw">type</span> <span class="ident">IntoIter</span> <span class="op">=</span> <span class="ident">::std::slice::Chunks</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span><span class="op">&gt;</span>;
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;data</span>, T: <span class="lifetime">&#39;data </span>+ Sync&gt; Producer <span class="kw">for </span>ChunksProducer&lt;<span class="lifetime">&#39;data</span>, T&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span>[T];
+    <span class="kw">type </span>IntoIter = ::std::slice::Chunks&lt;<span class="lifetime">&#39;data</span>, T&gt;;
 
-    <span class="kw">fn</span> <span class="ident">into_iter</span>(<span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::IntoIter</span> {
-        <span class="self">self</span>.<span class="ident">slice</span>.<span class="ident">chunks</span>(<span class="self">self</span>.<span class="ident">chunk_size</span>)
+    <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
+        <span class="self">self</span>.slice.chunks(<span class="self">self</span>.chunk_size)
     }
 
-    <span class="kw">fn</span> <span class="ident">split_at</span>(<span class="self">self</span>, <span class="ident">index</span>: <span class="ident">usize</span>) -&gt; (<span class="self">Self</span>, <span class="self">Self</span>) {
-        <span class="kw">let</span> <span class="ident">elem_index</span> <span class="op">=</span> <span class="ident">cmp::min</span>(<span class="ident">index</span> <span class="op">*</span> <span class="self">self</span>.<span class="ident">chunk_size</span>, <span class="self">self</span>.<span class="ident">slice</span>.<span class="ident">len</span>());
-        <span class="kw">let</span> (<span class="ident">left</span>, <span class="ident">right</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">slice</span>.<span class="ident">split_at</span>(<span class="ident">elem_index</span>);
+    <span class="kw">fn </span>split_at(<span class="self">self</span>, index: usize) -&gt; (<span class="self">Self</span>, <span class="self">Self</span>) {
+        <span class="kw">let </span>elem_index = cmp::min(index * <span class="self">self</span>.chunk_size, <span class="self">self</span>.slice.len());
+        <span class="kw">let </span>(left, right) = <span class="self">self</span>.slice.split_at(elem_index);
         (
-            <span class="ident">ChunksProducer</span> {
-                <span class="ident">chunk_size</span>: <span class="self">self</span>.<span class="ident">chunk_size</span>,
-                <span class="ident">slice</span>: <span class="ident">left</span>,
+            ChunksProducer {
+                chunk_size: <span class="self">self</span>.chunk_size,
+                slice: left,
             },
-            <span class="ident">ChunksProducer</span> {
-                <span class="ident">chunk_size</span>: <span class="self">self</span>.<span class="ident">chunk_size</span>,
-                <span class="ident">slice</span>: <span class="ident">right</span>,
+            ChunksProducer {
+                chunk_size: <span class="self">self</span>.chunk_size,
+                slice: right,
             },
         )
     }
 }
 
-<span class="doccomment">/// Parallel iterator over immutable non-overlapping chunks of a slice</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ChunksExact</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="ident">Sync</span><span class="op">&gt;</span> {
-    <span class="ident">chunk_size</span>: <span class="ident">usize</span>,
-    <span class="ident">slice</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> [<span class="ident">T</span>],
-    <span class="ident">rem</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> [<span class="ident">T</span>],
+<span class="doccomment">/// Parallel iterator over immutable non-overlapping chunks of a slice
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub struct </span>ChunksExact&lt;<span class="lifetime">&#39;data</span>, T: Sync&gt; {
+    chunk_size: usize,
+    slice: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span>[T],
+    rem: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span>[T],
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="ident">Sync</span><span class="op">&gt;</span> <span class="ident">ChunksExact</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">chunk_size</span>: <span class="ident">usize</span>, <span class="ident">slice</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> [<span class="ident">T</span>]) -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">rem_len</span> <span class="op">=</span> <span class="ident">slice</span>.<span class="ident">len</span>() <span class="op">%</span> <span class="ident">chunk_size</span>;
-        <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">slice</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="ident">rem_len</span>;
-        <span class="kw">let</span> (<span class="ident">slice</span>, <span class="ident">rem</span>) <span class="op">=</span> <span class="ident">slice</span>.<span class="ident">split_at</span>(<span class="ident">len</span>);
-        <span class="self">Self</span> {
-            <span class="ident">chunk_size</span>,
-            <span class="ident">slice</span>,
-            <span class="ident">rem</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;data</span>, T: Sync&gt; ChunksExact&lt;<span class="lifetime">&#39;data</span>, T&gt; {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new(chunk_size: usize, slice: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span>[T]) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>rem_len = slice.len() % chunk_size;
+        <span class="kw">let </span>len = slice.len() - rem_len;
+        <span class="kw">let </span>(slice, rem) = slice.split_at(len);
+        <span class="self">Self </span>{
+            chunk_size,
+            slice,
+            rem,
         }
     }
 
-    <span class="doccomment">/// Return the remainder of the original slice that is not going to be</span>
-    <span class="doccomment">/// returned by the iterator. The returned slice has at most `chunk_size-1`</span>
-    <span class="doccomment">/// elements.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">remainder</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> [<span class="ident">T</span>] {
-        <span class="self">self</span>.<span class="ident">rem</span>
+    <span class="doccomment">/// Return the remainder of the original slice that is not going to be
+    /// returned by the iterator. The returned slice has at most `chunk_size-1`
+    /// elements.
+    </span><span class="kw">pub fn </span>remainder(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span>[T] {
+        <span class="self">self</span>.rem
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="ident">Sync</span><span class="op">&gt;</span> <span class="ident">Clone</span> <span class="kw">for</span> <span class="ident">ChunksExact</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">ChunksExact</span> { ..<span class="kw-2">*</span><span class="self">self</span> }
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;data</span>, T: Sync&gt; Clone <span class="kw">for </span>ChunksExact&lt;<span class="lifetime">&#39;data</span>, T&gt; {
+    <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        ChunksExact { ..<span class="kw-2">*</span><span class="self">self </span>}
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="ident">Sync</span> <span class="op">+</span> <span class="lifetime">&#39;data</span><span class="op">&gt;</span> <span class="ident">ParallelIterator</span> <span class="kw">for</span> <span class="ident">ChunksExact</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> [<span class="ident">T</span>];
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;data</span>, T: Sync + <span class="lifetime">&#39;data</span>&gt; ParallelIterator <span class="kw">for </span>ChunksExact&lt;<span class="lifetime">&#39;data</span>, T&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span>[T];
 
-    <span class="kw">fn</span> <span class="ident">drive_unindexed</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">consumer</span>: <span class="ident">C</span>) -&gt; <span class="ident">C::Result</span>
-    <span class="kw">where</span>
-        <span class="ident">C</span>: <span class="ident">UnindexedConsumer</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span>,
+    <span class="kw">fn </span>drive_unindexed&lt;C&gt;(<span class="self">self</span>, consumer: C) -&gt; C::Result
+    <span class="kw">where
+        </span>C: UnindexedConsumer&lt;<span class="self">Self</span>::Item&gt;,
     {
-        <span class="ident">bridge</span>(<span class="self">self</span>, <span class="ident">consumer</span>)
+        bridge(<span class="self">self</span>, consumer)
     }
 
-    <span class="kw">fn</span> <span class="ident">opt_len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">len</span>())
+    <span class="kw">fn </span>opt_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
+        <span class="prelude-val">Some</span>(<span class="self">self</span>.len())
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="ident">Sync</span> <span class="op">+</span> <span class="lifetime">&#39;data</span><span class="op">&gt;</span> <span class="ident">IndexedParallelIterator</span> <span class="kw">for</span> <span class="ident">ChunksExact</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">drive</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">consumer</span>: <span class="ident">C</span>) -&gt; <span class="ident">C::Result</span>
-    <span class="kw">where</span>
-        <span class="ident">C</span>: <span class="ident">Consumer</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;data</span>, T: Sync + <span class="lifetime">&#39;data</span>&gt; IndexedParallelIterator <span class="kw">for </span>ChunksExact&lt;<span class="lifetime">&#39;data</span>, T&gt; {
+    <span class="kw">fn </span>drive&lt;C&gt;(<span class="self">self</span>, consumer: C) -&gt; C::Result
+    <span class="kw">where
+        </span>C: Consumer&lt;<span class="self">Self</span>::Item&gt;,
     {
-        <span class="ident">bridge</span>(<span class="self">self</span>, <span class="ident">consumer</span>)
+        bridge(<span class="self">self</span>, consumer)
     }
 
-    <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span>.<span class="ident">slice</span>.<span class="ident">len</span>() <span class="op">/</span> <span class="self">self</span>.<span class="ident">chunk_size</span>
+    <span class="kw">fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.slice.len() / <span class="self">self</span>.chunk_size
     }
 
-    <span class="kw">fn</span> <span class="ident">with_producer</span><span class="op">&lt;</span><span class="ident">CB</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">callback</span>: <span class="ident">CB</span>) -&gt; <span class="ident">CB::Output</span>
-    <span class="kw">where</span>
-        <span class="ident">CB</span>: <span class="ident">ProducerCallback</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span>,
+    <span class="kw">fn </span>with_producer&lt;CB&gt;(<span class="self">self</span>, callback: CB) -&gt; CB::Output
+    <span class="kw">where
+        </span>CB: ProducerCallback&lt;<span class="self">Self</span>::Item&gt;,
     {
-        <span class="ident">callback</span>.<span class="ident">callback</span>(<span class="ident">ChunksExactProducer</span> {
-            <span class="ident">chunk_size</span>: <span class="self">self</span>.<span class="ident">chunk_size</span>,
-            <span class="ident">slice</span>: <span class="self">self</span>.<span class="ident">slice</span>,
+        callback.callback(ChunksExactProducer {
+            chunk_size: <span class="self">self</span>.chunk_size,
+            slice: <span class="self">self</span>.slice,
         })
     }
 }
 
-<span class="kw">struct</span> <span class="ident">ChunksExactProducer</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="ident">Sync</span><span class="op">&gt;</span> {
-    <span class="ident">chunk_size</span>: <span class="ident">usize</span>,
-    <span class="ident">slice</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> [<span class="ident">T</span>],
+<span class="kw">struct </span>ChunksExactProducer&lt;<span class="lifetime">&#39;data</span>, T: Sync&gt; {
+    chunk_size: usize,
+    slice: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span>[T],
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="lifetime">&#39;data</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span> <span class="ident">Producer</span> <span class="kw">for</span> <span class="ident">ChunksExactProducer</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> [<span class="ident">T</span>];
-    <span class="kw">type</span> <span class="ident">IntoIter</span> <span class="op">=</span> <span class="ident">::std::slice::ChunksExact</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span><span class="op">&gt;</span>;
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;data</span>, T: <span class="lifetime">&#39;data </span>+ Sync&gt; Producer <span class="kw">for </span>ChunksExactProducer&lt;<span class="lifetime">&#39;data</span>, T&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span>[T];
+    <span class="kw">type </span>IntoIter = ::std::slice::ChunksExact&lt;<span class="lifetime">&#39;data</span>, T&gt;;
 
-    <span class="kw">fn</span> <span class="ident">into_iter</span>(<span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::IntoIter</span> {
-        <span class="self">self</span>.<span class="ident">slice</span>.<span class="ident">chunks_exact</span>(<span class="self">self</span>.<span class="ident">chunk_size</span>)
+    <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
+        <span class="self">self</span>.slice.chunks_exact(<span class="self">self</span>.chunk_size)
     }
 
-    <span class="kw">fn</span> <span class="ident">split_at</span>(<span class="self">self</span>, <span class="ident">index</span>: <span class="ident">usize</span>) -&gt; (<span class="self">Self</span>, <span class="self">Self</span>) {
-        <span class="kw">let</span> <span class="ident">elem_index</span> <span class="op">=</span> <span class="ident">index</span> <span class="op">*</span> <span class="self">self</span>.<span class="ident">chunk_size</span>;
-        <span class="kw">let</span> (<span class="ident">left</span>, <span class="ident">right</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">slice</span>.<span class="ident">split_at</span>(<span class="ident">elem_index</span>);
+    <span class="kw">fn </span>split_at(<span class="self">self</span>, index: usize) -&gt; (<span class="self">Self</span>, <span class="self">Self</span>) {
+        <span class="kw">let </span>elem_index = index * <span class="self">self</span>.chunk_size;
+        <span class="kw">let </span>(left, right) = <span class="self">self</span>.slice.split_at(elem_index);
         (
-            <span class="ident">ChunksExactProducer</span> {
-                <span class="ident">chunk_size</span>: <span class="self">self</span>.<span class="ident">chunk_size</span>,
-                <span class="ident">slice</span>: <span class="ident">left</span>,
+            ChunksExactProducer {
+                chunk_size: <span class="self">self</span>.chunk_size,
+                slice: left,
             },
-            <span class="ident">ChunksExactProducer</span> {
-                <span class="ident">chunk_size</span>: <span class="self">self</span>.<span class="ident">chunk_size</span>,
-                <span class="ident">slice</span>: <span class="ident">right</span>,
+            ChunksExactProducer {
+                chunk_size: <span class="self">self</span>.chunk_size,
+                slice: right,
             },
         )
     }
 }
 
-<span class="doccomment">/// Parallel iterator over mutable non-overlapping chunks of a slice</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ChunksMut</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="ident">Send</span><span class="op">&gt;</span> {
-    <span class="ident">chunk_size</span>: <span class="ident">usize</span>,
-    <span class="ident">slice</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> <span class="kw-2">mut</span> [<span class="ident">T</span>],
+<span class="doccomment">/// Parallel iterator over mutable non-overlapping chunks of a slice
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub struct </span>ChunksMut&lt;<span class="lifetime">&#39;data</span>, T: Send&gt; {
+    chunk_size: usize,
+    slice: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span><span class="kw-2">mut </span>[T],
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="ident">Send</span><span class="op">&gt;</span> <span class="ident">ChunksMut</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">chunk_size</span>: <span class="ident">usize</span>, <span class="ident">slice</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> <span class="kw-2">mut</span> [<span class="ident">T</span>]) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> { <span class="ident">chunk_size</span>, <span class="ident">slice</span> }
-    }
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="lifetime">&#39;data</span><span class="op">&gt;</span> <span class="ident">ParallelIterator</span> <span class="kw">for</span> <span class="ident">ChunksMut</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> <span class="kw-2">mut</span> [<span class="ident">T</span>];
-
-    <span class="kw">fn</span> <span class="ident">drive_unindexed</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">consumer</span>: <span class="ident">C</span>) -&gt; <span class="ident">C::Result</span>
-    <span class="kw">where</span>
-        <span class="ident">C</span>: <span class="ident">UnindexedConsumer</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span>,
-    {
-        <span class="ident">bridge</span>(<span class="self">self</span>, <span class="ident">consumer</span>)
-    }
-
-    <span class="kw">fn</span> <span class="ident">opt_len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">len</span>())
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;data</span>, T: Send&gt; ChunksMut&lt;<span class="lifetime">&#39;data</span>, T&gt; {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new(chunk_size: usize, slice: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span><span class="kw-2">mut </span>[T]) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ chunk_size, slice }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="lifetime">&#39;data</span><span class="op">&gt;</span> <span class="ident">IndexedParallelIterator</span> <span class="kw">for</span> <span class="ident">ChunksMut</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">drive</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">consumer</span>: <span class="ident">C</span>) -&gt; <span class="ident">C::Result</span>
-    <span class="kw">where</span>
-        <span class="ident">C</span>: <span class="ident">Consumer</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;data</span>, T: Send + <span class="lifetime">&#39;data</span>&gt; ParallelIterator <span class="kw">for </span>ChunksMut&lt;<span class="lifetime">&#39;data</span>, T&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span><span class="kw-2">mut </span>[T];
+
+    <span class="kw">fn </span>drive_unindexed&lt;C&gt;(<span class="self">self</span>, consumer: C) -&gt; C::Result
+    <span class="kw">where
+        </span>C: UnindexedConsumer&lt;<span class="self">Self</span>::Item&gt;,
     {
-        <span class="ident">bridge</span>(<span class="self">self</span>, <span class="ident">consumer</span>)
+        bridge(<span class="self">self</span>, consumer)
     }
 
-    <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="ident">div_round_up</span>(<span class="self">self</span>.<span class="ident">slice</span>.<span class="ident">len</span>(), <span class="self">self</span>.<span class="ident">chunk_size</span>)
+    <span class="kw">fn </span>opt_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
+        <span class="prelude-val">Some</span>(<span class="self">self</span>.len())
+    }
+}
+
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;data</span>, T: Send + <span class="lifetime">&#39;data</span>&gt; IndexedParallelIterator <span class="kw">for </span>ChunksMut&lt;<span class="lifetime">&#39;data</span>, T&gt; {
+    <span class="kw">fn </span>drive&lt;C&gt;(<span class="self">self</span>, consumer: C) -&gt; C::Result
+    <span class="kw">where
+        </span>C: Consumer&lt;<span class="self">Self</span>::Item&gt;,
+    {
+        bridge(<span class="self">self</span>, consumer)
     }
 
-    <span class="kw">fn</span> <span class="ident">with_producer</span><span class="op">&lt;</span><span class="ident">CB</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">callback</span>: <span class="ident">CB</span>) -&gt; <span class="ident">CB::Output</span>
-    <span class="kw">where</span>
-        <span class="ident">CB</span>: <span class="ident">ProducerCallback</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span>,
+    <span class="kw">fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        div_round_up(<span class="self">self</span>.slice.len(), <span class="self">self</span>.chunk_size)
+    }
+
+    <span class="kw">fn </span>with_producer&lt;CB&gt;(<span class="self">self</span>, callback: CB) -&gt; CB::Output
+    <span class="kw">where
+        </span>CB: ProducerCallback&lt;<span class="self">Self</span>::Item&gt;,
     {
-        <span class="ident">callback</span>.<span class="ident">callback</span>(<span class="ident">ChunksMutProducer</span> {
-            <span class="ident">chunk_size</span>: <span class="self">self</span>.<span class="ident">chunk_size</span>,
-            <span class="ident">slice</span>: <span class="self">self</span>.<span class="ident">slice</span>,
+        callback.callback(ChunksMutProducer {
+            chunk_size: <span class="self">self</span>.chunk_size,
+            slice: <span class="self">self</span>.slice,
         })
     }
 }
 
-<span class="kw">struct</span> <span class="ident">ChunksMutProducer</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="ident">Send</span><span class="op">&gt;</span> {
-    <span class="ident">chunk_size</span>: <span class="ident">usize</span>,
-    <span class="ident">slice</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> <span class="kw-2">mut</span> [<span class="ident">T</span>],
+<span class="kw">struct </span>ChunksMutProducer&lt;<span class="lifetime">&#39;data</span>, T: Send&gt; {
+    chunk_size: usize,
+    slice: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span><span class="kw-2">mut </span>[T],
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="lifetime">&#39;data</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span> <span class="ident">Producer</span> <span class="kw">for</span> <span class="ident">ChunksMutProducer</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> <span class="kw-2">mut</span> [<span class="ident">T</span>];
-    <span class="kw">type</span> <span class="ident">IntoIter</span> <span class="op">=</span> <span class="ident">::std::slice::ChunksMut</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span><span class="op">&gt;</span>;
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;data</span>, T: <span class="lifetime">&#39;data </span>+ Send&gt; Producer <span class="kw">for </span>ChunksMutProducer&lt;<span class="lifetime">&#39;data</span>, T&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span><span class="kw-2">mut </span>[T];
+    <span class="kw">type </span>IntoIter = ::std::slice::ChunksMut&lt;<span class="lifetime">&#39;data</span>, T&gt;;
 
-    <span class="kw">fn</span> <span class="ident">into_iter</span>(<span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::IntoIter</span> {
-        <span class="self">self</span>.<span class="ident">slice</span>.<span class="ident">chunks_mut</span>(<span class="self">self</span>.<span class="ident">chunk_size</span>)
+    <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
+        <span class="self">self</span>.slice.chunks_mut(<span class="self">self</span>.chunk_size)
     }
 
-    <span class="kw">fn</span> <span class="ident">split_at</span>(<span class="self">self</span>, <span class="ident">index</span>: <span class="ident">usize</span>) -&gt; (<span class="self">Self</span>, <span class="self">Self</span>) {
-        <span class="kw">let</span> <span class="ident">elem_index</span> <span class="op">=</span> <span class="ident">cmp::min</span>(<span class="ident">index</span> <span class="op">*</span> <span class="self">self</span>.<span class="ident">chunk_size</span>, <span class="self">self</span>.<span class="ident">slice</span>.<span class="ident">len</span>());
-        <span class="kw">let</span> (<span class="ident">left</span>, <span class="ident">right</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">slice</span>.<span class="ident">split_at_mut</span>(<span class="ident">elem_index</span>);
+    <span class="kw">fn </span>split_at(<span class="self">self</span>, index: usize) -&gt; (<span class="self">Self</span>, <span class="self">Self</span>) {
+        <span class="kw">let </span>elem_index = cmp::min(index * <span class="self">self</span>.chunk_size, <span class="self">self</span>.slice.len());
+        <span class="kw">let </span>(left, right) = <span class="self">self</span>.slice.split_at_mut(elem_index);
         (
-            <span class="ident">ChunksMutProducer</span> {
-                <span class="ident">chunk_size</span>: <span class="self">self</span>.<span class="ident">chunk_size</span>,
-                <span class="ident">slice</span>: <span class="ident">left</span>,
+            ChunksMutProducer {
+                chunk_size: <span class="self">self</span>.chunk_size,
+                slice: left,
             },
-            <span class="ident">ChunksMutProducer</span> {
-                <span class="ident">chunk_size</span>: <span class="self">self</span>.<span class="ident">chunk_size</span>,
-                <span class="ident">slice</span>: <span class="ident">right</span>,
+            ChunksMutProducer {
+                chunk_size: <span class="self">self</span>.chunk_size,
+                slice: right,
             },
         )
     }
 }
 
-<span class="doccomment">/// Parallel iterator over mutable non-overlapping chunks of a slice</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ChunksExactMut</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="ident">Send</span><span class="op">&gt;</span> {
-    <span class="ident">chunk_size</span>: <span class="ident">usize</span>,
-    <span class="ident">slice</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> <span class="kw-2">mut</span> [<span class="ident">T</span>],
-    <span class="ident">rem</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> <span class="kw-2">mut</span> [<span class="ident">T</span>],
+<span class="doccomment">/// Parallel iterator over mutable non-overlapping chunks of a slice
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub struct </span>ChunksExactMut&lt;<span class="lifetime">&#39;data</span>, T: Send&gt; {
+    chunk_size: usize,
+    slice: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span><span class="kw-2">mut </span>[T],
+    rem: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span><span class="kw-2">mut </span>[T],
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="ident">Send</span><span class="op">&gt;</span> <span class="ident">ChunksExactMut</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">chunk_size</span>: <span class="ident">usize</span>, <span class="ident">slice</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> <span class="kw-2">mut</span> [<span class="ident">T</span>]) -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">rem_len</span> <span class="op">=</span> <span class="ident">slice</span>.<span class="ident">len</span>() <span class="op">%</span> <span class="ident">chunk_size</span>;
-        <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">slice</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="ident">rem_len</span>;
-        <span class="kw">let</span> (<span class="ident">slice</span>, <span class="ident">rem</span>) <span class="op">=</span> <span class="ident">slice</span>.<span class="ident">split_at_mut</span>(<span class="ident">len</span>);
-        <span class="self">Self</span> {
-            <span class="ident">chunk_size</span>,
-            <span class="ident">slice</span>,
-            <span class="ident">rem</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;data</span>, T: Send&gt; ChunksExactMut&lt;<span class="lifetime">&#39;data</span>, T&gt; {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new(chunk_size: usize, slice: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span><span class="kw-2">mut </span>[T]) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>rem_len = slice.len() % chunk_size;
+        <span class="kw">let </span>len = slice.len() - rem_len;
+        <span class="kw">let </span>(slice, rem) = slice.split_at_mut(len);
+        <span class="self">Self </span>{
+            chunk_size,
+            slice,
+            rem,
         }
     }
 
-    <span class="doccomment">/// Return the remainder of the original slice that is not going to be</span>
-    <span class="doccomment">/// returned by the iterator. The returned slice has at most `chunk_size-1`</span>
-    <span class="doccomment">/// elements.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Note that this has to consume `self` to return the original lifetime of</span>
-    <span class="doccomment">/// the data, which prevents this from actually being used as a parallel</span>
-    <span class="doccomment">/// iterator since that also consumes. This method is provided for parity</span>
-    <span class="doccomment">/// with `std::iter::ChunksExactMut`, but consider calling `remainder()` or</span>
-    <span class="doccomment">/// `take_remainder()` as alternatives.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_remainder</span>(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> <span class="kw-2">mut</span> [<span class="ident">T</span>] {
-        <span class="self">self</span>.<span class="ident">rem</span>
+    <span class="doccomment">/// Return the remainder of the original slice that is not going to be
+    /// returned by the iterator. The returned slice has at most `chunk_size-1`
+    /// elements.
+    ///
+    /// Note that this has to consume `self` to return the original lifetime of
+    /// the data, which prevents this from actually being used as a parallel
+    /// iterator since that also consumes. This method is provided for parity
+    /// with `std::iter::ChunksExactMut`, but consider calling `remainder()` or
+    /// `take_remainder()` as alternatives.
+    </span><span class="kw">pub fn </span>into_remainder(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span><span class="kw-2">mut </span>[T] {
+        <span class="self">self</span>.rem
     }
 
-    <span class="doccomment">/// Return the remainder of the original slice that is not going to be</span>
-    <span class="doccomment">/// returned by the iterator. The returned slice has at most `chunk_size-1`</span>
-    <span class="doccomment">/// elements.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Consider `take_remainder()` if you need access to the data with its</span>
-    <span class="doccomment">/// original lifetime, rather than borrowing through `&amp;mut self` here.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">remainder</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut</span> [<span class="ident">T</span>] {
-        <span class="self">self</span>.<span class="ident">rem</span>
+    <span class="doccomment">/// Return the remainder of the original slice that is not going to be
+    /// returned by the iterator. The returned slice has at most `chunk_size-1`
+    /// elements.
+    ///
+    /// Consider `take_remainder()` if you need access to the data with its
+    /// original lifetime, rather than borrowing through `&amp;mut self` here.
+    </span><span class="kw">pub fn </span>remainder(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>[T] {
+        <span class="self">self</span>.rem
     }
 
-    <span class="doccomment">/// Return the remainder of the original slice that is not going to be</span>
-    <span class="doccomment">/// returned by the iterator. The returned slice has at most `chunk_size-1`</span>
-    <span class="doccomment">/// elements. Subsequent calls will return an empty slice.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">take_remainder</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> <span class="kw-2">mut</span> [<span class="ident">T</span>] {
-        <span class="ident">std::mem::replace</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">rem</span>, <span class="kw-2">&amp;mut</span> [])
-    }
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="lifetime">&#39;data</span><span class="op">&gt;</span> <span class="ident">ParallelIterator</span> <span class="kw">for</span> <span class="ident">ChunksExactMut</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> <span class="kw-2">mut</span> [<span class="ident">T</span>];
-
-    <span class="kw">fn</span> <span class="ident">drive_unindexed</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">consumer</span>: <span class="ident">C</span>) -&gt; <span class="ident">C::Result</span>
-    <span class="kw">where</span>
-        <span class="ident">C</span>: <span class="ident">UnindexedConsumer</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span>,
-    {
-        <span class="ident">bridge</span>(<span class="self">self</span>, <span class="ident">consumer</span>)
-    }
-
-    <span class="kw">fn</span> <span class="ident">opt_len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">len</span>())
+    <span class="doccomment">/// Return the remainder of the original slice that is not going to be
+    /// returned by the iterator. The returned slice has at most `chunk_size-1`
+    /// elements. Subsequent calls will return an empty slice.
+    </span><span class="kw">pub fn </span>take_remainder(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span><span class="kw-2">mut </span>[T] {
+        std::mem::replace(<span class="kw-2">&amp;mut </span><span class="self">self</span>.rem, <span class="kw-2">&amp;mut </span>[])
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="lifetime">&#39;data</span><span class="op">&gt;</span> <span class="ident">IndexedParallelIterator</span> <span class="kw">for</span> <span class="ident">ChunksExactMut</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">drive</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">consumer</span>: <span class="ident">C</span>) -&gt; <span class="ident">C::Result</span>
-    <span class="kw">where</span>
-        <span class="ident">C</span>: <span class="ident">Consumer</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;data</span>, T: Send + <span class="lifetime">&#39;data</span>&gt; ParallelIterator <span class="kw">for </span>ChunksExactMut&lt;<span class="lifetime">&#39;data</span>, T&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span><span class="kw-2">mut </span>[T];
+
+    <span class="kw">fn </span>drive_unindexed&lt;C&gt;(<span class="self">self</span>, consumer: C) -&gt; C::Result
+    <span class="kw">where
+        </span>C: UnindexedConsumer&lt;<span class="self">Self</span>::Item&gt;,
     {
-        <span class="ident">bridge</span>(<span class="self">self</span>, <span class="ident">consumer</span>)
+        bridge(<span class="self">self</span>, consumer)
     }
 
-    <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span>.<span class="ident">slice</span>.<span class="ident">len</span>() <span class="op">/</span> <span class="self">self</span>.<span class="ident">chunk_size</span>
+    <span class="kw">fn </span>opt_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
+        <span class="prelude-val">Some</span>(<span class="self">self</span>.len())
+    }
+}
+
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;data</span>, T: Send + <span class="lifetime">&#39;data</span>&gt; IndexedParallelIterator <span class="kw">for </span>ChunksExactMut&lt;<span class="lifetime">&#39;data</span>, T&gt; {
+    <span class="kw">fn </span>drive&lt;C&gt;(<span class="self">self</span>, consumer: C) -&gt; C::Result
+    <span class="kw">where
+        </span>C: Consumer&lt;<span class="self">Self</span>::Item&gt;,
+    {
+        bridge(<span class="self">self</span>, consumer)
     }
 
-    <span class="kw">fn</span> <span class="ident">with_producer</span><span class="op">&lt;</span><span class="ident">CB</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">callback</span>: <span class="ident">CB</span>) -&gt; <span class="ident">CB::Output</span>
-    <span class="kw">where</span>
-        <span class="ident">CB</span>: <span class="ident">ProducerCallback</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span>,
+    <span class="kw">fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.slice.len() / <span class="self">self</span>.chunk_size
+    }
+
+    <span class="kw">fn </span>with_producer&lt;CB&gt;(<span class="self">self</span>, callback: CB) -&gt; CB::Output
+    <span class="kw">where
+        </span>CB: ProducerCallback&lt;<span class="self">Self</span>::Item&gt;,
     {
-        <span class="ident">callback</span>.<span class="ident">callback</span>(<span class="ident">ChunksExactMutProducer</span> {
-            <span class="ident">chunk_size</span>: <span class="self">self</span>.<span class="ident">chunk_size</span>,
-            <span class="ident">slice</span>: <span class="self">self</span>.<span class="ident">slice</span>,
+        callback.callback(ChunksExactMutProducer {
+            chunk_size: <span class="self">self</span>.chunk_size,
+            slice: <span class="self">self</span>.slice,
         })
     }
 }
 
-<span class="kw">struct</span> <span class="ident">ChunksExactMutProducer</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="ident">Send</span><span class="op">&gt;</span> {
-    <span class="ident">chunk_size</span>: <span class="ident">usize</span>,
-    <span class="ident">slice</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> <span class="kw-2">mut</span> [<span class="ident">T</span>],
+<span class="kw">struct </span>ChunksExactMutProducer&lt;<span class="lifetime">&#39;data</span>, T: Send&gt; {
+    chunk_size: usize,
+    slice: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span><span class="kw-2">mut </span>[T],
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span>: <span class="lifetime">&#39;data</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span> <span class="ident">Producer</span> <span class="kw">for</span> <span class="ident">ChunksExactMutProducer</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> <span class="kw-2">mut</span> [<span class="ident">T</span>];
-    <span class="kw">type</span> <span class="ident">IntoIter</span> <span class="op">=</span> <span class="ident">::std::slice::ChunksExactMut</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">T</span><span class="op">&gt;</span>;
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;data</span>, T: <span class="lifetime">&#39;data </span>+ Send&gt; Producer <span class="kw">for </span>ChunksExactMutProducer&lt;<span class="lifetime">&#39;data</span>, T&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span><span class="kw-2">mut </span>[T];
+    <span class="kw">type </span>IntoIter = ::std::slice::ChunksExactMut&lt;<span class="lifetime">&#39;data</span>, T&gt;;
 
-    <span class="kw">fn</span> <span class="ident">into_iter</span>(<span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::IntoIter</span> {
-        <span class="self">self</span>.<span class="ident">slice</span>.<span class="ident">chunks_exact_mut</span>(<span class="self">self</span>.<span class="ident">chunk_size</span>)
+    <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
+        <span class="self">self</span>.slice.chunks_exact_mut(<span class="self">self</span>.chunk_size)
     }
 
-    <span class="kw">fn</span> <span class="ident">split_at</span>(<span class="self">self</span>, <span class="ident">index</span>: <span class="ident">usize</span>) -&gt; (<span class="self">Self</span>, <span class="self">Self</span>) {
-        <span class="kw">let</span> <span class="ident">elem_index</span> <span class="op">=</span> <span class="ident">index</span> <span class="op">*</span> <span class="self">self</span>.<span class="ident">chunk_size</span>;
-        <span class="kw">let</span> (<span class="ident">left</span>, <span class="ident">right</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">slice</span>.<span class="ident">split_at_mut</span>(<span class="ident">elem_index</span>);
+    <span class="kw">fn </span>split_at(<span class="self">self</span>, index: usize) -&gt; (<span class="self">Self</span>, <span class="self">Self</span>) {
+        <span class="kw">let </span>elem_index = index * <span class="self">self</span>.chunk_size;
+        <span class="kw">let </span>(left, right) = <span class="self">self</span>.slice.split_at_mut(elem_index);
         (
-            <span class="ident">ChunksExactMutProducer</span> {
-                <span class="ident">chunk_size</span>: <span class="self">self</span>.<span class="ident">chunk_size</span>,
-                <span class="ident">slice</span>: <span class="ident">left</span>,
+            ChunksExactMutProducer {
+                chunk_size: <span class="self">self</span>.chunk_size,
+                slice: left,
             },
-            <span class="ident">ChunksExactMutProducer</span> {
-                <span class="ident">chunk_size</span>: <span class="self">self</span>.<span class="ident">chunk_size</span>,
-                <span class="ident">slice</span>: <span class="ident">right</span>,
+            ChunksExactMutProducer {
+                chunk_size: <span class="self">self</span>.chunk_size,
+                slice: right,
             },
         )
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="rayon" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.63.0-nightly (fee3a459d 2022-06-05)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="rayon" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (02654a084 2022-08-30)" ></div></body></html>

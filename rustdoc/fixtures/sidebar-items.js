@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["package_id","Helper for creating `PackageId` instances in test code."]],"mod":[["dep_helpers",""],["details",""],["json",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["package_id","Helper for creating `PackageId` instances in test code."]],"mod":[["dep_helpers",""],["details",""],["json",""]]};

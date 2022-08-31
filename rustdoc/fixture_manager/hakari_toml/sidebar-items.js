@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["HakariTomlContext",""],["HakariTomlItem",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["HakariTomlContext",""],["HakariTomlItem",""]]};

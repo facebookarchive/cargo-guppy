@@ -1,11 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/rayon-core-1.9.3/src/latch.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>latch.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../rayon_core/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../rayon_core/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../rayon_core/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><div id="settings-menu" tabindex="-1">
-                                <a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div>
-                        </div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/rayon-core-1.9.3/src/latch.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>latch.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../rayon_core/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../rayon_core/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../rayon_core/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -380,381 +373,380 @@
 <span id="373">373</span>
 <span id="374">374</span>
 <span id="375">375</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::sync::atomic</span>::{<span class="ident">AtomicUsize</span>, <span class="ident">Ordering</span>};
-<span class="kw">use</span> <span class="ident">std::sync</span>::{<span class="ident">Arc</span>, <span class="ident">Condvar</span>, <span class="ident">Mutex</span>};
-<span class="kw">use</span> <span class="ident">std::usize</span>;
+</pre><pre class="rust"><code><span class="kw">use </span>std::sync::atomic::{AtomicUsize, Ordering};
+<span class="kw">use </span>std::sync::{Arc, Condvar, Mutex};
+<span class="kw">use </span>std::usize;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::registry</span>::{<span class="ident">Registry</span>, <span class="ident">WorkerThread</span>};
+<span class="kw">use </span><span class="kw">crate</span>::registry::{Registry, WorkerThread};
 
-<span class="doccomment">/// We define various kinds of latches, which are all a primitive signaling</span>
-<span class="doccomment">/// mechanism. A latch starts as false. Eventually someone calls `set()` and</span>
-<span class="doccomment">/// it becomes true. You can test if it has been set by calling `probe()`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Some kinds of latches, but not all, support a `wait()` operation</span>
-<span class="doccomment">/// that will wait until the latch is set, blocking efficiently. That</span>
-<span class="doccomment">/// is not part of the trait since it is not possibly to do with all</span>
-<span class="doccomment">/// latches.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The intention is that `set()` is called once, but `probe()` may be</span>
-<span class="doccomment">/// called any number of times. Once `probe()` returns true, the memory</span>
-<span class="doccomment">/// effects that occurred before `set()` become visible.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// It&#39;d probably be better to refactor the API into two paired types,</span>
-<span class="doccomment">/// but that&#39;s a bit of work, and this is not a public API.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ## Memory ordering</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Latches need to guarantee two things:</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// - Once `probe()` returns true, all memory effects from the `set()`</span>
-<span class="doccomment">///   are visible (in other words, the set should synchronize-with</span>
-<span class="doccomment">///   the probe).</span>
-<span class="doccomment">/// - Once `set()` occurs, the next `probe()` *will* observe it.  This</span>
-<span class="doccomment">///   typically requires a seq-cst ordering. See [the &quot;tickle-then-get-sleepy&quot; scenario in the sleep</span>
-<span class="doccomment">///   README](/src/sleep/README.md#tickle-then-get-sleepy) for details.</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">trait</span> <span class="ident">Latch</span> {
-    <span class="doccomment">/// Set the latch, signalling others.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # WARNING</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Setting a latch triggers other threads to wake up and (in some</span>
-    <span class="doccomment">/// cases) complete. This may, in turn, cause memory to be</span>
-    <span class="doccomment">/// allocated and so forth.  One must be very careful about this,</span>
-    <span class="doccomment">/// and it&#39;s typically better to read all the fields you will need</span>
-    <span class="doccomment">/// to access *before* a latch is set!</span>
-    <span class="kw">fn</span> <span class="ident">set</span>(<span class="kw-2">&amp;</span><span class="self">self</span>);
+<span class="doccomment">/// We define various kinds of latches, which are all a primitive signaling
+/// mechanism. A latch starts as false. Eventually someone calls `set()` and
+/// it becomes true. You can test if it has been set by calling `probe()`.
+///
+/// Some kinds of latches, but not all, support a `wait()` operation
+/// that will wait until the latch is set, blocking efficiently. That
+/// is not part of the trait since it is not possibly to do with all
+/// latches.
+///
+/// The intention is that `set()` is called once, but `probe()` may be
+/// called any number of times. Once `probe()` returns true, the memory
+/// effects that occurred before `set()` become visible.
+///
+/// It&#39;d probably be better to refactor the API into two paired types,
+/// but that&#39;s a bit of work, and this is not a public API.
+///
+/// ## Memory ordering
+///
+/// Latches need to guarantee two things:
+///
+/// - Once `probe()` returns true, all memory effects from the `set()`
+///   are visible (in other words, the set should synchronize-with
+///   the probe).
+/// - Once `set()` occurs, the next `probe()` *will* observe it.  This
+///   typically requires a seq-cst ordering. See [the &quot;tickle-then-get-sleepy&quot; scenario in the sleep
+///   README](/src/sleep/README.md#tickle-then-get-sleepy) for details.
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">trait </span>Latch {
+    <span class="doccomment">/// Set the latch, signalling others.
+    ///
+    /// # WARNING
+    ///
+    /// Setting a latch triggers other threads to wake up and (in some
+    /// cases) complete. This may, in turn, cause memory to be
+    /// allocated and so forth.  One must be very careful about this,
+    /// and it&#39;s typically better to read all the fields you will need
+    /// to access *before* a latch is set!
+    </span><span class="kw">fn </span>set(<span class="kw-2">&amp;</span><span class="self">self</span>);
 }
 
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">trait</span> <span class="ident">AsCoreLatch</span> {
-    <span class="kw">fn</span> <span class="ident">as_core_latch</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">CoreLatch</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">trait </span>AsCoreLatch {
+    <span class="kw">fn </span>as_core_latch(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>CoreLatch;
 }
 
-<span class="doccomment">/// Latch is not set, owning thread is awake</span>
-<span class="kw">const</span> <span class="ident">UNSET</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">0</span>;
+<span class="doccomment">/// Latch is not set, owning thread is awake
+</span><span class="kw">const </span>UNSET: usize = <span class="number">0</span>;
 
-<span class="doccomment">/// Latch is not set, owning thread is going to sleep on this latch</span>
-<span class="doccomment">/// (but has not yet fallen asleep).</span>
-<span class="kw">const</span> <span class="ident">SLEEPY</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">1</span>;
+<span class="doccomment">/// Latch is not set, owning thread is going to sleep on this latch
+/// (but has not yet fallen asleep).
+</span><span class="kw">const </span>SLEEPY: usize = <span class="number">1</span>;
 
-<span class="doccomment">/// Latch is not set, owning thread is asleep on this latch and</span>
-<span class="doccomment">/// must be awoken.</span>
-<span class="kw">const</span> <span class="ident">SLEEPING</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">2</span>;
+<span class="doccomment">/// Latch is not set, owning thread is asleep on this latch and
+/// must be awoken.
+</span><span class="kw">const </span>SLEEPING: usize = <span class="number">2</span>;
 
-<span class="doccomment">/// Latch is set.</span>
-<span class="kw">const</span> <span class="ident">SET</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">3</span>;
+<span class="doccomment">/// Latch is set.
+</span><span class="kw">const </span>SET: usize = <span class="number">3</span>;
 
-<span class="doccomment">/// Spin latches are the simplest, most efficient kind, but they do</span>
-<span class="doccomment">/// not support a `wait()` operation. They just have a boolean flag</span>
-<span class="doccomment">/// that becomes true when `set()` is called.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">CoreLatch</span> {
-    <span class="ident">state</span>: <span class="ident">AtomicUsize</span>,
+<span class="doccomment">/// Spin latches are the simplest, most efficient kind, but they do
+/// not support a `wait()` operation. They just have a boolean flag
+/// that becomes true when `set()` is called.
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>CoreLatch {
+    state: AtomicUsize,
 }
 
-<span class="kw">impl</span> <span class="ident">CoreLatch</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">state</span>: <span class="ident">AtomicUsize::new</span>(<span class="number">0</span>),
+<span class="kw">impl </span>CoreLatch {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            state: AtomicUsize::new(<span class="number">0</span>),
         }
     }
 
-    <span class="doccomment">/// Returns the address of this core latch as an integer. Used</span>
-    <span class="doccomment">/// for logging.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">addr</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">CoreLatch</span> <span class="kw">as</span> <span class="ident">usize</span>
+    <span class="doccomment">/// Returns the address of this core latch as an integer. Used
+    /// for logging.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>addr(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self </span><span class="kw">as </span><span class="kw-2">*const </span>CoreLatch <span class="kw">as </span>usize
     }
 
-    <span class="doccomment">/// Invoked by owning thread as it prepares to sleep. Returns true</span>
-    <span class="doccomment">/// if the owning thread may proceed to fall asleep, false if the</span>
-    <span class="doccomment">/// latch was set in the meantime.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">get_sleepy</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">state</span>
-            .<span class="ident">compare_exchange</span>(<span class="ident">UNSET</span>, <span class="ident">SLEEPY</span>, <span class="ident">Ordering::SeqCst</span>, <span class="ident">Ordering::Relaxed</span>)
-            .<span class="ident">is_ok</span>()
+    <span class="doccomment">/// Invoked by owning thread as it prepares to sleep. Returns true
+    /// if the owning thread may proceed to fall asleep, false if the
+    /// latch was set in the meantime.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>get_sleepy(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.state
+            .compare_exchange(UNSET, SLEEPY, Ordering::SeqCst, Ordering::Relaxed)
+            .is_ok()
     }
 
-    <span class="doccomment">/// Invoked by owning thread as it falls asleep sleep. Returns</span>
-    <span class="doccomment">/// true if the owning thread should block, or false if the latch</span>
-    <span class="doccomment">/// was set in the meantime.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">fall_asleep</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">state</span>
-            .<span class="ident">compare_exchange</span>(<span class="ident">SLEEPY</span>, <span class="ident">SLEEPING</span>, <span class="ident">Ordering::SeqCst</span>, <span class="ident">Ordering::Relaxed</span>)
-            .<span class="ident">is_ok</span>()
+    <span class="doccomment">/// Invoked by owning thread as it falls asleep sleep. Returns
+    /// true if the owning thread should block, or false if the latch
+    /// was set in the meantime.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>fall_asleep(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.state
+            .compare_exchange(SLEEPY, SLEEPING, Ordering::SeqCst, Ordering::Relaxed)
+            .is_ok()
     }
 
-    <span class="doccomment">/// Invoked by owning thread as it falls asleep sleep. Returns</span>
-    <span class="doccomment">/// true if the owning thread should block, or false if the latch</span>
-    <span class="doccomment">/// was set in the meantime.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">wake_up</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">probe</span>() {
-            <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span>
-                <span class="self">self</span>.<span class="ident">state</span>
-                    .<span class="ident">compare_exchange</span>(<span class="ident">SLEEPING</span>, <span class="ident">UNSET</span>, <span class="ident">Ordering::SeqCst</span>, <span class="ident">Ordering::Relaxed</span>);
+    <span class="doccomment">/// Invoked by owning thread as it falls asleep sleep. Returns
+    /// true if the owning thread should block, or false if the latch
+    /// was set in the meantime.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>wake_up(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="kw">if </span>!<span class="self">self</span>.probe() {
+            <span class="kw">let _ </span>=
+                <span class="self">self</span>.state
+                    .compare_exchange(SLEEPING, UNSET, Ordering::SeqCst, Ordering::Relaxed);
         }
     }
 
-    <span class="doccomment">/// Set the latch. If this returns true, the owning thread was sleeping</span>
-    <span class="doccomment">/// and must be awoken.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is private because, typically, setting a latch involves</span>
-    <span class="doccomment">/// doing some wakeups; those are encapsulated in the surrounding</span>
-    <span class="doccomment">/// latch code.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">set</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">let</span> <span class="ident">old_state</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">swap</span>(<span class="ident">SET</span>, <span class="ident">Ordering::AcqRel</span>);
-        <span class="ident">old_state</span> <span class="op">==</span> <span class="ident">SLEEPING</span>
+    <span class="doccomment">/// Set the latch. If this returns true, the owning thread was sleeping
+    /// and must be awoken.
+    ///
+    /// This is private because, typically, setting a latch involves
+    /// doing some wakeups; those are encapsulated in the surrounding
+    /// latch code.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">fn </span>set(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="kw">let </span>old_state = <span class="self">self</span>.state.swap(SET, Ordering::AcqRel);
+        old_state == SLEEPING
     }
 
-    <span class="doccomment">/// Test if this latch has been set.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">probe</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>) <span class="op">==</span> <span class="ident">SET</span>
+    <span class="doccomment">/// Test if this latch has been set.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>probe(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.state.load(Ordering::Acquire) == SET
     }
 }
 
-<span class="doccomment">/// Spin latches are the simplest, most efficient kind, but they do</span>
-<span class="doccomment">/// not support a `wait()` operation. They just have a boolean flag</span>
-<span class="doccomment">/// that becomes true when `set()` is called.</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">SpinLatch</span><span class="op">&lt;</span><span class="lifetime">&#39;r</span><span class="op">&gt;</span> {
-    <span class="ident">core_latch</span>: <span class="ident">CoreLatch</span>,
-    <span class="ident">registry</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;r</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Registry</span><span class="op">&gt;</span>,
-    <span class="ident">target_worker_index</span>: <span class="ident">usize</span>,
-    <span class="ident">cross</span>: <span class="ident">bool</span>,
+<span class="doccomment">/// Spin latches are the simplest, most efficient kind, but they do
+/// not support a `wait()` operation. They just have a boolean flag
+/// that becomes true when `set()` is called.
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>SpinLatch&lt;<span class="lifetime">&#39;r</span>&gt; {
+    core_latch: CoreLatch,
+    registry: <span class="kw-2">&amp;</span><span class="lifetime">&#39;r </span>Arc&lt;Registry&gt;,
+    target_worker_index: usize,
+    cross: bool,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;r</span><span class="op">&gt;</span> <span class="ident">SpinLatch</span><span class="op">&lt;</span><span class="lifetime">&#39;r</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Creates a new spin latch that is owned by `thread`. This means</span>
-    <span class="doccomment">/// that `thread` is the only thread that should be blocking on</span>
-    <span class="doccomment">/// this latch -- it also means that when the latch is set, we</span>
-    <span class="doccomment">/// will wake `thread` if it is sleeping.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">thread</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;r</span> <span class="ident">WorkerThread</span>) -&gt; <span class="ident">SpinLatch</span><span class="op">&lt;</span><span class="lifetime">&#39;r</span><span class="op">&gt;</span> {
-        <span class="ident">SpinLatch</span> {
-            <span class="ident">core_latch</span>: <span class="ident">CoreLatch::new</span>(),
-            <span class="ident">registry</span>: <span class="ident">thread</span>.<span class="ident">registry</span>(),
-            <span class="ident">target_worker_index</span>: <span class="ident">thread</span>.<span class="ident">index</span>(),
-            <span class="ident">cross</span>: <span class="bool-val">false</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;r</span>&gt; SpinLatch&lt;<span class="lifetime">&#39;r</span>&gt; {
+    <span class="doccomment">/// Creates a new spin latch that is owned by `thread`. This means
+    /// that `thread` is the only thread that should be blocking on
+    /// this latch -- it also means that when the latch is set, we
+    /// will wake `thread` if it is sleeping.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new(thread: <span class="kw-2">&amp;</span><span class="lifetime">&#39;r </span>WorkerThread) -&gt; SpinLatch&lt;<span class="lifetime">&#39;r</span>&gt; {
+        SpinLatch {
+            core_latch: CoreLatch::new(),
+            registry: thread.registry(),
+            target_worker_index: thread.index(),
+            cross: <span class="bool-val">false</span>,
         }
     }
 
-    <span class="doccomment">/// Creates a new spin latch for cross-threadpool blocking.  Notably, we</span>
-    <span class="doccomment">/// need to make sure the registry is kept alive after setting, so we can</span>
-    <span class="doccomment">/// safely call the notification.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">cross</span>(<span class="ident">thread</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;r</span> <span class="ident">WorkerThread</span>) -&gt; <span class="ident">SpinLatch</span><span class="op">&lt;</span><span class="lifetime">&#39;r</span><span class="op">&gt;</span> {
-        <span class="ident">SpinLatch</span> {
-            <span class="ident">cross</span>: <span class="bool-val">true</span>,
-            ..<span class="ident">SpinLatch::new</span>(<span class="ident">thread</span>)
+    <span class="doccomment">/// Creates a new spin latch for cross-threadpool blocking.  Notably, we
+    /// need to make sure the registry is kept alive after setting, so we can
+    /// safely call the notification.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>cross(thread: <span class="kw-2">&amp;</span><span class="lifetime">&#39;r </span>WorkerThread) -&gt; SpinLatch&lt;<span class="lifetime">&#39;r</span>&gt; {
+        SpinLatch {
+            cross: <span class="bool-val">true</span>,
+            ..SpinLatch::new(thread)
         }
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">probe</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">core_latch</span>.<span class="ident">probe</span>()
+    <span class="attribute">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>probe(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.core_latch.probe()
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;r</span><span class="op">&gt;</span> <span class="ident">AsCoreLatch</span> <span class="kw">for</span> <span class="ident">SpinLatch</span><span class="op">&lt;</span><span class="lifetime">&#39;r</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">as_core_latch</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">CoreLatch</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">core_latch</span>
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;r</span>&gt; AsCoreLatch <span class="kw">for </span>SpinLatch&lt;<span class="lifetime">&#39;r</span>&gt; {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>as_core_latch(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>CoreLatch {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.core_latch
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;r</span><span class="op">&gt;</span> <span class="ident">Latch</span> <span class="kw">for</span> <span class="ident">SpinLatch</span><span class="op">&lt;</span><span class="lifetime">&#39;r</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">set</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="kw">let</span> <span class="ident">cross_registry</span>;
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;r</span>&gt; Latch <span class="kw">for </span>SpinLatch&lt;<span class="lifetime">&#39;r</span>&gt; {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>set(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="kw">let </span>cross_registry;
 
-        <span class="kw">let</span> <span class="ident">registry</span>: <span class="kw-2">&amp;</span><span class="ident">Registry</span> <span class="op">=</span> <span class="kw">if</span> <span class="self">self</span>.<span class="ident">cross</span> {
-            <span class="comment">// Ensure the registry stays alive while we notify it.</span>
-            <span class="comment">// Otherwise, it would be possible that we set the spin</span>
-            <span class="comment">// latch and the other thread sees it and exits, causing</span>
-            <span class="comment">// the registry to be deallocated, all before we get a</span>
-            <span class="comment">// chance to invoke `registry.notify_worker_latch_is_set`.</span>
-            <span class="ident">cross_registry</span> <span class="op">=</span> <span class="ident">Arc::clone</span>(<span class="self">self</span>.<span class="ident">registry</span>);
-            <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">cross_registry</span>
-        } <span class="kw">else</span> {
-            <span class="comment">// If this is not a &quot;cross-registry&quot; spin-latch, then the</span>
-            <span class="comment">// thread which is performing `set` is itself ensuring</span>
-            <span class="comment">// that the registry stays alive. However, that doesn&#39;t</span>
-            <span class="comment">// include this *particular* `Arc` handle if the waiting</span>
-            <span class="comment">// thread then exits, so we must completely dereference it.</span>
-            <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">registry</span>
+        <span class="kw">let </span>registry: <span class="kw-2">&amp;</span>Registry = <span class="kw">if </span><span class="self">self</span>.cross {
+            <span class="comment">// Ensure the registry stays alive while we notify it.
+            // Otherwise, it would be possible that we set the spin
+            // latch and the other thread sees it and exits, causing
+            // the registry to be deallocated, all before we get a
+            // chance to invoke `registry.notify_worker_latch_is_set`.
+            </span>cross_registry = Arc::clone(<span class="self">self</span>.registry);
+            <span class="kw-2">&amp;*</span>cross_registry
+        } <span class="kw">else </span>{
+            <span class="comment">// If this is not a &quot;cross-registry&quot; spin-latch, then the
+            // thread which is performing `set` is itself ensuring
+            // that the registry stays alive. However, that doesn&#39;t
+            // include this *particular* `Arc` handle if the waiting
+            // thread then exits, so we must completely dereference it.
+            </span><span class="kw-2">&amp;**</span><span class="self">self</span>.registry
         };
-        <span class="kw">let</span> <span class="ident">target_worker_index</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">target_worker_index</span>;
+        <span class="kw">let </span>target_worker_index = <span class="self">self</span>.target_worker_index;
 
-        <span class="comment">// NOTE: Once we `set`, the target may proceed and invalidate `&amp;self`!</span>
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">core_latch</span>.<span class="ident">set</span>() {
-            <span class="comment">// Subtle: at this point, we can no longer read from</span>
-            <span class="comment">// `self`, because the thread owning this spin latch may</span>
-            <span class="comment">// have awoken and deallocated the latch. Therefore, we</span>
-            <span class="comment">// only use fields whose values we already read.</span>
-            <span class="ident">registry</span>.<span class="ident">notify_worker_latch_is_set</span>(<span class="ident">target_worker_index</span>);
+        <span class="comment">// NOTE: Once we `set`, the target may proceed and invalidate `&amp;self`!
+        </span><span class="kw">if </span><span class="self">self</span>.core_latch.set() {
+            <span class="comment">// Subtle: at this point, we can no longer read from
+            // `self`, because the thread owning this spin latch may
+            // have awoken and deallocated the latch. Therefore, we
+            // only use fields whose values we already read.
+            </span>registry.notify_worker_latch_is_set(target_worker_index);
         }
     }
 }
 
-<span class="doccomment">/// A Latch starts as false and eventually becomes true. You can block</span>
-<span class="doccomment">/// until it becomes true.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">LockLatch</span> {
-    <span class="ident">m</span>: <span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span>,
-    <span class="ident">v</span>: <span class="ident">Condvar</span>,
+<span class="doccomment">/// A Latch starts as false and eventually becomes true. You can block
+/// until it becomes true.
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>LockLatch {
+    m: Mutex&lt;bool&gt;,
+    v: Condvar,
 }
 
-<span class="kw">impl</span> <span class="ident">LockLatch</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="ident">LockLatch</span> {
-        <span class="ident">LockLatch</span> {
-            <span class="ident">m</span>: <span class="ident">Mutex::new</span>(<span class="bool-val">false</span>),
-            <span class="ident">v</span>: <span class="ident">Condvar::new</span>(),
+<span class="kw">impl </span>LockLatch {
+    <span class="attribute">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new() -&gt; LockLatch {
+        LockLatch {
+            m: Mutex::new(<span class="bool-val">false</span>),
+            v: Condvar::new(),
         }
     }
 
-    <span class="doccomment">/// Block until latch is set, then resets this lock latch so it can be reused again.</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">wait_and_reset</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">guard</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">m</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>();
-        <span class="kw">while</span> <span class="op">!</span><span class="kw-2">*</span><span class="ident">guard</span> {
-            <span class="ident">guard</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">v</span>.<span class="ident">wait</span>(<span class="ident">guard</span>).<span class="ident">unwrap</span>();
+    <span class="doccomment">/// Block until latch is set, then resets this lock latch so it can be reused again.
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>wait_and_reset(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="kw">let </span><span class="kw-2">mut </span>guard = <span class="self">self</span>.m.lock().unwrap();
+        <span class="kw">while </span>!<span class="kw-2">*</span>guard {
+            guard = <span class="self">self</span>.v.wait(guard).unwrap();
         }
-        <span class="kw-2">*</span><span class="ident">guard</span> <span class="op">=</span> <span class="bool-val">false</span>;
+        <span class="kw-2">*</span>guard = <span class="bool-val">false</span>;
     }
 
-    <span class="doccomment">/// Block until latch is set.</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">wait</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">guard</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">m</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>();
-        <span class="kw">while</span> <span class="op">!</span><span class="kw-2">*</span><span class="ident">guard</span> {
-            <span class="ident">guard</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">v</span>.<span class="ident">wait</span>(<span class="ident">guard</span>).<span class="ident">unwrap</span>();
-        }
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">Latch</span> <span class="kw">for</span> <span class="ident">LockLatch</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">set</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">guard</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">m</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>();
-        <span class="kw-2">*</span><span class="ident">guard</span> <span class="op">=</span> <span class="bool-val">true</span>;
-        <span class="self">self</span>.<span class="ident">v</span>.<span class="ident">notify_all</span>();
-    }
-}
-
-<span class="doccomment">/// Counting latches are used to implement scopes. They track a</span>
-<span class="doccomment">/// counter. Unlike other latches, calling `set()` does not</span>
-<span class="doccomment">/// necessarily make the latch be considered `set()`; instead, it just</span>
-<span class="doccomment">/// decrements the counter. The latch is only &quot;set&quot; (in the sense that</span>
-<span class="doccomment">/// `probe()` returns true) once the counter reaches zero.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Note: like a `SpinLatch`, count laches are always associated with</span>
-<span class="doccomment">/// some registry that is probing them, which must be tickled when</span>
-<span class="doccomment">/// they are set. *Unlike* a `SpinLatch`, they don&#39;t themselves hold a</span>
-<span class="doccomment">/// reference to that registry. This is because in some cases the</span>
-<span class="doccomment">/// registry owns the count-latch, and that would create a cycle. So a</span>
-<span class="doccomment">/// `CountLatch` must be given a reference to its owning registry when</span>
-<span class="doccomment">/// it is set. For this reason, it does not implement the `Latch`</span>
-<span class="doccomment">/// trait (but it doesn&#39;t have to, as it is not used in those generic</span>
-<span class="doccomment">/// contexts).</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">CountLatch</span> {
-    <span class="ident">core_latch</span>: <span class="ident">CoreLatch</span>,
-    <span class="ident">counter</span>: <span class="ident">AtomicUsize</span>,
-}
-
-<span class="kw">impl</span> <span class="ident">CountLatch</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="ident">CountLatch</span> {
-        <span class="ident">CountLatch</span> {
-            <span class="ident">core_latch</span>: <span class="ident">CoreLatch::new</span>(),
-            <span class="ident">counter</span>: <span class="ident">AtomicUsize::new</span>(<span class="number">1</span>),
-        }
-    }
-
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">increment</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="macro">debug_assert!</span>(<span class="op">!</span><span class="self">self</span>.<span class="ident">core_latch</span>.<span class="ident">probe</span>());
-        <span class="self">self</span>.<span class="ident">counter</span>.<span class="ident">fetch_add</span>(<span class="number">1</span>, <span class="ident">Ordering::Relaxed</span>);
-    }
-
-    <span class="doccomment">/// Decrements the latch counter by one. If this is the final</span>
-    <span class="doccomment">/// count, then the latch is **set**, and calls to `probe()` will</span>
-    <span class="doccomment">/// return true. Returns whether the latch was set.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">set</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">counter</span>.<span class="ident">fetch_sub</span>(<span class="number">1</span>, <span class="ident">Ordering::SeqCst</span>) <span class="op">==</span> <span class="number">1</span> {
-            <span class="self">self</span>.<span class="ident">core_latch</span>.<span class="ident">set</span>();
-            <span class="bool-val">true</span>
-        } <span class="kw">else</span> {
-            <span class="bool-val">false</span>
-        }
-    }
-
-    <span class="doccomment">/// Decrements the latch counter by one and possibly set it.  If</span>
-    <span class="doccomment">/// the latch is set, then the specific worker thread is tickled,</span>
-    <span class="doccomment">/// which should be the one that owns this latch.</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">set_and_tickle_one</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">registry</span>: <span class="kw-2">&amp;</span><span class="ident">Registry</span>, <span class="ident">target_worker_index</span>: <span class="ident">usize</span>) {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">set</span>() {
-            <span class="ident">registry</span>.<span class="ident">notify_worker_latch_is_set</span>(<span class="ident">target_worker_index</span>);
+    <span class="doccomment">/// Block until latch is set.
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>wait(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="kw">let </span><span class="kw-2">mut </span>guard = <span class="self">self</span>.m.lock().unwrap();
+        <span class="kw">while </span>!<span class="kw-2">*</span>guard {
+            guard = <span class="self">self</span>.v.wait(guard).unwrap();
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">AsCoreLatch</span> <span class="kw">for</span> <span class="ident">CountLatch</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">as_core_latch</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">CoreLatch</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">core_latch</span>
+<span class="kw">impl </span>Latch <span class="kw">for </span>LockLatch {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>set(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="kw">let </span><span class="kw-2">mut </span>guard = <span class="self">self</span>.m.lock().unwrap();
+        <span class="kw-2">*</span>guard = <span class="bool-val">true</span>;
+        <span class="self">self</span>.v.notify_all();
     }
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">CountLockLatch</span> {
-    <span class="ident">lock_latch</span>: <span class="ident">LockLatch</span>,
-    <span class="ident">counter</span>: <span class="ident">AtomicUsize</span>,
+<span class="doccomment">/// Counting latches are used to implement scopes. They track a
+/// counter. Unlike other latches, calling `set()` does not
+/// necessarily make the latch be considered `set()`; instead, it just
+/// decrements the counter. The latch is only &quot;set&quot; (in the sense that
+/// `probe()` returns true) once the counter reaches zero.
+///
+/// Note: like a `SpinLatch`, count laches are always associated with
+/// some registry that is probing them, which must be tickled when
+/// they are set. *Unlike* a `SpinLatch`, they don&#39;t themselves hold a
+/// reference to that registry. This is because in some cases the
+/// registry owns the count-latch, and that would create a cycle. So a
+/// `CountLatch` must be given a reference to its owning registry when
+/// it is set. For this reason, it does not implement the `Latch`
+/// trait (but it doesn&#39;t have to, as it is not used in those generic
+/// contexts).
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>CountLatch {
+    core_latch: CoreLatch,
+    counter: AtomicUsize,
 }
 
-<span class="kw">impl</span> <span class="ident">CountLockLatch</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="ident">CountLockLatch</span> {
-        <span class="ident">CountLockLatch</span> {
-            <span class="ident">lock_latch</span>: <span class="ident">LockLatch::new</span>(),
-            <span class="ident">counter</span>: <span class="ident">AtomicUsize::new</span>(<span class="number">1</span>),
+<span class="kw">impl </span>CountLatch {
+    <span class="attribute">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new() -&gt; CountLatch {
+        CountLatch {
+            core_latch: CoreLatch::new(),
+            counter: AtomicUsize::new(<span class="number">1</span>),
         }
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">increment</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="kw">let</span> <span class="ident">old_counter</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">counter</span>.<span class="ident">fetch_add</span>(<span class="number">1</span>, <span class="ident">Ordering::Relaxed</span>);
-        <span class="macro">debug_assert!</span>(<span class="ident">old_counter</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>);
+    <span class="attribute">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>increment(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="macro">debug_assert!</span>(!<span class="self">self</span>.core_latch.probe());
+        <span class="self">self</span>.counter.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
     }
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">wait</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="self">self</span>.<span class="ident">lock_latch</span>.<span class="ident">wait</span>();
+    <span class="doccomment">/// Decrements the latch counter by one. If this is the final
+    /// count, then the latch is **set**, and calls to `probe()` will
+    /// return true. Returns whether the latch was set.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>set(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="kw">if </span><span class="self">self</span>.counter.fetch_sub(<span class="number">1</span>, Ordering::SeqCst) == <span class="number">1 </span>{
+            <span class="self">self</span>.core_latch.set();
+            <span class="bool-val">true
+        </span>} <span class="kw">else </span>{
+            <span class="bool-val">false
+        </span>}
     }
-}
 
-<span class="kw">impl</span> <span class="ident">Latch</span> <span class="kw">for</span> <span class="ident">CountLockLatch</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">set</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">counter</span>.<span class="ident">fetch_sub</span>(<span class="number">1</span>, <span class="ident">Ordering::SeqCst</span>) <span class="op">==</span> <span class="number">1</span> {
-            <span class="self">self</span>.<span class="ident">lock_latch</span>.<span class="ident">set</span>();
+    <span class="doccomment">/// Decrements the latch counter by one and possibly set it.  If
+    /// the latch is set, then the specific worker thread is tickled,
+    /// which should be the one that owns this latch.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>set_and_tickle_one(<span class="kw-2">&amp;</span><span class="self">self</span>, registry: <span class="kw-2">&amp;</span>Registry, target_worker_index: usize) {
+        <span class="kw">if </span><span class="self">self</span>.set() {
+            registry.notify_worker_latch_is_set(target_worker_index);
         }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">L</span><span class="op">&gt;</span> <span class="ident">Latch</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">L</span>
-<span class="kw">where</span>
-    <span class="ident">L</span>: <span class="ident">Latch</span>,
+<span class="kw">impl </span>AsCoreLatch <span class="kw">for </span>CountLatch {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>as_core_latch(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>CoreLatch {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.core_latch
+    }
+}
+
+<span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>CountLockLatch {
+    lock_latch: LockLatch,
+    counter: AtomicUsize,
+}
+
+<span class="kw">impl </span>CountLockLatch {
+    <span class="attribute">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new() -&gt; CountLockLatch {
+        CountLockLatch {
+            lock_latch: LockLatch::new(),
+            counter: AtomicUsize::new(<span class="number">1</span>),
+        }
+    }
+
+    <span class="attribute">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>increment(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="kw">let </span>old_counter = <span class="self">self</span>.counter.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
+        <span class="macro">debug_assert!</span>(old_counter != <span class="number">0</span>);
+    }
+
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>wait(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="self">self</span>.lock_latch.wait();
+    }
+}
+
+<span class="kw">impl </span>Latch <span class="kw">for </span>CountLockLatch {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>set(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="kw">if </span><span class="self">self</span>.counter.fetch_sub(<span class="number">1</span>, Ordering::SeqCst) == <span class="number">1 </span>{
+            <span class="self">self</span>.lock_latch.set();
+        }
+    }
+}
+
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, L&gt; Latch <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>L
+<span class="kw">where
+    </span>L: Latch,
 {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">set</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="ident">L::set</span>(<span class="self">self</span>);
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>set(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        L::set(<span class="self">self</span>);
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="rayon_core" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.63.0-nightly (fee3a459d 2022-06-05)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="rayon_core" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (02654a084 2022-08-30)" ></div></body></html>

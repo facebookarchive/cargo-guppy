@@ -1,11 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/rayon-1.5.3/src/slice/quicksort.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>quicksort.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../rayon/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><div id="settings-menu" tabindex="-1">
-                                <a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div>
-                        </div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/rayon-1.5.3/src/slice/quicksort.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>quicksort.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../rayon/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -903,904 +896,903 @@
 <span id="896">896</span>
 <span id="897">897</span>
 <span id="898">898</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Parallel quicksort.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! This implementation is copied verbatim from `std::slice::sort_unstable` and then parallelized.</span>
-<span class="doccomment">//! The only difference from the original is that calls to `recurse` are executed in parallel using</span>
-<span class="doccomment">//! `rayon_core::join`.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Parallel quicksort.
+//!
+//! This implementation is copied verbatim from `std::slice::sort_unstable` and then parallelized.
+//! The only difference from the original is that calls to `recurse` are executed in parallel using
+//! `rayon_core::join`.
 
-<span class="kw">use</span> <span class="ident">std::cmp</span>;
-<span class="kw">use</span> <span class="ident">std::mem</span>::{<span class="self">self</span>, <span class="ident">MaybeUninit</span>};
-<span class="kw">use</span> <span class="ident">std::ptr</span>;
+</span><span class="kw">use </span>std::cmp;
+<span class="kw">use </span>std::mem::{<span class="self">self</span>, MaybeUninit};
+<span class="kw">use </span>std::ptr;
 
-<span class="doccomment">/// When dropped, copies from `src` into `dest`.</span>
-<span class="kw">struct</span> <span class="ident">CopyOnDrop</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="ident">src</span>: <span class="kw-2">*const</span> <span class="ident">T</span>,
-    <span class="ident">dest</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>,
+<span class="doccomment">/// When dropped, copies from `src` into `dest`.
+</span><span class="kw">struct </span>CopyOnDrop&lt;T&gt; {
+    src: <span class="kw-2">*const </span>T,
+    dest: <span class="kw-2">*mut </span>T,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">CopyOnDrop</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="comment">// SAFETY:  This is a helper class.</span>
-        <span class="comment">//          Please refer to its usage for correctness.</span>
-        <span class="comment">//          Namely, one must be sure that `src` and `dst` does not overlap as required by `ptr::copy_nonoverlapping`.</span>
-        <span class="kw">unsafe</span> {
-            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="self">self</span>.<span class="ident">src</span>, <span class="self">self</span>.<span class="ident">dest</span>, <span class="number">1</span>);
+<span class="kw">impl</span>&lt;T&gt; Drop <span class="kw">for </span>CopyOnDrop&lt;T&gt; {
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="comment">// SAFETY:  This is a helper class.
+        //          Please refer to its usage for correctness.
+        //          Namely, one must be sure that `src` and `dst` does not overlap as required by `ptr::copy_nonoverlapping`.
+        </span><span class="kw">unsafe </span>{
+            ptr::copy_nonoverlapping(<span class="self">self</span>.src, <span class="self">self</span>.dest, <span class="number">1</span>);
         }
     }
 }
 
-<span class="doccomment">/// Shifts the first element to the right until it encounters a greater or equal element.</span>
-<span class="kw">fn</span> <span class="ident">shift_head</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">v</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">T</span>], <span class="ident">is_less</span>: <span class="kw-2">&amp;</span><span class="ident">F</span>)
-<span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="kw-2">&amp;</span><span class="ident">T</span>) -&gt; <span class="ident">bool</span>,
+<span class="doccomment">/// Shifts the first element to the right until it encounters a greater or equal element.
+</span><span class="kw">fn </span>shift_head&lt;T, F&gt;(v: <span class="kw-2">&amp;mut </span>[T], is_less: <span class="kw-2">&amp;</span>F)
+<span class="kw">where
+    </span>F: Fn(<span class="kw-2">&amp;</span>T, <span class="kw-2">&amp;</span>T) -&gt; bool,
 {
-    <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">len</span>();
-    <span class="comment">// SAFETY: The unsafe operations below involves indexing without a bounds check (by offsetting a</span>
-    <span class="comment">// pointer) and copying memory (`ptr::copy_nonoverlapping`).</span>
-    <span class="comment">//</span>
-    <span class="comment">// a. Indexing:</span>
-    <span class="comment">//  1. We checked the size of the array to &gt;=2.</span>
-    <span class="comment">//  2. All the indexing that we will do is always between {0 &lt;= index &lt; len} at most.</span>
-    <span class="comment">//</span>
-    <span class="comment">// b. Memory copying</span>
-    <span class="comment">//  1. We are obtaining pointers to references which are guaranteed to be valid.</span>
-    <span class="comment">//  2. They cannot overlap because we obtain pointers to difference indices of the slice.</span>
-    <span class="comment">//     Namely, `i` and `i-1`.</span>
-    <span class="comment">//  3. If the slice is properly aligned, the elements are properly aligned.</span>
-    <span class="comment">//     It is the caller&#39;s responsibility to make sure the slice is properly aligned.</span>
-    <span class="comment">//</span>
-    <span class="comment">// See comments below for further detail.</span>
-    <span class="kw">unsafe</span> {
-        <span class="comment">// If the first two elements are out-of-order...</span>
-        <span class="kw">if</span> <span class="ident">len</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">2</span> <span class="op">&amp;&amp;</span> <span class="ident">is_less</span>(<span class="ident">v</span>.<span class="ident">get_unchecked</span>(<span class="number">1</span>), <span class="ident">v</span>.<span class="ident">get_unchecked</span>(<span class="number">0</span>)) {
-            <span class="comment">// Read the first element into a stack-allocated variable. If a following comparison</span>
-            <span class="comment">// operation panics, `hole` will get dropped and automatically write the element back</span>
-            <span class="comment">// into the slice.</span>
-            <span class="kw">let</span> <span class="ident">tmp</span> <span class="op">=</span> <span class="ident">mem::ManuallyDrop::new</span>(<span class="ident">ptr::read</span>(<span class="ident">v</span>.<span class="ident">get_unchecked</span>(<span class="number">0</span>)));
-            <span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">as_mut_ptr</span>();
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">hole</span> <span class="op">=</span> <span class="ident">CopyOnDrop</span> {
-                <span class="ident">src</span>: <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">tmp</span>,
-                <span class="ident">dest</span>: <span class="ident">v</span>.<span class="ident">add</span>(<span class="number">1</span>),
+    <span class="kw">let </span>len = v.len();
+    <span class="comment">// SAFETY: The unsafe operations below involves indexing without a bounds check (by offsetting a
+    // pointer) and copying memory (`ptr::copy_nonoverlapping`).
+    //
+    // a. Indexing:
+    //  1. We checked the size of the array to &gt;=2.
+    //  2. All the indexing that we will do is always between {0 &lt;= index &lt; len} at most.
+    //
+    // b. Memory copying
+    //  1. We are obtaining pointers to references which are guaranteed to be valid.
+    //  2. They cannot overlap because we obtain pointers to difference indices of the slice.
+    //     Namely, `i` and `i-1`.
+    //  3. If the slice is properly aligned, the elements are properly aligned.
+    //     It is the caller&#39;s responsibility to make sure the slice is properly aligned.
+    //
+    // See comments below for further detail.
+    </span><span class="kw">unsafe </span>{
+        <span class="comment">// If the first two elements are out-of-order...
+        </span><span class="kw">if </span>len &gt;= <span class="number">2 </span>&amp;&amp; is_less(v.get_unchecked(<span class="number">1</span>), v.get_unchecked(<span class="number">0</span>)) {
+            <span class="comment">// Read the first element into a stack-allocated variable. If a following comparison
+            // operation panics, `hole` will get dropped and automatically write the element back
+            // into the slice.
+            </span><span class="kw">let </span>tmp = mem::ManuallyDrop::new(ptr::read(v.get_unchecked(<span class="number">0</span>)));
+            <span class="kw">let </span>v = v.as_mut_ptr();
+            <span class="kw">let </span><span class="kw-2">mut </span>hole = CopyOnDrop {
+                src: <span class="kw-2">&amp;*</span>tmp,
+                dest: v.add(<span class="number">1</span>),
             };
-            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">v</span>.<span class="ident">add</span>(<span class="number">1</span>), <span class="ident">v</span>.<span class="ident">add</span>(<span class="number">0</span>), <span class="number">1</span>);
+            ptr::copy_nonoverlapping(v.add(<span class="number">1</span>), v.add(<span class="number">0</span>), <span class="number">1</span>);
 
-            <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">2</span>..<span class="ident">len</span> {
-                <span class="kw">if</span> <span class="op">!</span><span class="ident">is_less</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">v</span>.<span class="ident">add</span>(<span class="ident">i</span>), <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">tmp</span>) {
+            <span class="kw">for </span>i <span class="kw">in </span><span class="number">2</span>..len {
+                <span class="kw">if </span>!is_less(<span class="kw-2">&amp;*</span>v.add(i), <span class="kw-2">&amp;*</span>tmp) {
                     <span class="kw">break</span>;
                 }
 
-                <span class="comment">// Move `i`-th element one place to the left, thus shifting the hole to the right.</span>
-                <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">v</span>.<span class="ident">add</span>(<span class="ident">i</span>), <span class="ident">v</span>.<span class="ident">add</span>(<span class="ident">i</span> <span class="op">-</span> <span class="number">1</span>), <span class="number">1</span>);
-                <span class="ident">hole</span>.<span class="ident">dest</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">add</span>(<span class="ident">i</span>);
+                <span class="comment">// Move `i`-th element one place to the left, thus shifting the hole to the right.
+                </span>ptr::copy_nonoverlapping(v.add(i), v.add(i - <span class="number">1</span>), <span class="number">1</span>);
+                hole.dest = v.add(i);
             }
-            <span class="comment">// `hole` gets dropped and thus copies `tmp` into the remaining hole in `v`.</span>
-        }
+            <span class="comment">// `hole` gets dropped and thus copies `tmp` into the remaining hole in `v`.
+        </span>}
     }
 }
 
-<span class="doccomment">/// Shifts the last element to the left until it encounters a smaller or equal element.</span>
-<span class="kw">fn</span> <span class="ident">shift_tail</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">v</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">T</span>], <span class="ident">is_less</span>: <span class="kw-2">&amp;</span><span class="ident">F</span>)
-<span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="kw-2">&amp;</span><span class="ident">T</span>) -&gt; <span class="ident">bool</span>,
+<span class="doccomment">/// Shifts the last element to the left until it encounters a smaller or equal element.
+</span><span class="kw">fn </span>shift_tail&lt;T, F&gt;(v: <span class="kw-2">&amp;mut </span>[T], is_less: <span class="kw-2">&amp;</span>F)
+<span class="kw">where
+    </span>F: Fn(<span class="kw-2">&amp;</span>T, <span class="kw-2">&amp;</span>T) -&gt; bool,
 {
-    <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">len</span>();
-    <span class="comment">// SAFETY: The unsafe operations below involves indexing without a bound check (by offsetting a</span>
-    <span class="comment">// pointer) and copying memory (`ptr::copy_nonoverlapping`).</span>
-    <span class="comment">//</span>
-    <span class="comment">// a. Indexing:</span>
-    <span class="comment">//  1. We checked the size of the array to &gt;= 2.</span>
-    <span class="comment">//  2. All the indexing that we will do is always between `0 &lt;= index &lt; len-1` at most.</span>
-    <span class="comment">//</span>
-    <span class="comment">// b. Memory copying</span>
-    <span class="comment">//  1. We are obtaining pointers to references which are guaranteed to be valid.</span>
-    <span class="comment">//  2. They cannot overlap because we obtain pointers to difference indices of the slice.</span>
-    <span class="comment">//     Namely, `i` and `i+1`.</span>
-    <span class="comment">//  3. If the slice is properly aligned, the elements are properly aligned.</span>
-    <span class="comment">//     It is the caller&#39;s responsibility to make sure the slice is properly aligned.</span>
-    <span class="comment">//</span>
-    <span class="comment">// See comments below for further detail.</span>
-    <span class="kw">unsafe</span> {
-        <span class="comment">// If the last two elements are out-of-order...</span>
-        <span class="kw">if</span> <span class="ident">len</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">2</span> <span class="op">&amp;&amp;</span> <span class="ident">is_less</span>(<span class="ident">v</span>.<span class="ident">get_unchecked</span>(<span class="ident">len</span> <span class="op">-</span> <span class="number">1</span>), <span class="ident">v</span>.<span class="ident">get_unchecked</span>(<span class="ident">len</span> <span class="op">-</span> <span class="number">2</span>)) {
-            <span class="comment">// Read the last element into a stack-allocated variable. If a following comparison</span>
-            <span class="comment">// operation panics, `hole` will get dropped and automatically write the element back</span>
-            <span class="comment">// into the slice.</span>
-            <span class="kw">let</span> <span class="ident">tmp</span> <span class="op">=</span> <span class="ident">mem::ManuallyDrop::new</span>(<span class="ident">ptr::read</span>(<span class="ident">v</span>.<span class="ident">get_unchecked</span>(<span class="ident">len</span> <span class="op">-</span> <span class="number">1</span>)));
-            <span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">as_mut_ptr</span>();
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">hole</span> <span class="op">=</span> <span class="ident">CopyOnDrop</span> {
-                <span class="ident">src</span>: <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">tmp</span>,
-                <span class="ident">dest</span>: <span class="ident">v</span>.<span class="ident">add</span>(<span class="ident">len</span> <span class="op">-</span> <span class="number">2</span>),
+    <span class="kw">let </span>len = v.len();
+    <span class="comment">// SAFETY: The unsafe operations below involves indexing without a bound check (by offsetting a
+    // pointer) and copying memory (`ptr::copy_nonoverlapping`).
+    //
+    // a. Indexing:
+    //  1. We checked the size of the array to &gt;= 2.
+    //  2. All the indexing that we will do is always between `0 &lt;= index &lt; len-1` at most.
+    //
+    // b. Memory copying
+    //  1. We are obtaining pointers to references which are guaranteed to be valid.
+    //  2. They cannot overlap because we obtain pointers to difference indices of the slice.
+    //     Namely, `i` and `i+1`.
+    //  3. If the slice is properly aligned, the elements are properly aligned.
+    //     It is the caller&#39;s responsibility to make sure the slice is properly aligned.
+    //
+    // See comments below for further detail.
+    </span><span class="kw">unsafe </span>{
+        <span class="comment">// If the last two elements are out-of-order...
+        </span><span class="kw">if </span>len &gt;= <span class="number">2 </span>&amp;&amp; is_less(v.get_unchecked(len - <span class="number">1</span>), v.get_unchecked(len - <span class="number">2</span>)) {
+            <span class="comment">// Read the last element into a stack-allocated variable. If a following comparison
+            // operation panics, `hole` will get dropped and automatically write the element back
+            // into the slice.
+            </span><span class="kw">let </span>tmp = mem::ManuallyDrop::new(ptr::read(v.get_unchecked(len - <span class="number">1</span>)));
+            <span class="kw">let </span>v = v.as_mut_ptr();
+            <span class="kw">let </span><span class="kw-2">mut </span>hole = CopyOnDrop {
+                src: <span class="kw-2">&amp;*</span>tmp,
+                dest: v.add(len - <span class="number">2</span>),
             };
-            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">v</span>.<span class="ident">add</span>(<span class="ident">len</span> <span class="op">-</span> <span class="number">2</span>), <span class="ident">v</span>.<span class="ident">add</span>(<span class="ident">len</span> <span class="op">-</span> <span class="number">1</span>), <span class="number">1</span>);
+            ptr::copy_nonoverlapping(v.add(len - <span class="number">2</span>), v.add(len - <span class="number">1</span>), <span class="number">1</span>);
 
-            <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> (<span class="number">0</span>..<span class="ident">len</span> <span class="op">-</span> <span class="number">2</span>).<span class="ident">rev</span>() {
-                <span class="kw">if</span> <span class="op">!</span><span class="ident">is_less</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">tmp</span>, <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">v</span>.<span class="ident">add</span>(<span class="ident">i</span>)) {
+            <span class="kw">for </span>i <span class="kw">in </span>(<span class="number">0</span>..len - <span class="number">2</span>).rev() {
+                <span class="kw">if </span>!is_less(<span class="kw-2">&amp;*</span>tmp, <span class="kw-2">&amp;*</span>v.add(i)) {
                     <span class="kw">break</span>;
                 }
 
-                <span class="comment">// Move `i`-th element one place to the right, thus shifting the hole to the left.</span>
-                <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">v</span>.<span class="ident">add</span>(<span class="ident">i</span>), <span class="ident">v</span>.<span class="ident">add</span>(<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>), <span class="number">1</span>);
-                <span class="ident">hole</span>.<span class="ident">dest</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">add</span>(<span class="ident">i</span>);
+                <span class="comment">// Move `i`-th element one place to the right, thus shifting the hole to the left.
+                </span>ptr::copy_nonoverlapping(v.add(i), v.add(i + <span class="number">1</span>), <span class="number">1</span>);
+                hole.dest = v.add(i);
             }
-            <span class="comment">// `hole` gets dropped and thus copies `tmp` into the remaining hole in `v`.</span>
-        }
+            <span class="comment">// `hole` gets dropped and thus copies `tmp` into the remaining hole in `v`.
+        </span>}
     }
 }
 
-<span class="doccomment">/// Partially sorts a slice by shifting several out-of-order elements around.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Returns `true` if the slice is sorted at the end. This function is *O*(*n*) worst-case.</span>
-<span class="attribute">#[<span class="ident">cold</span>]</span>
-<span class="kw">fn</span> <span class="ident">partial_insertion_sort</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">v</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">T</span>], <span class="ident">is_less</span>: <span class="kw-2">&amp;</span><span class="ident">F</span>) -&gt; <span class="ident">bool</span>
-<span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="kw-2">&amp;</span><span class="ident">T</span>) -&gt; <span class="ident">bool</span>,
+<span class="doccomment">/// Partially sorts a slice by shifting several out-of-order elements around.
+///
+/// Returns `true` if the slice is sorted at the end. This function is *O*(*n*) worst-case.
+</span><span class="attribute">#[cold]
+</span><span class="kw">fn </span>partial_insertion_sort&lt;T, F&gt;(v: <span class="kw-2">&amp;mut </span>[T], is_less: <span class="kw-2">&amp;</span>F) -&gt; bool
+<span class="kw">where
+    </span>F: Fn(<span class="kw-2">&amp;</span>T, <span class="kw-2">&amp;</span>T) -&gt; bool,
 {
-    <span class="comment">// Maximum number of adjacent out-of-order pairs that will get shifted.</span>
-    <span class="kw">const</span> <span class="ident">MAX_STEPS</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">5</span>;
-    <span class="comment">// If the slice is shorter than this, don&#39;t shift any elements.</span>
-    <span class="kw">const</span> <span class="ident">SHORTEST_SHIFTING</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">50</span>;
+    <span class="comment">// Maximum number of adjacent out-of-order pairs that will get shifted.
+    </span><span class="kw">const </span>MAX_STEPS: usize = <span class="number">5</span>;
+    <span class="comment">// If the slice is shorter than this, don&#39;t shift any elements.
+    </span><span class="kw">const </span>SHORTEST_SHIFTING: usize = <span class="number">50</span>;
 
-    <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">len</span>();
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">i</span> <span class="op">=</span> <span class="number">1</span>;
+    <span class="kw">let </span>len = v.len();
+    <span class="kw">let </span><span class="kw-2">mut </span>i = <span class="number">1</span>;
 
-    <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">MAX_STEPS</span> {
-        <span class="comment">// SAFETY: We already explicitly did the bound checking with `i &lt; len`.</span>
-        <span class="comment">// All our subsequent indexing is only in the range `0 &lt;= index &lt; len`</span>
-        <span class="kw">unsafe</span> {
-            <span class="comment">// Find the next pair of adjacent out-of-order elements.</span>
-            <span class="kw">while</span> <span class="ident">i</span> <span class="op">&lt;</span> <span class="ident">len</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="ident">is_less</span>(<span class="ident">v</span>.<span class="ident">get_unchecked</span>(<span class="ident">i</span>), <span class="ident">v</span>.<span class="ident">get_unchecked</span>(<span class="ident">i</span> <span class="op">-</span> <span class="number">1</span>)) {
-                <span class="ident">i</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+    <span class="kw">for _ in </span><span class="number">0</span>..MAX_STEPS {
+        <span class="comment">// SAFETY: We already explicitly did the bound checking with `i &lt; len`.
+        // All our subsequent indexing is only in the range `0 &lt;= index &lt; len`
+        </span><span class="kw">unsafe </span>{
+            <span class="comment">// Find the next pair of adjacent out-of-order elements.
+            </span><span class="kw">while </span>i &lt; len &amp;&amp; !is_less(v.get_unchecked(i), v.get_unchecked(i - <span class="number">1</span>)) {
+                i += <span class="number">1</span>;
             }
         }
 
-        <span class="comment">// Are we done?</span>
-        <span class="kw">if</span> <span class="ident">i</span> <span class="op">==</span> <span class="ident">len</span> {
-            <span class="kw">return</span> <span class="bool-val">true</span>;
+        <span class="comment">// Are we done?
+        </span><span class="kw">if </span>i == len {
+            <span class="kw">return </span><span class="bool-val">true</span>;
         }
 
-        <span class="comment">// Don&#39;t shift elements on short arrays, that has a performance cost.</span>
-        <span class="kw">if</span> <span class="ident">len</span> <span class="op">&lt;</span> <span class="ident">SHORTEST_SHIFTING</span> {
-            <span class="kw">return</span> <span class="bool-val">false</span>;
+        <span class="comment">// Don&#39;t shift elements on short arrays, that has a performance cost.
+        </span><span class="kw">if </span>len &lt; SHORTEST_SHIFTING {
+            <span class="kw">return </span><span class="bool-val">false</span>;
         }
 
-        <span class="comment">// Swap the found pair of elements. This puts them in correct order.</span>
-        <span class="ident">v</span>.<span class="ident">swap</span>(<span class="ident">i</span> <span class="op">-</span> <span class="number">1</span>, <span class="ident">i</span>);
+        <span class="comment">// Swap the found pair of elements. This puts them in correct order.
+        </span>v.swap(i - <span class="number">1</span>, i);
 
-        <span class="comment">// Shift the smaller element to the left.</span>
-        <span class="ident">shift_tail</span>(<span class="kw-2">&amp;mut</span> <span class="ident">v</span>[..<span class="ident">i</span>], <span class="ident">is_less</span>);
-        <span class="comment">// Shift the greater element to the right.</span>
-        <span class="ident">shift_head</span>(<span class="kw-2">&amp;mut</span> <span class="ident">v</span>[<span class="ident">i</span>..], <span class="ident">is_less</span>);
+        <span class="comment">// Shift the smaller element to the left.
+        </span>shift_tail(<span class="kw-2">&amp;mut </span>v[..i], is_less);
+        <span class="comment">// Shift the greater element to the right.
+        </span>shift_head(<span class="kw-2">&amp;mut </span>v[i..], is_less);
     }
 
-    <span class="comment">// Didn&#39;t manage to sort the slice in the limited number of steps.</span>
-    <span class="bool-val">false</span>
-}
+    <span class="comment">// Didn&#39;t manage to sort the slice in the limited number of steps.
+    </span><span class="bool-val">false
+</span>}
 
-<span class="doccomment">/// Sorts a slice using insertion sort, which is *O*(*n*^2) worst-case.</span>
-<span class="kw">fn</span> <span class="ident">insertion_sort</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">v</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">T</span>], <span class="ident">is_less</span>: <span class="kw-2">&amp;</span><span class="ident">F</span>)
-<span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="kw-2">&amp;</span><span class="ident">T</span>) -&gt; <span class="ident">bool</span>,
+<span class="doccomment">/// Sorts a slice using insertion sort, which is *O*(*n*^2) worst-case.
+</span><span class="kw">fn </span>insertion_sort&lt;T, F&gt;(v: <span class="kw-2">&amp;mut </span>[T], is_less: <span class="kw-2">&amp;</span>F)
+<span class="kw">where
+    </span>F: Fn(<span class="kw-2">&amp;</span>T, <span class="kw-2">&amp;</span>T) -&gt; bool,
 {
-    <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">1</span>..<span class="ident">v</span>.<span class="ident">len</span>() {
-        <span class="ident">shift_tail</span>(<span class="kw-2">&amp;mut</span> <span class="ident">v</span>[..<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>], <span class="ident">is_less</span>);
+    <span class="kw">for </span>i <span class="kw">in </span><span class="number">1</span>..v.len() {
+        shift_tail(<span class="kw-2">&amp;mut </span>v[..i + <span class="number">1</span>], is_less);
     }
 }
 
-<span class="doccomment">/// Sorts `v` using heapsort, which guarantees *O*(*n* \* log(*n*)) worst-case.</span>
-<span class="attribute">#[<span class="ident">cold</span>]</span>
-<span class="kw">fn</span> <span class="ident">heapsort</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">v</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">T</span>], <span class="ident">is_less</span>: <span class="kw-2">&amp;</span><span class="ident">F</span>)
-<span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="kw-2">&amp;</span><span class="ident">T</span>) -&gt; <span class="ident">bool</span>,
+<span class="doccomment">/// Sorts `v` using heapsort, which guarantees *O*(*n* \* log(*n*)) worst-case.
+</span><span class="attribute">#[cold]
+</span><span class="kw">fn </span>heapsort&lt;T, F&gt;(v: <span class="kw-2">&amp;mut </span>[T], is_less: <span class="kw-2">&amp;</span>F)
+<span class="kw">where
+    </span>F: Fn(<span class="kw-2">&amp;</span>T, <span class="kw-2">&amp;</span>T) -&gt; bool,
 {
-    <span class="comment">// This binary heap respects the invariant `parent &gt;= child`.</span>
-    <span class="kw">let</span> <span class="ident">sift_down</span> <span class="op">=</span> <span class="op">|</span><span class="ident">v</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">T</span>], <span class="kw-2">mut</span> <span class="ident">node</span><span class="op">|</span> {
-        <span class="kw">loop</span> {
-            <span class="comment">// Children of `node`:</span>
-            <span class="kw">let</span> <span class="ident">left</span> <span class="op">=</span> <span class="number">2</span> <span class="op">*</span> <span class="ident">node</span> <span class="op">+</span> <span class="number">1</span>;
-            <span class="kw">let</span> <span class="ident">right</span> <span class="op">=</span> <span class="number">2</span> <span class="op">*</span> <span class="ident">node</span> <span class="op">+</span> <span class="number">2</span>;
+    <span class="comment">// This binary heap respects the invariant `parent &gt;= child`.
+    </span><span class="kw">let </span>sift_down = |v: <span class="kw-2">&amp;mut </span>[T], <span class="kw-2">mut </span>node| {
+        <span class="kw">loop </span>{
+            <span class="comment">// Children of `node`:
+            </span><span class="kw">let </span>left = <span class="number">2 </span>* node + <span class="number">1</span>;
+            <span class="kw">let </span>right = <span class="number">2 </span>* node + <span class="number">2</span>;
 
-            <span class="comment">// Choose the greater child.</span>
-            <span class="kw">let</span> <span class="ident">greater</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">right</span> <span class="op">&lt;</span> <span class="ident">v</span>.<span class="ident">len</span>() <span class="op">&amp;&amp;</span> <span class="ident">is_less</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>[<span class="ident">left</span>], <span class="kw-2">&amp;</span><span class="ident">v</span>[<span class="ident">right</span>]) {
-                <span class="ident">right</span>
-            } <span class="kw">else</span> {
-                <span class="ident">left</span>
+            <span class="comment">// Choose the greater child.
+            </span><span class="kw">let </span>greater = <span class="kw">if </span>right &lt; v.len() &amp;&amp; is_less(<span class="kw-2">&amp;</span>v[left], <span class="kw-2">&amp;</span>v[right]) {
+                right
+            } <span class="kw">else </span>{
+                left
             };
 
-            <span class="comment">// Stop if the invariant holds at `node`.</span>
-            <span class="kw">if</span> <span class="ident">greater</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">v</span>.<span class="ident">len</span>() <span class="op">|</span><span class="op">|</span> <span class="op">!</span><span class="ident">is_less</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>[<span class="ident">node</span>], <span class="kw-2">&amp;</span><span class="ident">v</span>[<span class="ident">greater</span>]) {
+            <span class="comment">// Stop if the invariant holds at `node`.
+            </span><span class="kw">if </span>greater &gt;= v.len() || !is_less(<span class="kw-2">&amp;</span>v[node], <span class="kw-2">&amp;</span>v[greater]) {
                 <span class="kw">break</span>;
             }
 
-            <span class="comment">// Swap `node` with the greater child, move one step down, and continue sifting.</span>
-            <span class="ident">v</span>.<span class="ident">swap</span>(<span class="ident">node</span>, <span class="ident">greater</span>);
-            <span class="ident">node</span> <span class="op">=</span> <span class="ident">greater</span>;
+            <span class="comment">// Swap `node` with the greater child, move one step down, and continue sifting.
+            </span>v.swap(node, greater);
+            node = greater;
         }
     };
 
-    <span class="comment">// Build the heap in linear time.</span>
-    <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> (<span class="number">0</span>..<span class="ident">v</span>.<span class="ident">len</span>() <span class="op">/</span> <span class="number">2</span>).<span class="ident">rev</span>() {
-        <span class="ident">sift_down</span>(<span class="ident">v</span>, <span class="ident">i</span>);
+    <span class="comment">// Build the heap in linear time.
+    </span><span class="kw">for </span>i <span class="kw">in </span>(<span class="number">0</span>..v.len() / <span class="number">2</span>).rev() {
+        sift_down(v, i);
     }
 
-    <span class="comment">// Pop maximal elements from the heap.</span>
-    <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> (<span class="number">1</span>..<span class="ident">v</span>.<span class="ident">len</span>()).<span class="ident">rev</span>() {
-        <span class="ident">v</span>.<span class="ident">swap</span>(<span class="number">0</span>, <span class="ident">i</span>);
-        <span class="ident">sift_down</span>(<span class="kw-2">&amp;mut</span> <span class="ident">v</span>[..<span class="ident">i</span>], <span class="number">0</span>);
+    <span class="comment">// Pop maximal elements from the heap.
+    </span><span class="kw">for </span>i <span class="kw">in </span>(<span class="number">1</span>..v.len()).rev() {
+        v.swap(<span class="number">0</span>, i);
+        sift_down(<span class="kw-2">&amp;mut </span>v[..i], <span class="number">0</span>);
     }
 }
 
-<span class="doccomment">/// Partitions `v` into elements smaller than `pivot`, followed by elements greater than or equal</span>
-<span class="doccomment">/// to `pivot`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Returns the number of elements smaller than `pivot`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Partitioning is performed block-by-block in order to minimize the cost of branching operations.</span>
-<span class="doccomment">/// This idea is presented in the [BlockQuicksort][pdf] paper.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [pdf]: https://drops.dagstuhl.de/opus/volltexte/2016/6389/pdf/LIPIcs-ESA-2016-38.pdf</span>
-<span class="kw">fn</span> <span class="ident">partition_in_blocks</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">v</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">T</span>], <span class="ident">pivot</span>: <span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="ident">is_less</span>: <span class="kw-2">&amp;</span><span class="ident">F</span>) -&gt; <span class="ident">usize</span>
-<span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="kw-2">&amp;</span><span class="ident">T</span>) -&gt; <span class="ident">bool</span>,
+<span class="doccomment">/// Partitions `v` into elements smaller than `pivot`, followed by elements greater than or equal
+/// to `pivot`.
+///
+/// Returns the number of elements smaller than `pivot`.
+///
+/// Partitioning is performed block-by-block in order to minimize the cost of branching operations.
+/// This idea is presented in the [BlockQuicksort][pdf] paper.
+///
+/// [pdf]: https://drops.dagstuhl.de/opus/volltexte/2016/6389/pdf/LIPIcs-ESA-2016-38.pdf
+</span><span class="kw">fn </span>partition_in_blocks&lt;T, F&gt;(v: <span class="kw-2">&amp;mut </span>[T], pivot: <span class="kw-2">&amp;</span>T, is_less: <span class="kw-2">&amp;</span>F) -&gt; usize
+<span class="kw">where
+    </span>F: Fn(<span class="kw-2">&amp;</span>T, <span class="kw-2">&amp;</span>T) -&gt; bool,
 {
-    <span class="comment">// Number of elements in a typical block.</span>
-    <span class="kw">const</span> <span class="ident">BLOCK</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">128</span>;
+    <span class="comment">// Number of elements in a typical block.
+    </span><span class="kw">const </span>BLOCK: usize = <span class="number">128</span>;
 
-    <span class="comment">// The partitioning algorithm repeats the following steps until completion:</span>
-    <span class="comment">//</span>
-    <span class="comment">// 1. Trace a block from the left side to identify elements greater than or equal to the pivot.</span>
-    <span class="comment">// 2. Trace a block from the right side to identify elements smaller than the pivot.</span>
-    <span class="comment">// 3. Exchange the identified elements between the left and right side.</span>
-    <span class="comment">//</span>
-    <span class="comment">// We keep the following variables for a block of elements:</span>
-    <span class="comment">//</span>
-    <span class="comment">// 1. `block` - Number of elements in the block.</span>
-    <span class="comment">// 2. `start` - Start pointer into the `offsets` array.</span>
-    <span class="comment">// 3. `end` - End pointer into the `offsets` array.</span>
-    <span class="comment">// 4. `offsets - Indices of out-of-order elements within the block.</span>
+    <span class="comment">// The partitioning algorithm repeats the following steps until completion:
+    //
+    // 1. Trace a block from the left side to identify elements greater than or equal to the pivot.
+    // 2. Trace a block from the right side to identify elements smaller than the pivot.
+    // 3. Exchange the identified elements between the left and right side.
+    //
+    // We keep the following variables for a block of elements:
+    //
+    // 1. `block` - Number of elements in the block.
+    // 2. `start` - Start pointer into the `offsets` array.
+    // 3. `end` - End pointer into the `offsets` array.
+    // 4. `offsets - Indices of out-of-order elements within the block.
 
-    <span class="comment">// The current block on the left side (from `l` to `l.add(block_l)`).</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">l</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">as_mut_ptr</span>();
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">block_l</span> <span class="op">=</span> <span class="ident">BLOCK</span>;
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">start_l</span> <span class="op">=</span> <span class="ident">ptr::null_mut</span>();
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">end_l</span> <span class="op">=</span> <span class="ident">ptr::null_mut</span>();
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">offsets_l</span> <span class="op">=</span> [<span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="ident">::uninit</span>(); <span class="ident">BLOCK</span>];
+    // The current block on the left side (from `l` to `l.add(block_l)`).
+    </span><span class="kw">let </span><span class="kw-2">mut </span>l = v.as_mut_ptr();
+    <span class="kw">let </span><span class="kw-2">mut </span>block_l = BLOCK;
+    <span class="kw">let </span><span class="kw-2">mut </span>start_l = ptr::null_mut();
+    <span class="kw">let </span><span class="kw-2">mut </span>end_l = ptr::null_mut();
+    <span class="kw">let </span><span class="kw-2">mut </span>offsets_l = [MaybeUninit::&lt;u8&gt;::uninit(); BLOCK];
 
-    <span class="comment">// The current block on the right side (from `r.sub(block_r)` to `r`).</span>
-    <span class="comment">// SAFETY: The documentation for .add() specifically mention that `vec.as_ptr().add(vec.len())` is always safe`</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">r</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">l</span>.<span class="ident">add</span>(<span class="ident">v</span>.<span class="ident">len</span>()) };
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">block_r</span> <span class="op">=</span> <span class="ident">BLOCK</span>;
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">start_r</span> <span class="op">=</span> <span class="ident">ptr::null_mut</span>();
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">end_r</span> <span class="op">=</span> <span class="ident">ptr::null_mut</span>();
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">offsets_r</span> <span class="op">=</span> [<span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="ident">::uninit</span>(); <span class="ident">BLOCK</span>];
+    <span class="comment">// The current block on the right side (from `r.sub(block_r)` to `r`).
+    // SAFETY: The documentation for .add() specifically mention that `vec.as_ptr().add(vec.len())` is always safe`
+    </span><span class="kw">let </span><span class="kw-2">mut </span>r = <span class="kw">unsafe </span>{ l.add(v.len()) };
+    <span class="kw">let </span><span class="kw-2">mut </span>block_r = BLOCK;
+    <span class="kw">let </span><span class="kw-2">mut </span>start_r = ptr::null_mut();
+    <span class="kw">let </span><span class="kw-2">mut </span>end_r = ptr::null_mut();
+    <span class="kw">let </span><span class="kw-2">mut </span>offsets_r = [MaybeUninit::&lt;u8&gt;::uninit(); BLOCK];
 
-    <span class="comment">// FIXME: When we get VLAs, try creating one array of length `min(v.len(), 2 * BLOCK)` rather</span>
-    <span class="comment">// than two fixed-size arrays of length `BLOCK`. VLAs might be more cache-efficient.</span>
+    <span class="comment">// FIXME: When we get VLAs, try creating one array of length `min(v.len(), 2 * BLOCK)` rather
+    // than two fixed-size arrays of length `BLOCK`. VLAs might be more cache-efficient.
 
-    <span class="comment">// Returns the number of elements between pointers `l` (inclusive) and `r` (exclusive).</span>
-    <span class="kw">fn</span> <span class="ident">width</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">l</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>, <span class="ident">r</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>) -&gt; <span class="ident">usize</span> {
-        <span class="macro">assert!</span>(<span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>() <span class="op">&gt;</span> <span class="number">0</span>);
-        <span class="comment">// FIXME: this should *likely* use `offset_from`, but more</span>
-        <span class="comment">// investigation is needed (including running tests in miri).</span>
-        <span class="comment">// TODO unstable: (r.addr() - l.addr()) / mem::size_of::&lt;T&gt;()</span>
-        (<span class="ident">r</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">-</span> <span class="ident">l</span> <span class="kw">as</span> <span class="ident">usize</span>) <span class="op">/</span> <span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>()
+    // Returns the number of elements between pointers `l` (inclusive) and `r` (exclusive).
+    </span><span class="kw">fn </span>width&lt;T&gt;(l: <span class="kw-2">*mut </span>T, r: <span class="kw-2">*mut </span>T) -&gt; usize {
+        <span class="macro">assert!</span>(mem::size_of::&lt;T&gt;() &gt; <span class="number">0</span>);
+        <span class="comment">// FIXME: this should *likely* use `offset_from`, but more
+        // investigation is needed (including running tests in miri).
+        // TODO unstable: (r.addr() - l.addr()) / mem::size_of::&lt;T&gt;()
+        </span>(r <span class="kw">as </span>usize - l <span class="kw">as </span>usize) / mem::size_of::&lt;T&gt;()
     }
 
-    <span class="kw">loop</span> {
-        <span class="comment">// We are done with partitioning block-by-block when `l` and `r` get very close. Then we do</span>
-        <span class="comment">// some patch-up work in order to partition the remaining elements in between.</span>
-        <span class="kw">let</span> <span class="ident">is_done</span> <span class="op">=</span> <span class="ident">width</span>(<span class="ident">l</span>, <span class="ident">r</span>) <span class="op">&lt;</span><span class="op">=</span> <span class="number">2</span> <span class="op">*</span> <span class="ident">BLOCK</span>;
+    <span class="kw">loop </span>{
+        <span class="comment">// We are done with partitioning block-by-block when `l` and `r` get very close. Then we do
+        // some patch-up work in order to partition the remaining elements in between.
+        </span><span class="kw">let </span>is_done = width(l, r) &lt;= <span class="number">2 </span>* BLOCK;
 
-        <span class="kw">if</span> <span class="ident">is_done</span> {
-            <span class="comment">// Number of remaining elements (still not compared to the pivot).</span>
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rem</span> <span class="op">=</span> <span class="ident">width</span>(<span class="ident">l</span>, <span class="ident">r</span>);
-            <span class="kw">if</span> <span class="ident">start_l</span> <span class="op">&lt;</span> <span class="ident">end_l</span> <span class="op">|</span><span class="op">|</span> <span class="ident">start_r</span> <span class="op">&lt;</span> <span class="ident">end_r</span> {
-                <span class="ident">rem</span> <span class="op">-</span><span class="op">=</span> <span class="ident">BLOCK</span>;
+        <span class="kw">if </span>is_done {
+            <span class="comment">// Number of remaining elements (still not compared to the pivot).
+            </span><span class="kw">let </span><span class="kw-2">mut </span>rem = width(l, r);
+            <span class="kw">if </span>start_l &lt; end_l || start_r &lt; end_r {
+                rem -= BLOCK;
             }
 
-            <span class="comment">// Adjust block sizes so that the left and right block don&#39;t overlap, but get perfectly</span>
-            <span class="comment">// aligned to cover the whole remaining gap.</span>
-            <span class="kw">if</span> <span class="ident">start_l</span> <span class="op">&lt;</span> <span class="ident">end_l</span> {
-                <span class="ident">block_r</span> <span class="op">=</span> <span class="ident">rem</span>;
-            } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">start_r</span> <span class="op">&lt;</span> <span class="ident">end_r</span> {
-                <span class="ident">block_l</span> <span class="op">=</span> <span class="ident">rem</span>;
-            } <span class="kw">else</span> {
-                <span class="comment">// There were the same number of elements to switch on both blocks during the last</span>
-                <span class="comment">// iteration, so there are no remaining elements on either block. Cover the remaining</span>
-                <span class="comment">// items with roughly equally-sized blocks.</span>
-                <span class="ident">block_l</span> <span class="op">=</span> <span class="ident">rem</span> <span class="op">/</span> <span class="number">2</span>;
-                <span class="ident">block_r</span> <span class="op">=</span> <span class="ident">rem</span> <span class="op">-</span> <span class="ident">block_l</span>;
+            <span class="comment">// Adjust block sizes so that the left and right block don&#39;t overlap, but get perfectly
+            // aligned to cover the whole remaining gap.
+            </span><span class="kw">if </span>start_l &lt; end_l {
+                block_r = rem;
+            } <span class="kw">else if </span>start_r &lt; end_r {
+                block_l = rem;
+            } <span class="kw">else </span>{
+                <span class="comment">// There were the same number of elements to switch on both blocks during the last
+                // iteration, so there are no remaining elements on either block. Cover the remaining
+                // items with roughly equally-sized blocks.
+                </span>block_l = rem / <span class="number">2</span>;
+                block_r = rem - block_l;
             }
-            <span class="macro">debug_assert!</span>(<span class="ident">block_l</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">BLOCK</span> <span class="op">&amp;&amp;</span> <span class="ident">block_r</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">BLOCK</span>);
-            <span class="macro">debug_assert!</span>(<span class="ident">width</span>(<span class="ident">l</span>, <span class="ident">r</span>) <span class="op">==</span> <span class="ident">block_l</span> <span class="op">+</span> <span class="ident">block_r</span>);
+            <span class="macro">debug_assert!</span>(block_l &lt;= BLOCK &amp;&amp; block_r &lt;= BLOCK);
+            <span class="macro">debug_assert!</span>(width(l, r) == block_l + block_r);
         }
 
-        <span class="kw">if</span> <span class="ident">start_l</span> <span class="op">==</span> <span class="ident">end_l</span> {
-            <span class="comment">// Trace `block_l` elements from the left side.</span>
-            <span class="comment">// TODO unstable: start_l = MaybeUninit::slice_as_mut_ptr(&amp;mut offsets_l);</span>
-            <span class="ident">start_l</span> <span class="op">=</span> <span class="ident">offsets_l</span>.<span class="ident">as_mut_ptr</span>() <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>;
-            <span class="ident">end_l</span> <span class="op">=</span> <span class="ident">start_l</span>;
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">elem</span> <span class="op">=</span> <span class="ident">l</span>;
+        <span class="kw">if </span>start_l == end_l {
+            <span class="comment">// Trace `block_l` elements from the left side.
+            // TODO unstable: start_l = MaybeUninit::slice_as_mut_ptr(&amp;mut offsets_l);
+            </span>start_l = offsets_l.as_mut_ptr() <span class="kw">as </span><span class="kw-2">*mut </span>u8;
+            end_l = start_l;
+            <span class="kw">let </span><span class="kw-2">mut </span>elem = l;
 
-            <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">block_l</span> {
-                <span class="comment">// SAFETY: The unsafety operations below involve the usage of the `offset`.</span>
-                <span class="comment">//         According to the conditions required by the function, we satisfy them because:</span>
-                <span class="comment">//         1. `offsets_l` is stack-allocated, and thus considered separate allocated object.</span>
-                <span class="comment">//         2. The function `is_less` returns a `bool`.</span>
-                <span class="comment">//            Casting a `bool` will never overflow `isize`.</span>
-                <span class="comment">//         3. We have guaranteed that `block_l` will be `&lt;= BLOCK`.</span>
-                <span class="comment">//            Plus, `end_l` was initially set to the begin pointer of `offsets_` which was declared on the stack.</span>
-                <span class="comment">//            Thus, we know that even in the worst case (all invocations of `is_less` returns false) we will only be at most 1 byte pass the end.</span>
-                <span class="comment">//        Another unsafety operation here is dereferencing `elem`.</span>
-                <span class="comment">//        However, `elem` was initially the begin pointer to the slice which is always valid.</span>
-                <span class="kw">unsafe</span> {
-                    <span class="comment">// Branchless comparison.</span>
-                    <span class="kw-2">*</span><span class="ident">end_l</span> <span class="op">=</span> <span class="ident">i</span> <span class="kw">as</span> <span class="ident">u8</span>;
-                    <span class="ident">end_l</span> <span class="op">=</span> <span class="ident">end_l</span>.<span class="ident">offset</span>(<span class="op">!</span><span class="ident">is_less</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">elem</span>, <span class="ident">pivot</span>) <span class="kw">as</span> <span class="ident">isize</span>);
-                    <span class="ident">elem</span> <span class="op">=</span> <span class="ident">elem</span>.<span class="ident">offset</span>(<span class="number">1</span>);
+            <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..block_l {
+                <span class="comment">// SAFETY: The unsafety operations below involve the usage of the `offset`.
+                //         According to the conditions required by the function, we satisfy them because:
+                //         1. `offsets_l` is stack-allocated, and thus considered separate allocated object.
+                //         2. The function `is_less` returns a `bool`.
+                //            Casting a `bool` will never overflow `isize`.
+                //         3. We have guaranteed that `block_l` will be `&lt;= BLOCK`.
+                //            Plus, `end_l` was initially set to the begin pointer of `offsets_` which was declared on the stack.
+                //            Thus, we know that even in the worst case (all invocations of `is_less` returns false) we will only be at most 1 byte pass the end.
+                //        Another unsafety operation here is dereferencing `elem`.
+                //        However, `elem` was initially the begin pointer to the slice which is always valid.
+                </span><span class="kw">unsafe </span>{
+                    <span class="comment">// Branchless comparison.
+                    </span><span class="kw-2">*</span>end_l = i <span class="kw">as </span>u8;
+                    end_l = end_l.offset(!is_less(<span class="kw-2">&amp;*</span>elem, pivot) <span class="kw">as </span>isize);
+                    elem = elem.offset(<span class="number">1</span>);
                 }
             }
         }
 
-        <span class="kw">if</span> <span class="ident">start_r</span> <span class="op">==</span> <span class="ident">end_r</span> {
-            <span class="comment">// Trace `block_r` elements from the right side.</span>
-            <span class="comment">// TODO unstable: start_r = MaybeUninit::slice_as_mut_ptr(&amp;mut offsets_r);</span>
-            <span class="ident">start_r</span> <span class="op">=</span> <span class="ident">offsets_r</span>.<span class="ident">as_mut_ptr</span>() <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>;
-            <span class="ident">end_r</span> <span class="op">=</span> <span class="ident">start_r</span>;
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">elem</span> <span class="op">=</span> <span class="ident">r</span>;
+        <span class="kw">if </span>start_r == end_r {
+            <span class="comment">// Trace `block_r` elements from the right side.
+            // TODO unstable: start_r = MaybeUninit::slice_as_mut_ptr(&amp;mut offsets_r);
+            </span>start_r = offsets_r.as_mut_ptr() <span class="kw">as </span><span class="kw-2">*mut </span>u8;
+            end_r = start_r;
+            <span class="kw">let </span><span class="kw-2">mut </span>elem = r;
 
-            <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">block_r</span> {
-                <span class="comment">// SAFETY: The unsafety operations below involve the usage of the `offset`.</span>
-                <span class="comment">//         According to the conditions required by the function, we satisfy them because:</span>
-                <span class="comment">//         1. `offsets_r` is stack-allocated, and thus considered separate allocated object.</span>
-                <span class="comment">//         2. The function `is_less` returns a `bool`.</span>
-                <span class="comment">//            Casting a `bool` will never overflow `isize`.</span>
-                <span class="comment">//         3. We have guaranteed that `block_r` will be `&lt;= BLOCK`.</span>
-                <span class="comment">//            Plus, `end_r` was initially set to the begin pointer of `offsets_` which was declared on the stack.</span>
-                <span class="comment">//            Thus, we know that even in the worst case (all invocations of `is_less` returns true) we will only be at most 1 byte pass the end.</span>
-                <span class="comment">//        Another unsafety operation here is dereferencing `elem`.</span>
-                <span class="comment">//        However, `elem` was initially `1 * sizeof(T)` past the end and we decrement it by `1 * sizeof(T)` before accessing it.</span>
-                <span class="comment">//        Plus, `block_r` was asserted to be less than `BLOCK` and `elem` will therefore at most be pointing to the beginning of the slice.</span>
-                <span class="kw">unsafe</span> {
-                    <span class="comment">// Branchless comparison.</span>
-                    <span class="ident">elem</span> <span class="op">=</span> <span class="ident">elem</span>.<span class="ident">offset</span>(<span class="op">-</span><span class="number">1</span>);
-                    <span class="kw-2">*</span><span class="ident">end_r</span> <span class="op">=</span> <span class="ident">i</span> <span class="kw">as</span> <span class="ident">u8</span>;
-                    <span class="ident">end_r</span> <span class="op">=</span> <span class="ident">end_r</span>.<span class="ident">offset</span>(<span class="ident">is_less</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">elem</span>, <span class="ident">pivot</span>) <span class="kw">as</span> <span class="ident">isize</span>);
+            <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..block_r {
+                <span class="comment">// SAFETY: The unsafety operations below involve the usage of the `offset`.
+                //         According to the conditions required by the function, we satisfy them because:
+                //         1. `offsets_r` is stack-allocated, and thus considered separate allocated object.
+                //         2. The function `is_less` returns a `bool`.
+                //            Casting a `bool` will never overflow `isize`.
+                //         3. We have guaranteed that `block_r` will be `&lt;= BLOCK`.
+                //            Plus, `end_r` was initially set to the begin pointer of `offsets_` which was declared on the stack.
+                //            Thus, we know that even in the worst case (all invocations of `is_less` returns true) we will only be at most 1 byte pass the end.
+                //        Another unsafety operation here is dereferencing `elem`.
+                //        However, `elem` was initially `1 * sizeof(T)` past the end and we decrement it by `1 * sizeof(T)` before accessing it.
+                //        Plus, `block_r` was asserted to be less than `BLOCK` and `elem` will therefore at most be pointing to the beginning of the slice.
+                </span><span class="kw">unsafe </span>{
+                    <span class="comment">// Branchless comparison.
+                    </span>elem = elem.offset(-<span class="number">1</span>);
+                    <span class="kw-2">*</span>end_r = i <span class="kw">as </span>u8;
+                    end_r = end_r.offset(is_less(<span class="kw-2">&amp;*</span>elem, pivot) <span class="kw">as </span>isize);
                 }
             }
         }
 
-        <span class="comment">// Number of out-of-order elements to swap between the left and right side.</span>
-        <span class="kw">let</span> <span class="ident">count</span> <span class="op">=</span> <span class="ident">cmp::min</span>(<span class="ident">width</span>(<span class="ident">start_l</span>, <span class="ident">end_l</span>), <span class="ident">width</span>(<span class="ident">start_r</span>, <span class="ident">end_r</span>));
+        <span class="comment">// Number of out-of-order elements to swap between the left and right side.
+        </span><span class="kw">let </span>count = cmp::min(width(start_l, end_l), width(start_r, end_r));
 
-        <span class="kw">if</span> <span class="ident">count</span> <span class="op">&gt;</span> <span class="number">0</span> {
-            <span class="macro">macro_rules!</span> <span class="ident">left</span> {
+        <span class="kw">if </span>count &gt; <span class="number">0 </span>{
+            <span class="macro">macro_rules! </span>left {
                 () =&gt; {
-                    <span class="ident">l</span>.<span class="ident">offset</span>(<span class="kw-2">*</span><span class="ident">start_l</span> <span class="kw">as</span> <span class="ident">isize</span>)
+                    l.offset(<span class="kw-2">*</span>start_l <span class="kw">as </span>isize)
                 };
             }
-            <span class="macro">macro_rules!</span> <span class="ident">right</span> {
+            <span class="macro">macro_rules! </span>right {
                 () =&gt; {
-                    <span class="ident">r</span>.<span class="ident">offset</span>(<span class="op">-</span>(<span class="kw-2">*</span><span class="ident">start_r</span> <span class="kw">as</span> <span class="ident">isize</span>) <span class="op">-</span> <span class="number">1</span>)
+                    r.offset(-(<span class="kw-2">*</span>start_r <span class="kw">as </span>isize) - <span class="number">1</span>)
                 };
             }
 
-            <span class="comment">// Instead of swapping one pair at the time, it is more efficient to perform a cyclic</span>
-            <span class="comment">// permutation. This is not strictly equivalent to swapping, but produces a similar</span>
-            <span class="comment">// result using fewer memory operations.</span>
+            <span class="comment">// Instead of swapping one pair at the time, it is more efficient to perform a cyclic
+            // permutation. This is not strictly equivalent to swapping, but produces a similar
+            // result using fewer memory operations.
 
-            <span class="comment">// SAFETY: The use of `ptr::read` is valid because there is at least one element in</span>
-            <span class="comment">// both `offsets_l` and `offsets_r`, so `left!` is a valid pointer to read from.</span>
-            <span class="comment">//</span>
-            <span class="comment">// The uses of `left!` involve calls to `offset` on `l`, which points to the</span>
-            <span class="comment">// beginning of `v`. All the offsets pointed-to by `start_l` are at most `block_l`, so</span>
-            <span class="comment">// these `offset` calls are safe as all reads are within the block. The same argument</span>
-            <span class="comment">// applies for the uses of `right!`.</span>
-            <span class="comment">//</span>
-            <span class="comment">// The calls to `start_l.offset` are valid because there are at most `count-1` of them,</span>
-            <span class="comment">// plus the final one at the end of the unsafe block, where `count` is the minimum number</span>
-            <span class="comment">// of collected offsets in `offsets_l` and `offsets_r`, so there is no risk of there not</span>
-            <span class="comment">// being enough elements. The same reasoning applies to the calls to `start_r.offset`.</span>
-            <span class="comment">//</span>
-            <span class="comment">// The calls to `copy_nonoverlapping` are safe because `left!` and `right!` are guaranteed</span>
-            <span class="comment">// not to overlap, and are valid because of the reasoning above.</span>
-            <span class="kw">unsafe</span> {
-                <span class="kw">let</span> <span class="ident">tmp</span> <span class="op">=</span> <span class="ident">ptr::read</span>(<span class="macro">left!</span>());
-                <span class="ident">ptr::copy_nonoverlapping</span>(<span class="macro">right!</span>(), <span class="macro">left!</span>(), <span class="number">1</span>);
+            // SAFETY: The use of `ptr::read` is valid because there is at least one element in
+            // both `offsets_l` and `offsets_r`, so `left!` is a valid pointer to read from.
+            //
+            // The uses of `left!` involve calls to `offset` on `l`, which points to the
+            // beginning of `v`. All the offsets pointed-to by `start_l` are at most `block_l`, so
+            // these `offset` calls are safe as all reads are within the block. The same argument
+            // applies for the uses of `right!`.
+            //
+            // The calls to `start_l.offset` are valid because there are at most `count-1` of them,
+            // plus the final one at the end of the unsafe block, where `count` is the minimum number
+            // of collected offsets in `offsets_l` and `offsets_r`, so there is no risk of there not
+            // being enough elements. The same reasoning applies to the calls to `start_r.offset`.
+            //
+            // The calls to `copy_nonoverlapping` are safe because `left!` and `right!` are guaranteed
+            // not to overlap, and are valid because of the reasoning above.
+            </span><span class="kw">unsafe </span>{
+                <span class="kw">let </span>tmp = ptr::read(<span class="macro">left!</span>());
+                ptr::copy_nonoverlapping(<span class="macro">right!</span>(), <span class="macro">left!</span>(), <span class="number">1</span>);
 
-                <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">1</span>..<span class="ident">count</span> {
-                    <span class="ident">start_l</span> <span class="op">=</span> <span class="ident">start_l</span>.<span class="ident">offset</span>(<span class="number">1</span>);
-                    <span class="ident">ptr::copy_nonoverlapping</span>(<span class="macro">left!</span>(), <span class="macro">right!</span>(), <span class="number">1</span>);
-                    <span class="ident">start_r</span> <span class="op">=</span> <span class="ident">start_r</span>.<span class="ident">offset</span>(<span class="number">1</span>);
-                    <span class="ident">ptr::copy_nonoverlapping</span>(<span class="macro">right!</span>(), <span class="macro">left!</span>(), <span class="number">1</span>);
+                <span class="kw">for _ in </span><span class="number">1</span>..count {
+                    start_l = start_l.offset(<span class="number">1</span>);
+                    ptr::copy_nonoverlapping(<span class="macro">left!</span>(), <span class="macro">right!</span>(), <span class="number">1</span>);
+                    start_r = start_r.offset(<span class="number">1</span>);
+                    ptr::copy_nonoverlapping(<span class="macro">right!</span>(), <span class="macro">left!</span>(), <span class="number">1</span>);
                 }
 
-                <span class="ident">ptr::copy_nonoverlapping</span>(<span class="kw-2">&amp;</span><span class="ident">tmp</span>, <span class="macro">right!</span>(), <span class="number">1</span>);
-                <span class="ident">mem::forget</span>(<span class="ident">tmp</span>);
-                <span class="ident">start_l</span> <span class="op">=</span> <span class="ident">start_l</span>.<span class="ident">offset</span>(<span class="number">1</span>);
-                <span class="ident">start_r</span> <span class="op">=</span> <span class="ident">start_r</span>.<span class="ident">offset</span>(<span class="number">1</span>);
+                ptr::copy_nonoverlapping(<span class="kw-2">&amp;</span>tmp, <span class="macro">right!</span>(), <span class="number">1</span>);
+                mem::forget(tmp);
+                start_l = start_l.offset(<span class="number">1</span>);
+                start_r = start_r.offset(<span class="number">1</span>);
             }
         }
 
-        <span class="kw">if</span> <span class="ident">start_l</span> <span class="op">==</span> <span class="ident">end_l</span> {
-            <span class="comment">// All out-of-order elements in the left block were moved. Move to the next block.</span>
+        <span class="kw">if </span>start_l == end_l {
+            <span class="comment">// All out-of-order elements in the left block were moved. Move to the next block.
 
-            <span class="comment">// block-width-guarantee</span>
-            <span class="comment">// SAFETY: if `!is_done` then the slice width is guaranteed to be at least `2*BLOCK` wide. There</span>
-            <span class="comment">// are at most `BLOCK` elements in `offsets_l` because of its size, so the `offset` operation is</span>
-            <span class="comment">// safe. Otherwise, the debug assertions in the `is_done` case guarantee that</span>
-            <span class="comment">// `width(l, r) == block_l + block_r`, namely, that the block sizes have been adjusted to account</span>
-            <span class="comment">// for the smaller number of remaining elements.</span>
-            <span class="ident">l</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">l</span>.<span class="ident">offset</span>(<span class="ident">block_l</span> <span class="kw">as</span> <span class="ident">isize</span>) };
+            // block-width-guarantee
+            // SAFETY: if `!is_done` then the slice width is guaranteed to be at least `2*BLOCK` wide. There
+            // are at most `BLOCK` elements in `offsets_l` because of its size, so the `offset` operation is
+            // safe. Otherwise, the debug assertions in the `is_done` case guarantee that
+            // `width(l, r) == block_l + block_r`, namely, that the block sizes have been adjusted to account
+            // for the smaller number of remaining elements.
+            </span>l = <span class="kw">unsafe </span>{ l.offset(block_l <span class="kw">as </span>isize) };
         }
 
-        <span class="kw">if</span> <span class="ident">start_r</span> <span class="op">==</span> <span class="ident">end_r</span> {
-            <span class="comment">// All out-of-order elements in the right block were moved. Move to the previous block.</span>
+        <span class="kw">if </span>start_r == end_r {
+            <span class="comment">// All out-of-order elements in the right block were moved. Move to the previous block.
 
-            <span class="comment">// SAFETY: Same argument as [block-width-guarantee]. Either this is a full block `2*BLOCK`-wide,</span>
-            <span class="comment">// or `block_r` has been adjusted for the last handful of elements.</span>
-            <span class="ident">r</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">r</span>.<span class="ident">offset</span>(<span class="op">-</span>(<span class="ident">block_r</span> <span class="kw">as</span> <span class="ident">isize</span>)) };
+            // SAFETY: Same argument as [block-width-guarantee]. Either this is a full block `2*BLOCK`-wide,
+            // or `block_r` has been adjusted for the last handful of elements.
+            </span>r = <span class="kw">unsafe </span>{ r.offset(-(block_r <span class="kw">as </span>isize)) };
         }
 
-        <span class="kw">if</span> <span class="ident">is_done</span> {
+        <span class="kw">if </span>is_done {
             <span class="kw">break</span>;
         }
     }
 
-    <span class="comment">// All that remains now is at most one block (either the left or the right) with out-of-order</span>
-    <span class="comment">// elements that need to be moved. Such remaining elements can be simply shifted to the end</span>
-    <span class="comment">// within their block.</span>
+    <span class="comment">// All that remains now is at most one block (either the left or the right) with out-of-order
+    // elements that need to be moved. Such remaining elements can be simply shifted to the end
+    // within their block.
 
-    <span class="kw">if</span> <span class="ident">start_l</span> <span class="op">&lt;</span> <span class="ident">end_l</span> {
-        <span class="comment">// The left block remains.</span>
-        <span class="comment">// Move its remaining out-of-order elements to the far right.</span>
-        <span class="macro">debug_assert_eq!</span>(<span class="ident">width</span>(<span class="ident">l</span>, <span class="ident">r</span>), <span class="ident">block_l</span>);
-        <span class="kw">while</span> <span class="ident">start_l</span> <span class="op">&lt;</span> <span class="ident">end_l</span> {
-            <span class="comment">// remaining-elements-safety</span>
-            <span class="comment">// SAFETY: while the loop condition holds there are still elements in `offsets_l`, so it</span>
-            <span class="comment">// is safe to point `end_l` to the previous element.</span>
-            <span class="comment">//</span>
-            <span class="comment">// The `ptr::swap` is safe if both its arguments are valid for reads and writes:</span>
-            <span class="comment">//  - Per the debug assert above, the distance between `l` and `r` is `block_l`</span>
-            <span class="comment">//    elements, so there can be at most `block_l` remaining offsets between `start_l`</span>
-            <span class="comment">//    and `end_l`. This means `r` will be moved at most `block_l` steps back, which</span>
-            <span class="comment">//    makes the `r.offset` calls valid (at that point `l == r`).</span>
-            <span class="comment">//  - `offsets_l` contains valid offsets into `v` collected during the partitioning of</span>
-            <span class="comment">//    the last block, so the `l.offset` calls are valid.</span>
-            <span class="kw">unsafe</span> {
-                <span class="ident">end_l</span> <span class="op">=</span> <span class="ident">end_l</span>.<span class="ident">offset</span>(<span class="op">-</span><span class="number">1</span>);
-                <span class="ident">ptr::swap</span>(<span class="ident">l</span>.<span class="ident">offset</span>(<span class="kw-2">*</span><span class="ident">end_l</span> <span class="kw">as</span> <span class="ident">isize</span>), <span class="ident">r</span>.<span class="ident">offset</span>(<span class="op">-</span><span class="number">1</span>));
-                <span class="ident">r</span> <span class="op">=</span> <span class="ident">r</span>.<span class="ident">offset</span>(<span class="op">-</span><span class="number">1</span>);
+    </span><span class="kw">if </span>start_l &lt; end_l {
+        <span class="comment">// The left block remains.
+        // Move its remaining out-of-order elements to the far right.
+        </span><span class="macro">debug_assert_eq!</span>(width(l, r), block_l);
+        <span class="kw">while </span>start_l &lt; end_l {
+            <span class="comment">// remaining-elements-safety
+            // SAFETY: while the loop condition holds there are still elements in `offsets_l`, so it
+            // is safe to point `end_l` to the previous element.
+            //
+            // The `ptr::swap` is safe if both its arguments are valid for reads and writes:
+            //  - Per the debug assert above, the distance between `l` and `r` is `block_l`
+            //    elements, so there can be at most `block_l` remaining offsets between `start_l`
+            //    and `end_l`. This means `r` will be moved at most `block_l` steps back, which
+            //    makes the `r.offset` calls valid (at that point `l == r`).
+            //  - `offsets_l` contains valid offsets into `v` collected during the partitioning of
+            //    the last block, so the `l.offset` calls are valid.
+            </span><span class="kw">unsafe </span>{
+                end_l = end_l.offset(-<span class="number">1</span>);
+                ptr::swap(l.offset(<span class="kw-2">*</span>end_l <span class="kw">as </span>isize), r.offset(-<span class="number">1</span>));
+                r = r.offset(-<span class="number">1</span>);
             }
         }
-        <span class="ident">width</span>(<span class="ident">v</span>.<span class="ident">as_mut_ptr</span>(), <span class="ident">r</span>)
-    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">start_r</span> <span class="op">&lt;</span> <span class="ident">end_r</span> {
-        <span class="comment">// The right block remains.</span>
-        <span class="comment">// Move its remaining out-of-order elements to the far left.</span>
-        <span class="macro">debug_assert_eq!</span>(<span class="ident">width</span>(<span class="ident">l</span>, <span class="ident">r</span>), <span class="ident">block_r</span>);
-        <span class="kw">while</span> <span class="ident">start_r</span> <span class="op">&lt;</span> <span class="ident">end_r</span> {
-            <span class="comment">// SAFETY: See the reasoning in [remaining-elements-safety].</span>
-            <span class="kw">unsafe</span> {
-                <span class="ident">end_r</span> <span class="op">=</span> <span class="ident">end_r</span>.<span class="ident">offset</span>(<span class="op">-</span><span class="number">1</span>);
-                <span class="ident">ptr::swap</span>(<span class="ident">l</span>, <span class="ident">r</span>.<span class="ident">offset</span>(<span class="op">-</span>(<span class="kw-2">*</span><span class="ident">end_r</span> <span class="kw">as</span> <span class="ident">isize</span>) <span class="op">-</span> <span class="number">1</span>));
-                <span class="ident">l</span> <span class="op">=</span> <span class="ident">l</span>.<span class="ident">offset</span>(<span class="number">1</span>);
+        width(v.as_mut_ptr(), r)
+    } <span class="kw">else if </span>start_r &lt; end_r {
+        <span class="comment">// The right block remains.
+        // Move its remaining out-of-order elements to the far left.
+        </span><span class="macro">debug_assert_eq!</span>(width(l, r), block_r);
+        <span class="kw">while </span>start_r &lt; end_r {
+            <span class="comment">// SAFETY: See the reasoning in [remaining-elements-safety].
+            </span><span class="kw">unsafe </span>{
+                end_r = end_r.offset(-<span class="number">1</span>);
+                ptr::swap(l, r.offset(-(<span class="kw-2">*</span>end_r <span class="kw">as </span>isize) - <span class="number">1</span>));
+                l = l.offset(<span class="number">1</span>);
             }
         }
-        <span class="ident">width</span>(<span class="ident">v</span>.<span class="ident">as_mut_ptr</span>(), <span class="ident">l</span>)
-    } <span class="kw">else</span> {
-        <span class="comment">// Nothing else to do, we&#39;re done.</span>
-        <span class="ident">width</span>(<span class="ident">v</span>.<span class="ident">as_mut_ptr</span>(), <span class="ident">l</span>)
+        width(v.as_mut_ptr(), l)
+    } <span class="kw">else </span>{
+        <span class="comment">// Nothing else to do, we&#39;re done.
+        </span>width(v.as_mut_ptr(), l)
     }
 }
 
-<span class="doccomment">/// Partitions `v` into elements smaller than `v[pivot]`, followed by elements greater than or</span>
-<span class="doccomment">/// equal to `v[pivot]`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Returns a tuple of:</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// 1. Number of elements smaller than `v[pivot]`.</span>
-<span class="doccomment">/// 2. True if `v` was already partitioned.</span>
-<span class="kw">fn</span> <span class="ident">partition</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">v</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">T</span>], <span class="ident">pivot</span>: <span class="ident">usize</span>, <span class="ident">is_less</span>: <span class="kw-2">&amp;</span><span class="ident">F</span>) -&gt; (<span class="ident">usize</span>, <span class="ident">bool</span>)
-<span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="kw-2">&amp;</span><span class="ident">T</span>) -&gt; <span class="ident">bool</span>,
+<span class="doccomment">/// Partitions `v` into elements smaller than `v[pivot]`, followed by elements greater than or
+/// equal to `v[pivot]`.
+///
+/// Returns a tuple of:
+///
+/// 1. Number of elements smaller than `v[pivot]`.
+/// 2. True if `v` was already partitioned.
+</span><span class="kw">fn </span>partition&lt;T, F&gt;(v: <span class="kw-2">&amp;mut </span>[T], pivot: usize, is_less: <span class="kw-2">&amp;</span>F) -&gt; (usize, bool)
+<span class="kw">where
+    </span>F: Fn(<span class="kw-2">&amp;</span>T, <span class="kw-2">&amp;</span>T) -&gt; bool,
 {
-    <span class="kw">let</span> (<span class="ident">mid</span>, <span class="ident">was_partitioned</span>) <span class="op">=</span> {
-        <span class="comment">// Place the pivot at the beginning of slice.</span>
-        <span class="ident">v</span>.<span class="ident">swap</span>(<span class="number">0</span>, <span class="ident">pivot</span>);
-        <span class="kw">let</span> (<span class="ident">pivot</span>, <span class="ident">v</span>) <span class="op">=</span> <span class="ident">v</span>.<span class="ident">split_at_mut</span>(<span class="number">1</span>);
-        <span class="kw">let</span> <span class="ident">pivot</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="ident">pivot</span>[<span class="number">0</span>];
+    <span class="kw">let </span>(mid, was_partitioned) = {
+        <span class="comment">// Place the pivot at the beginning of slice.
+        </span>v.swap(<span class="number">0</span>, pivot);
+        <span class="kw">let </span>(pivot, v) = v.split_at_mut(<span class="number">1</span>);
+        <span class="kw">let </span>pivot = <span class="kw-2">&amp;mut </span>pivot[<span class="number">0</span>];
 
-        <span class="comment">// Read the pivot into a stack-allocated variable for efficiency. If a following comparison</span>
-        <span class="comment">// operation panics, the pivot will be automatically written back into the slice.</span>
+        <span class="comment">// Read the pivot into a stack-allocated variable for efficiency. If a following comparison
+        // operation panics, the pivot will be automatically written back into the slice.
 
-        <span class="comment">// SAFETY: `pivot` is a reference to the first element of `v`, so `ptr::read` is safe.</span>
-        <span class="kw">let</span> <span class="ident">tmp</span> <span class="op">=</span> <span class="ident">mem::ManuallyDrop::new</span>(<span class="kw">unsafe</span> { <span class="ident">ptr::read</span>(<span class="ident">pivot</span>) });
-        <span class="kw">let</span> <span class="ident">_pivot_guard</span> <span class="op">=</span> <span class="ident">CopyOnDrop</span> {
-            <span class="ident">src</span>: <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">tmp</span>,
-            <span class="ident">dest</span>: <span class="ident">pivot</span>,
+        // SAFETY: `pivot` is a reference to the first element of `v`, so `ptr::read` is safe.
+        </span><span class="kw">let </span>tmp = mem::ManuallyDrop::new(<span class="kw">unsafe </span>{ ptr::read(pivot) });
+        <span class="kw">let </span>_pivot_guard = CopyOnDrop {
+            src: <span class="kw-2">&amp;*</span>tmp,
+            dest: pivot,
         };
-        <span class="kw">let</span> <span class="ident">pivot</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">tmp</span>;
+        <span class="kw">let </span>pivot = <span class="kw-2">&amp;*</span>tmp;
 
-        <span class="comment">// Find the first pair of out-of-order elements.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">l</span> <span class="op">=</span> <span class="number">0</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">r</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">len</span>();
+        <span class="comment">// Find the first pair of out-of-order elements.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>l = <span class="number">0</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>r = v.len();
 
-        <span class="comment">// SAFETY: The unsafety below involves indexing an array.</span>
-        <span class="comment">// For the first one: We already do the bounds checking here with `l &lt; r`.</span>
-        <span class="comment">// For the second one: We initially have `l == 0` and `r == v.len()` and we checked that `l &lt; r` at every indexing operation.</span>
-        <span class="comment">//                     From here we know that `r` must be at least `r == l` which was shown to be valid from the first one.</span>
-        <span class="kw">unsafe</span> {
-            <span class="comment">// Find the first element greater than or equal to the pivot.</span>
-            <span class="kw">while</span> <span class="ident">l</span> <span class="op">&lt;</span> <span class="ident">r</span> <span class="op">&amp;&amp;</span> <span class="ident">is_less</span>(<span class="ident">v</span>.<span class="ident">get_unchecked</span>(<span class="ident">l</span>), <span class="ident">pivot</span>) {
-                <span class="ident">l</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+        <span class="comment">// SAFETY: The unsafety below involves indexing an array.
+        // For the first one: We already do the bounds checking here with `l &lt; r`.
+        // For the second one: We initially have `l == 0` and `r == v.len()` and we checked that `l &lt; r` at every indexing operation.
+        //                     From here we know that `r` must be at least `r == l` which was shown to be valid from the first one.
+        </span><span class="kw">unsafe </span>{
+            <span class="comment">// Find the first element greater than or equal to the pivot.
+            </span><span class="kw">while </span>l &lt; r &amp;&amp; is_less(v.get_unchecked(l), pivot) {
+                l += <span class="number">1</span>;
             }
 
-            <span class="comment">// Find the last element smaller that the pivot.</span>
-            <span class="kw">while</span> <span class="ident">l</span> <span class="op">&lt;</span> <span class="ident">r</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="ident">is_less</span>(<span class="ident">v</span>.<span class="ident">get_unchecked</span>(<span class="ident">r</span> <span class="op">-</span> <span class="number">1</span>), <span class="ident">pivot</span>) {
-                <span class="ident">r</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
+            <span class="comment">// Find the last element smaller that the pivot.
+            </span><span class="kw">while </span>l &lt; r &amp;&amp; !is_less(v.get_unchecked(r - <span class="number">1</span>), pivot) {
+                r -= <span class="number">1</span>;
             }
         }
 
         (
-            <span class="ident">l</span> <span class="op">+</span> <span class="ident">partition_in_blocks</span>(<span class="kw-2">&amp;mut</span> <span class="ident">v</span>[<span class="ident">l</span>..<span class="ident">r</span>], <span class="ident">pivot</span>, <span class="ident">is_less</span>),
-            <span class="ident">l</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">r</span>,
+            l + partition_in_blocks(<span class="kw-2">&amp;mut </span>v[l..r], pivot, is_less),
+            l &gt;= r,
         )
 
-        <span class="comment">// `_pivot_guard` goes out of scope and writes the pivot (which is a stack-allocated</span>
-        <span class="comment">// variable) back into the slice where it originally was. This step is critical in ensuring</span>
-        <span class="comment">// safety!</span>
-    };
+        <span class="comment">// `_pivot_guard` goes out of scope and writes the pivot (which is a stack-allocated
+        // variable) back into the slice where it originally was. This step is critical in ensuring
+        // safety!
+    </span>};
 
-    <span class="comment">// Place the pivot between the two partitions.</span>
-    <span class="ident">v</span>.<span class="ident">swap</span>(<span class="number">0</span>, <span class="ident">mid</span>);
+    <span class="comment">// Place the pivot between the two partitions.
+    </span>v.swap(<span class="number">0</span>, mid);
 
-    (<span class="ident">mid</span>, <span class="ident">was_partitioned</span>)
+    (mid, was_partitioned)
 }
 
-<span class="doccomment">/// Partitions `v` into elements equal to `v[pivot]` followed by elements greater than `v[pivot]`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Returns the number of elements equal to the pivot. It is assumed that `v` does not contain</span>
-<span class="doccomment">/// elements smaller than the pivot.</span>
-<span class="kw">fn</span> <span class="ident">partition_equal</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">v</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">T</span>], <span class="ident">pivot</span>: <span class="ident">usize</span>, <span class="ident">is_less</span>: <span class="kw-2">&amp;</span><span class="ident">F</span>) -&gt; <span class="ident">usize</span>
-<span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="kw-2">&amp;</span><span class="ident">T</span>) -&gt; <span class="ident">bool</span>,
+<span class="doccomment">/// Partitions `v` into elements equal to `v[pivot]` followed by elements greater than `v[pivot]`.
+///
+/// Returns the number of elements equal to the pivot. It is assumed that `v` does not contain
+/// elements smaller than the pivot.
+</span><span class="kw">fn </span>partition_equal&lt;T, F&gt;(v: <span class="kw-2">&amp;mut </span>[T], pivot: usize, is_less: <span class="kw-2">&amp;</span>F) -&gt; usize
+<span class="kw">where
+    </span>F: Fn(<span class="kw-2">&amp;</span>T, <span class="kw-2">&amp;</span>T) -&gt; bool,
 {
-    <span class="comment">// Place the pivot at the beginning of slice.</span>
-    <span class="ident">v</span>.<span class="ident">swap</span>(<span class="number">0</span>, <span class="ident">pivot</span>);
-    <span class="kw">let</span> (<span class="ident">pivot</span>, <span class="ident">v</span>) <span class="op">=</span> <span class="ident">v</span>.<span class="ident">split_at_mut</span>(<span class="number">1</span>);
-    <span class="kw">let</span> <span class="ident">pivot</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="ident">pivot</span>[<span class="number">0</span>];
+    <span class="comment">// Place the pivot at the beginning of slice.
+    </span>v.swap(<span class="number">0</span>, pivot);
+    <span class="kw">let </span>(pivot, v) = v.split_at_mut(<span class="number">1</span>);
+    <span class="kw">let </span>pivot = <span class="kw-2">&amp;mut </span>pivot[<span class="number">0</span>];
 
-    <span class="comment">// Read the pivot into a stack-allocated variable for efficiency. If a following comparison</span>
-    <span class="comment">// operation panics, the pivot will be automatically written back into the slice.</span>
-    <span class="comment">// SAFETY: The pointer here is valid because it is obtained from a reference to a slice.</span>
-    <span class="kw">let</span> <span class="ident">tmp</span> <span class="op">=</span> <span class="ident">mem::ManuallyDrop::new</span>(<span class="kw">unsafe</span> { <span class="ident">ptr::read</span>(<span class="ident">pivot</span>) });
-    <span class="kw">let</span> <span class="ident">_pivot_guard</span> <span class="op">=</span> <span class="ident">CopyOnDrop</span> {
-        <span class="ident">src</span>: <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">tmp</span>,
-        <span class="ident">dest</span>: <span class="ident">pivot</span>,
+    <span class="comment">// Read the pivot into a stack-allocated variable for efficiency. If a following comparison
+    // operation panics, the pivot will be automatically written back into the slice.
+    // SAFETY: The pointer here is valid because it is obtained from a reference to a slice.
+    </span><span class="kw">let </span>tmp = mem::ManuallyDrop::new(<span class="kw">unsafe </span>{ ptr::read(pivot) });
+    <span class="kw">let </span>_pivot_guard = CopyOnDrop {
+        src: <span class="kw-2">&amp;*</span>tmp,
+        dest: pivot,
     };
-    <span class="kw">let</span> <span class="ident">pivot</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">tmp</span>;
+    <span class="kw">let </span>pivot = <span class="kw-2">&amp;*</span>tmp;
 
-    <span class="comment">// Now partition the slice.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">l</span> <span class="op">=</span> <span class="number">0</span>;
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">r</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">len</span>();
-    <span class="kw">loop</span> {
-        <span class="comment">// SAFETY: The unsafety below involves indexing an array.</span>
-        <span class="comment">// For the first one: We already do the bounds checking here with `l &lt; r`.</span>
-        <span class="comment">// For the second one: We initially have `l == 0` and `r == v.len()` and we checked that `l &lt; r` at every indexing operation.</span>
-        <span class="comment">//                     From here we know that `r` must be at least `r == l` which was shown to be valid from the first one.</span>
-        <span class="kw">unsafe</span> {
-            <span class="comment">// Find the first element greater than the pivot.</span>
-            <span class="kw">while</span> <span class="ident">l</span> <span class="op">&lt;</span> <span class="ident">r</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="ident">is_less</span>(<span class="ident">pivot</span>, <span class="ident">v</span>.<span class="ident">get_unchecked</span>(<span class="ident">l</span>)) {
-                <span class="ident">l</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+    <span class="comment">// Now partition the slice.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>l = <span class="number">0</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>r = v.len();
+    <span class="kw">loop </span>{
+        <span class="comment">// SAFETY: The unsafety below involves indexing an array.
+        // For the first one: We already do the bounds checking here with `l &lt; r`.
+        // For the second one: We initially have `l == 0` and `r == v.len()` and we checked that `l &lt; r` at every indexing operation.
+        //                     From here we know that `r` must be at least `r == l` which was shown to be valid from the first one.
+        </span><span class="kw">unsafe </span>{
+            <span class="comment">// Find the first element greater than the pivot.
+            </span><span class="kw">while </span>l &lt; r &amp;&amp; !is_less(pivot, v.get_unchecked(l)) {
+                l += <span class="number">1</span>;
             }
 
-            <span class="comment">// Find the last element equal to the pivot.</span>
-            <span class="kw">while</span> <span class="ident">l</span> <span class="op">&lt;</span> <span class="ident">r</span> <span class="op">&amp;&amp;</span> <span class="ident">is_less</span>(<span class="ident">pivot</span>, <span class="ident">v</span>.<span class="ident">get_unchecked</span>(<span class="ident">r</span> <span class="op">-</span> <span class="number">1</span>)) {
-                <span class="ident">r</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
+            <span class="comment">// Find the last element equal to the pivot.
+            </span><span class="kw">while </span>l &lt; r &amp;&amp; is_less(pivot, v.get_unchecked(r - <span class="number">1</span>)) {
+                r -= <span class="number">1</span>;
             }
 
-            <span class="comment">// Are we done?</span>
-            <span class="kw">if</span> <span class="ident">l</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">r</span> {
+            <span class="comment">// Are we done?
+            </span><span class="kw">if </span>l &gt;= r {
                 <span class="kw">break</span>;
             }
 
-            <span class="comment">// Swap the found pair of out-of-order elements.</span>
-            <span class="ident">r</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
-            <span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">as_mut_ptr</span>();
-            <span class="ident">ptr::swap</span>(<span class="ident">ptr</span>.<span class="ident">add</span>(<span class="ident">l</span>), <span class="ident">ptr</span>.<span class="ident">add</span>(<span class="ident">r</span>));
-            <span class="ident">l</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+            <span class="comment">// Swap the found pair of out-of-order elements.
+            </span>r -= <span class="number">1</span>;
+            <span class="kw">let </span>ptr = v.as_mut_ptr();
+            ptr::swap(ptr.add(l), ptr.add(r));
+            l += <span class="number">1</span>;
         }
     }
 
-    <span class="comment">// We found `l` elements equal to the pivot. Add 1 to account for the pivot itself.</span>
-    <span class="ident">l</span> <span class="op">+</span> <span class="number">1</span>
+    <span class="comment">// We found `l` elements equal to the pivot. Add 1 to account for the pivot itself.
+    </span>l + <span class="number">1
 
-    <span class="comment">// `_pivot_guard` goes out of scope and writes the pivot (which is a stack-allocated variable)</span>
-    <span class="comment">// back into the slice where it originally was. This step is critical in ensuring safety!</span>
-}
+    </span><span class="comment">// `_pivot_guard` goes out of scope and writes the pivot (which is a stack-allocated variable)
+    // back into the slice where it originally was. This step is critical in ensuring safety!
+</span>}
 
-<span class="doccomment">/// Scatters some elements around in an attempt to break patterns that might cause imbalanced</span>
-<span class="doccomment">/// partitions in quicksort.</span>
-<span class="attribute">#[<span class="ident">cold</span>]</span>
-<span class="kw">fn</span> <span class="ident">break_patterns</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">v</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">T</span>]) {
-    <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">len</span>();
-    <span class="kw">if</span> <span class="ident">len</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">8</span> {
-        <span class="comment">// Pseudorandom number generator from the &quot;Xorshift RNGs&quot; paper by George Marsaglia.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">random</span> <span class="op">=</span> <span class="ident">len</span> <span class="kw">as</span> <span class="ident">u32</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">gen_u32</span> <span class="op">=</span> <span class="op">|</span><span class="op">|</span> {
-            <span class="ident">random</span> <span class="op">^</span><span class="op">=</span> <span class="ident">random</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">13</span>;
-            <span class="ident">random</span> <span class="op">^</span><span class="op">=</span> <span class="ident">random</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">17</span>;
-            <span class="ident">random</span> <span class="op">^</span><span class="op">=</span> <span class="ident">random</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">5</span>;
-            <span class="ident">random</span>
+<span class="doccomment">/// Scatters some elements around in an attempt to break patterns that might cause imbalanced
+/// partitions in quicksort.
+</span><span class="attribute">#[cold]
+</span><span class="kw">fn </span>break_patterns&lt;T&gt;(v: <span class="kw-2">&amp;mut </span>[T]) {
+    <span class="kw">let </span>len = v.len();
+    <span class="kw">if </span>len &gt;= <span class="number">8 </span>{
+        <span class="comment">// Pseudorandom number generator from the &quot;Xorshift RNGs&quot; paper by George Marsaglia.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>random = len <span class="kw">as </span>u32;
+        <span class="kw">let </span><span class="kw-2">mut </span>gen_u32 = || {
+            random ^= random &lt;&lt; <span class="number">13</span>;
+            random ^= random &gt;&gt; <span class="number">17</span>;
+            random ^= random &lt;&lt; <span class="number">5</span>;
+            random
         };
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">gen_usize</span> <span class="op">=</span> <span class="op">|</span><span class="op">|</span> {
-            <span class="comment">// TODO 1.53: if usize::BITS &lt;= 32 {</span>
-            <span class="kw">if</span> <span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="number">4</span> {
-                <span class="ident">gen_u32</span>() <span class="kw">as</span> <span class="ident">usize</span>
-            } <span class="kw">else</span> {
-                (((<span class="ident">gen_u32</span>() <span class="kw">as</span> <span class="ident">u64</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">32</span>) <span class="op">|</span> (<span class="ident">gen_u32</span>() <span class="kw">as</span> <span class="ident">u64</span>)) <span class="kw">as</span> <span class="ident">usize</span>
+        <span class="kw">let </span><span class="kw-2">mut </span>gen_usize = || {
+            <span class="comment">// TODO 1.53: if usize::BITS &lt;= 32 {
+            </span><span class="kw">if </span>mem::size_of::&lt;usize&gt;() &lt;= <span class="number">4 </span>{
+                gen_u32() <span class="kw">as </span>usize
+            } <span class="kw">else </span>{
+                (((gen_u32() <span class="kw">as </span>u64) &lt;&lt; <span class="number">32</span>) | (gen_u32() <span class="kw">as </span>u64)) <span class="kw">as </span>usize
             }
         };
 
-        <span class="comment">// Take random numbers modulo this number.</span>
-        <span class="comment">// The number fits into `usize` because `len` is not greater than `isize::MAX`.</span>
-        <span class="kw">let</span> <span class="ident">modulus</span> <span class="op">=</span> <span class="ident">len</span>.<span class="ident">next_power_of_two</span>();
+        <span class="comment">// Take random numbers modulo this number.
+        // The number fits into `usize` because `len` is not greater than `isize::MAX`.
+        </span><span class="kw">let </span>modulus = len.next_power_of_two();
 
-        <span class="comment">// Some pivot candidates will be in the nearby of this index. Let&#39;s randomize them.</span>
-        <span class="kw">let</span> <span class="ident">pos</span> <span class="op">=</span> <span class="ident">len</span> <span class="op">/</span> <span class="number">4</span> <span class="op">*</span> <span class="number">2</span>;
+        <span class="comment">// Some pivot candidates will be in the nearby of this index. Let&#39;s randomize them.
+        </span><span class="kw">let </span>pos = len / <span class="number">4 </span>* <span class="number">2</span>;
 
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">3</span> {
-            <span class="comment">// Generate a random number modulo `len`. However, in order to avoid costly operations</span>
-            <span class="comment">// we first take it modulo a power of two, and then decrease by `len` until it fits</span>
-            <span class="comment">// into the range `[0, len - 1]`.</span>
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">other</span> <span class="op">=</span> <span class="ident">gen_usize</span>() <span class="op">&amp;</span> (<span class="ident">modulus</span> <span class="op">-</span> <span class="number">1</span>);
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">3 </span>{
+            <span class="comment">// Generate a random number modulo `len`. However, in order to avoid costly operations
+            // we first take it modulo a power of two, and then decrease by `len` until it fits
+            // into the range `[0, len - 1]`.
+            </span><span class="kw">let </span><span class="kw-2">mut </span>other = gen_usize() &amp; (modulus - <span class="number">1</span>);
 
-            <span class="comment">// `other` is guaranteed to be less than `2 * len`.</span>
-            <span class="kw">if</span> <span class="ident">other</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">len</span> {
-                <span class="ident">other</span> <span class="op">-</span><span class="op">=</span> <span class="ident">len</span>;
+            <span class="comment">// `other` is guaranteed to be less than `2 * len`.
+            </span><span class="kw">if </span>other &gt;= len {
+                other -= len;
             }
 
-            <span class="ident">v</span>.<span class="ident">swap</span>(<span class="ident">pos</span> <span class="op">-</span> <span class="number">1</span> <span class="op">+</span> <span class="ident">i</span>, <span class="ident">other</span>);
+            v.swap(pos - <span class="number">1 </span>+ i, other);
         }
     }
 }
 
-<span class="doccomment">/// Chooses a pivot in `v` and returns the index and `true` if the slice is likely already sorted.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Elements in `v` might be reordered in the process.</span>
-<span class="kw">fn</span> <span class="ident">choose_pivot</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">v</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">T</span>], <span class="ident">is_less</span>: <span class="kw-2">&amp;</span><span class="ident">F</span>) -&gt; (<span class="ident">usize</span>, <span class="ident">bool</span>)
-<span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="kw-2">&amp;</span><span class="ident">T</span>) -&gt; <span class="ident">bool</span>,
+<span class="doccomment">/// Chooses a pivot in `v` and returns the index and `true` if the slice is likely already sorted.
+///
+/// Elements in `v` might be reordered in the process.
+</span><span class="kw">fn </span>choose_pivot&lt;T, F&gt;(v: <span class="kw-2">&amp;mut </span>[T], is_less: <span class="kw-2">&amp;</span>F) -&gt; (usize, bool)
+<span class="kw">where
+    </span>F: Fn(<span class="kw-2">&amp;</span>T, <span class="kw-2">&amp;</span>T) -&gt; bool,
 {
-    <span class="comment">// Minimum length to choose the median-of-medians method.</span>
-    <span class="comment">// Shorter slices use the simple median-of-three method.</span>
-    <span class="kw">const</span> <span class="ident">SHORTEST_MEDIAN_OF_MEDIANS</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">50</span>;
-    <span class="comment">// Maximum number of swaps that can be performed in this function.</span>
-    <span class="kw">const</span> <span class="ident">MAX_SWAPS</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">4</span> <span class="op">*</span> <span class="number">3</span>;
+    <span class="comment">// Minimum length to choose the median-of-medians method.
+    // Shorter slices use the simple median-of-three method.
+    </span><span class="kw">const </span>SHORTEST_MEDIAN_OF_MEDIANS: usize = <span class="number">50</span>;
+    <span class="comment">// Maximum number of swaps that can be performed in this function.
+    </span><span class="kw">const </span>MAX_SWAPS: usize = <span class="number">4 </span>* <span class="number">3</span>;
 
-    <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">len</span>();
+    <span class="kw">let </span>len = v.len();
 
-    <span class="comment">// Three indices near which we are going to choose a pivot.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">len</span> <span class="op">/</span> <span class="number">4</span> <span class="op">*</span> <span class="number">1</span>;
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">len</span> <span class="op">/</span> <span class="number">4</span> <span class="op">*</span> <span class="number">2</span>;
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">c</span> <span class="op">=</span> <span class="ident">len</span> <span class="op">/</span> <span class="number">4</span> <span class="op">*</span> <span class="number">3</span>;
+    <span class="comment">// Three indices near which we are going to choose a pivot.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>a = len / <span class="number">4 </span>* <span class="number">1</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>b = len / <span class="number">4 </span>* <span class="number">2</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>c = len / <span class="number">4 </span>* <span class="number">3</span>;
 
-    <span class="comment">// Counts the total number of swaps we are about to perform while sorting indices.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">swaps</span> <span class="op">=</span> <span class="number">0</span>;
+    <span class="comment">// Counts the total number of swaps we are about to perform while sorting indices.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>swaps = <span class="number">0</span>;
 
-    <span class="kw">if</span> <span class="ident">len</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">8</span> {
-        <span class="comment">// Swaps indices so that `v[a] &lt;= v[b]`.</span>
-        <span class="comment">// SAFETY: `len &gt;= 8` so there are at least two elements in the neighborhoods of</span>
-        <span class="comment">// `a`, `b` and `c`. This means the three calls to `sort_adjacent` result in</span>
-        <span class="comment">// corresponding calls to `sort3` with valid 3-item neighborhoods around each</span>
-        <span class="comment">// pointer, which in turn means the calls to `sort2` are done with valid</span>
-        <span class="comment">// references. Thus the `v.get_unchecked` calls are safe, as is the `ptr::swap`</span>
-        <span class="comment">// call.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">sort2</span> <span class="op">=</span> <span class="op">|</span><span class="ident">a</span>: <span class="kw-2">&amp;mut</span> <span class="ident">usize</span>, <span class="ident">b</span>: <span class="kw-2">&amp;mut</span> <span class="ident">usize</span><span class="op">|</span> <span class="kw">unsafe</span> {
-            <span class="kw">if</span> <span class="ident">is_less</span>(<span class="ident">v</span>.<span class="ident">get_unchecked</span>(<span class="kw-2">*</span><span class="ident">b</span>), <span class="ident">v</span>.<span class="ident">get_unchecked</span>(<span class="kw-2">*</span><span class="ident">a</span>)) {
-                <span class="ident">ptr::swap</span>(<span class="ident">a</span>, <span class="ident">b</span>);
-                <span class="ident">swaps</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+    <span class="kw">if </span>len &gt;= <span class="number">8 </span>{
+        <span class="comment">// Swaps indices so that `v[a] &lt;= v[b]`.
+        // SAFETY: `len &gt;= 8` so there are at least two elements in the neighborhoods of
+        // `a`, `b` and `c`. This means the three calls to `sort_adjacent` result in
+        // corresponding calls to `sort3` with valid 3-item neighborhoods around each
+        // pointer, which in turn means the calls to `sort2` are done with valid
+        // references. Thus the `v.get_unchecked` calls are safe, as is the `ptr::swap`
+        // call.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>sort2 = |a: <span class="kw-2">&amp;mut </span>usize, b: <span class="kw-2">&amp;mut </span>usize| <span class="kw">unsafe </span>{
+            <span class="kw">if </span>is_less(v.get_unchecked(<span class="kw-2">*</span>b), v.get_unchecked(<span class="kw-2">*</span>a)) {
+                ptr::swap(a, b);
+                swaps += <span class="number">1</span>;
             }
         };
 
-        <span class="comment">// Swaps indices so that `v[a] &lt;= v[b] &lt;= v[c]`.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">sort3</span> <span class="op">=</span> <span class="op">|</span><span class="ident">a</span>: <span class="kw-2">&amp;mut</span> <span class="ident">usize</span>, <span class="ident">b</span>: <span class="kw-2">&amp;mut</span> <span class="ident">usize</span>, <span class="ident">c</span>: <span class="kw-2">&amp;mut</span> <span class="ident">usize</span><span class="op">|</span> {
-            <span class="ident">sort2</span>(<span class="ident">a</span>, <span class="ident">b</span>);
-            <span class="ident">sort2</span>(<span class="ident">b</span>, <span class="ident">c</span>);
-            <span class="ident">sort2</span>(<span class="ident">a</span>, <span class="ident">b</span>);
+        <span class="comment">// Swaps indices so that `v[a] &lt;= v[b] &lt;= v[c]`.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>sort3 = |a: <span class="kw-2">&amp;mut </span>usize, b: <span class="kw-2">&amp;mut </span>usize, c: <span class="kw-2">&amp;mut </span>usize| {
+            sort2(a, b);
+            sort2(b, c);
+            sort2(a, b);
         };
 
-        <span class="kw">if</span> <span class="ident">len</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">SHORTEST_MEDIAN_OF_MEDIANS</span> {
-            <span class="comment">// Finds the median of `v[a - 1], v[a], v[a + 1]` and stores the index into `a`.</span>
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">sort_adjacent</span> <span class="op">=</span> <span class="op">|</span><span class="ident">a</span>: <span class="kw-2">&amp;mut</span> <span class="ident">usize</span><span class="op">|</span> {
-                <span class="kw">let</span> <span class="ident">tmp</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">a</span>;
-                <span class="ident">sort3</span>(<span class="kw-2">&amp;mut</span> (<span class="ident">tmp</span> <span class="op">-</span> <span class="number">1</span>), <span class="ident">a</span>, <span class="kw-2">&amp;mut</span> (<span class="ident">tmp</span> <span class="op">+</span> <span class="number">1</span>));
+        <span class="kw">if </span>len &gt;= SHORTEST_MEDIAN_OF_MEDIANS {
+            <span class="comment">// Finds the median of `v[a - 1], v[a], v[a + 1]` and stores the index into `a`.
+            </span><span class="kw">let </span><span class="kw-2">mut </span>sort_adjacent = |a: <span class="kw-2">&amp;mut </span>usize| {
+                <span class="kw">let </span>tmp = <span class="kw-2">*</span>a;
+                sort3(<span class="kw-2">&amp;mut </span>(tmp - <span class="number">1</span>), a, <span class="kw-2">&amp;mut </span>(tmp + <span class="number">1</span>));
             };
 
-            <span class="comment">// Find medians in the neighborhoods of `a`, `b`, and `c`.</span>
-            <span class="ident">sort_adjacent</span>(<span class="kw-2">&amp;mut</span> <span class="ident">a</span>);
-            <span class="ident">sort_adjacent</span>(<span class="kw-2">&amp;mut</span> <span class="ident">b</span>);
-            <span class="ident">sort_adjacent</span>(<span class="kw-2">&amp;mut</span> <span class="ident">c</span>);
+            <span class="comment">// Find medians in the neighborhoods of `a`, `b`, and `c`.
+            </span>sort_adjacent(<span class="kw-2">&amp;mut </span>a);
+            sort_adjacent(<span class="kw-2">&amp;mut </span>b);
+            sort_adjacent(<span class="kw-2">&amp;mut </span>c);
         }
 
-        <span class="comment">// Find the median among `a`, `b`, and `c`.</span>
-        <span class="ident">sort3</span>(<span class="kw-2">&amp;mut</span> <span class="ident">a</span>, <span class="kw-2">&amp;mut</span> <span class="ident">b</span>, <span class="kw-2">&amp;mut</span> <span class="ident">c</span>);
+        <span class="comment">// Find the median among `a`, `b`, and `c`.
+        </span>sort3(<span class="kw-2">&amp;mut </span>a, <span class="kw-2">&amp;mut </span>b, <span class="kw-2">&amp;mut </span>c);
     }
 
-    <span class="kw">if</span> <span class="ident">swaps</span> <span class="op">&lt;</span> <span class="ident">MAX_SWAPS</span> {
-        (<span class="ident">b</span>, <span class="ident">swaps</span> <span class="op">==</span> <span class="number">0</span>)
-    } <span class="kw">else</span> {
-        <span class="comment">// The maximum number of swaps was performed. Chances are the slice is descending or mostly</span>
-        <span class="comment">// descending, so reversing will probably help sort it faster.</span>
-        <span class="ident">v</span>.<span class="ident">reverse</span>();
-        (<span class="ident">len</span> <span class="op">-</span> <span class="number">1</span> <span class="op">-</span> <span class="ident">b</span>, <span class="bool-val">true</span>)
+    <span class="kw">if </span>swaps &lt; MAX_SWAPS {
+        (b, swaps == <span class="number">0</span>)
+    } <span class="kw">else </span>{
+        <span class="comment">// The maximum number of swaps was performed. Chances are the slice is descending or mostly
+        // descending, so reversing will probably help sort it faster.
+        </span>v.reverse();
+        (len - <span class="number">1 </span>- b, <span class="bool-val">true</span>)
     }
 }
 
-<span class="doccomment">/// Sorts `v` recursively.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// If the slice had a predecessor in the original array, it is specified as `pred`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// `limit` is the number of allowed imbalanced partitions before switching to `heapsort`. If zero,</span>
-<span class="doccomment">/// this function will immediately switch to heapsort.</span>
-<span class="kw">fn</span> <span class="ident">recurse</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="kw-2">mut</span> <span class="ident">v</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> [<span class="ident">T</span>], <span class="ident">is_less</span>: <span class="kw-2">&amp;</span><span class="ident">F</span>, <span class="kw-2">mut</span> <span class="ident">pred</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">T</span><span class="op">&gt;</span>, <span class="kw-2">mut</span> <span class="ident">limit</span>: <span class="ident">u32</span>)
-<span class="kw">where</span>
-    <span class="ident">T</span>: <span class="ident">Send</span>,
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="kw-2">&amp;</span><span class="ident">T</span>) -&gt; <span class="ident">bool</span> <span class="op">+</span> <span class="ident">Sync</span>,
+<span class="doccomment">/// Sorts `v` recursively.
+///
+/// If the slice had a predecessor in the original array, it is specified as `pred`.
+///
+/// `limit` is the number of allowed imbalanced partitions before switching to `heapsort`. If zero,
+/// this function will immediately switch to heapsort.
+</span><span class="kw">fn </span>recurse&lt;<span class="lifetime">&#39;a</span>, T, F&gt;(<span class="kw-2">mut </span>v: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>[T], is_less: <span class="kw-2">&amp;</span>F, <span class="kw-2">mut </span>pred: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>T&gt;, <span class="kw-2">mut </span>limit: u32)
+<span class="kw">where
+    </span>T: Send,
+    F: Fn(<span class="kw-2">&amp;</span>T, <span class="kw-2">&amp;</span>T) -&gt; bool + Sync,
 {
-    <span class="comment">// Slices of up to this length get sorted using insertion sort.</span>
-    <span class="kw">const</span> <span class="ident">MAX_INSERTION</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">20</span>;
-    <span class="comment">// If both partitions are up to this length, we continue sequentially. This number is as small</span>
-    <span class="comment">// as possible but so that the overhead of Rayon&#39;s task scheduling is still negligible.</span>
-    <span class="kw">const</span> <span class="ident">MAX_SEQUENTIAL</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">2000</span>;
+    <span class="comment">// Slices of up to this length get sorted using insertion sort.
+    </span><span class="kw">const </span>MAX_INSERTION: usize = <span class="number">20</span>;
+    <span class="comment">// If both partitions are up to this length, we continue sequentially. This number is as small
+    // as possible but so that the overhead of Rayon&#39;s task scheduling is still negligible.
+    </span><span class="kw">const </span>MAX_SEQUENTIAL: usize = <span class="number">2000</span>;
 
-    <span class="comment">// True if the last partitioning was reasonably balanced.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">was_balanced</span> <span class="op">=</span> <span class="bool-val">true</span>;
-    <span class="comment">// True if the last partitioning didn&#39;t shuffle elements (the slice was already partitioned).</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">was_partitioned</span> <span class="op">=</span> <span class="bool-val">true</span>;
+    <span class="comment">// True if the last partitioning was reasonably balanced.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>was_balanced = <span class="bool-val">true</span>;
+    <span class="comment">// True if the last partitioning didn&#39;t shuffle elements (the slice was already partitioned).
+    </span><span class="kw">let </span><span class="kw-2">mut </span>was_partitioned = <span class="bool-val">true</span>;
 
-    <span class="kw">loop</span> {
-        <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">len</span>();
+    <span class="kw">loop </span>{
+        <span class="kw">let </span>len = v.len();
 
-        <span class="comment">// Very short slices get sorted using insertion sort.</span>
-        <span class="kw">if</span> <span class="ident">len</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">MAX_INSERTION</span> {
-            <span class="ident">insertion_sort</span>(<span class="ident">v</span>, <span class="ident">is_less</span>);
+        <span class="comment">// Very short slices get sorted using insertion sort.
+        </span><span class="kw">if </span>len &lt;= MAX_INSERTION {
+            insertion_sort(v, is_less);
             <span class="kw">return</span>;
         }
 
-        <span class="comment">// If too many bad pivot choices were made, simply fall back to heapsort in order to</span>
-        <span class="comment">// guarantee `O(n * log(n))` worst-case.</span>
-        <span class="kw">if</span> <span class="ident">limit</span> <span class="op">==</span> <span class="number">0</span> {
-            <span class="ident">heapsort</span>(<span class="ident">v</span>, <span class="ident">is_less</span>);
+        <span class="comment">// If too many bad pivot choices were made, simply fall back to heapsort in order to
+        // guarantee `O(n * log(n))` worst-case.
+        </span><span class="kw">if </span>limit == <span class="number">0 </span>{
+            heapsort(v, is_less);
             <span class="kw">return</span>;
         }
 
-        <span class="comment">// If the last partitioning was imbalanced, try breaking patterns in the slice by shuffling</span>
-        <span class="comment">// some elements around. Hopefully we&#39;ll choose a better pivot this time.</span>
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">was_balanced</span> {
-            <span class="ident">break_patterns</span>(<span class="ident">v</span>);
-            <span class="ident">limit</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
+        <span class="comment">// If the last partitioning was imbalanced, try breaking patterns in the slice by shuffling
+        // some elements around. Hopefully we&#39;ll choose a better pivot this time.
+        </span><span class="kw">if </span>!was_balanced {
+            break_patterns(v);
+            limit -= <span class="number">1</span>;
         }
 
-        <span class="comment">// Choose a pivot and try guessing whether the slice is already sorted.</span>
-        <span class="kw">let</span> (<span class="ident">pivot</span>, <span class="ident">likely_sorted</span>) <span class="op">=</span> <span class="ident">choose_pivot</span>(<span class="ident">v</span>, <span class="ident">is_less</span>);
+        <span class="comment">// Choose a pivot and try guessing whether the slice is already sorted.
+        </span><span class="kw">let </span>(pivot, likely_sorted) = choose_pivot(v, is_less);
 
-        <span class="comment">// If the last partitioning was decently balanced and didn&#39;t shuffle elements, and if pivot</span>
-        <span class="comment">// selection predicts the slice is likely already sorted...</span>
-        <span class="kw">if</span> <span class="ident">was_balanced</span> <span class="op">&amp;&amp;</span> <span class="ident">was_partitioned</span> <span class="op">&amp;&amp;</span> <span class="ident">likely_sorted</span> {
-            <span class="comment">// Try identifying several out-of-order elements and shifting them to correct</span>
-            <span class="comment">// positions. If the slice ends up being completely sorted, we&#39;re done.</span>
-            <span class="kw">if</span> <span class="ident">partial_insertion_sort</span>(<span class="ident">v</span>, <span class="ident">is_less</span>) {
+        <span class="comment">// If the last partitioning was decently balanced and didn&#39;t shuffle elements, and if pivot
+        // selection predicts the slice is likely already sorted...
+        </span><span class="kw">if </span>was_balanced &amp;&amp; was_partitioned &amp;&amp; likely_sorted {
+            <span class="comment">// Try identifying several out-of-order elements and shifting them to correct
+            // positions. If the slice ends up being completely sorted, we&#39;re done.
+            </span><span class="kw">if </span>partial_insertion_sort(v, is_less) {
                 <span class="kw">return</span>;
             }
         }
 
-        <span class="comment">// If the chosen pivot is equal to the predecessor, then it&#39;s the smallest element in the</span>
-        <span class="comment">// slice. Partition the slice into elements equal to and elements greater than the pivot.</span>
-        <span class="comment">// This case is usually hit when the slice contains many duplicate elements.</span>
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">p</span>) <span class="op">=</span> <span class="ident">pred</span> {
-            <span class="kw">if</span> <span class="op">!</span><span class="ident">is_less</span>(<span class="ident">p</span>, <span class="kw-2">&amp;</span><span class="ident">v</span>[<span class="ident">pivot</span>]) {
-                <span class="kw">let</span> <span class="ident">mid</span> <span class="op">=</span> <span class="ident">partition_equal</span>(<span class="ident">v</span>, <span class="ident">pivot</span>, <span class="ident">is_less</span>);
+        <span class="comment">// If the chosen pivot is equal to the predecessor, then it&#39;s the smallest element in the
+        // slice. Partition the slice into elements equal to and elements greater than the pivot.
+        // This case is usually hit when the slice contains many duplicate elements.
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>p) = pred {
+            <span class="kw">if </span>!is_less(p, <span class="kw-2">&amp;</span>v[pivot]) {
+                <span class="kw">let </span>mid = partition_equal(v, pivot, is_less);
 
-                <span class="comment">// Continue sorting elements greater than the pivot.</span>
-                <span class="ident">v</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="ident">v</span>[<span class="ident">mid</span>..];
+                <span class="comment">// Continue sorting elements greater than the pivot.
+                </span>v = <span class="kw-2">&amp;mut </span>v[mid..];
                 <span class="kw">continue</span>;
             }
         }
 
-        <span class="comment">// Partition the slice.</span>
-        <span class="kw">let</span> (<span class="ident">mid</span>, <span class="ident">was_p</span>) <span class="op">=</span> <span class="ident">partition</span>(<span class="ident">v</span>, <span class="ident">pivot</span>, <span class="ident">is_less</span>);
-        <span class="ident">was_balanced</span> <span class="op">=</span> <span class="ident">cmp::min</span>(<span class="ident">mid</span>, <span class="ident">len</span> <span class="op">-</span> <span class="ident">mid</span>) <span class="op">&gt;</span><span class="op">=</span> <span class="ident">len</span> <span class="op">/</span> <span class="number">8</span>;
-        <span class="ident">was_partitioned</span> <span class="op">=</span> <span class="ident">was_p</span>;
+        <span class="comment">// Partition the slice.
+        </span><span class="kw">let </span>(mid, was_p) = partition(v, pivot, is_less);
+        was_balanced = cmp::min(mid, len - mid) &gt;= len / <span class="number">8</span>;
+        was_partitioned = was_p;
 
-        <span class="comment">// Split the slice into `left`, `pivot`, and `right`.</span>
-        <span class="kw">let</span> (<span class="ident">left</span>, <span class="ident">right</span>) <span class="op">=</span> <span class="ident">v</span>.<span class="ident">split_at_mut</span>(<span class="ident">mid</span>);
-        <span class="kw">let</span> (<span class="ident">pivot</span>, <span class="ident">right</span>) <span class="op">=</span> <span class="ident">right</span>.<span class="ident">split_at_mut</span>(<span class="number">1</span>);
-        <span class="kw">let</span> <span class="ident">pivot</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="ident">pivot</span>[<span class="number">0</span>];
+        <span class="comment">// Split the slice into `left`, `pivot`, and `right`.
+        </span><span class="kw">let </span>(left, right) = v.split_at_mut(mid);
+        <span class="kw">let </span>(pivot, right) = right.split_at_mut(<span class="number">1</span>);
+        <span class="kw">let </span>pivot = <span class="kw-2">&amp;mut </span>pivot[<span class="number">0</span>];
 
-        <span class="kw">if</span> <span class="ident">cmp::max</span>(<span class="ident">left</span>.<span class="ident">len</span>(), <span class="ident">right</span>.<span class="ident">len</span>()) <span class="op">&lt;</span><span class="op">=</span> <span class="ident">MAX_SEQUENTIAL</span> {
-            <span class="comment">// Recurse into the shorter side only in order to minimize the total number of recursive</span>
-            <span class="comment">// calls and consume less stack space. Then just continue with the longer side (this is</span>
-            <span class="comment">// akin to tail recursion).</span>
-            <span class="kw">if</span> <span class="ident">left</span>.<span class="ident">len</span>() <span class="op">&lt;</span> <span class="ident">right</span>.<span class="ident">len</span>() {
-                <span class="ident">recurse</span>(<span class="ident">left</span>, <span class="ident">is_less</span>, <span class="ident">pred</span>, <span class="ident">limit</span>);
-                <span class="ident">v</span> <span class="op">=</span> <span class="ident">right</span>;
-                <span class="ident">pred</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">pivot</span>);
-            } <span class="kw">else</span> {
-                <span class="ident">recurse</span>(<span class="ident">right</span>, <span class="ident">is_less</span>, <span class="prelude-val">Some</span>(<span class="ident">pivot</span>), <span class="ident">limit</span>);
-                <span class="ident">v</span> <span class="op">=</span> <span class="ident">left</span>;
+        <span class="kw">if </span>cmp::max(left.len(), right.len()) &lt;= MAX_SEQUENTIAL {
+            <span class="comment">// Recurse into the shorter side only in order to minimize the total number of recursive
+            // calls and consume less stack space. Then just continue with the longer side (this is
+            // akin to tail recursion).
+            </span><span class="kw">if </span>left.len() &lt; right.len() {
+                recurse(left, is_less, pred, limit);
+                v = right;
+                pred = <span class="prelude-val">Some</span>(pivot);
+            } <span class="kw">else </span>{
+                recurse(right, is_less, <span class="prelude-val">Some</span>(pivot), limit);
+                v = left;
             }
-        } <span class="kw">else</span> {
-            <span class="comment">// Sort the left and right half in parallel.</span>
-            <span class="ident">rayon_core::join</span>(
-                <span class="op">|</span><span class="op">|</span> <span class="ident">recurse</span>(<span class="ident">left</span>, <span class="ident">is_less</span>, <span class="ident">pred</span>, <span class="ident">limit</span>),
-                <span class="op">|</span><span class="op">|</span> <span class="ident">recurse</span>(<span class="ident">right</span>, <span class="ident">is_less</span>, <span class="prelude-val">Some</span>(<span class="ident">pivot</span>), <span class="ident">limit</span>),
+        } <span class="kw">else </span>{
+            <span class="comment">// Sort the left and right half in parallel.
+            </span>rayon_core::join(
+                || recurse(left, is_less, pred, limit),
+                || recurse(right, is_less, <span class="prelude-val">Some</span>(pivot), limit),
             );
             <span class="kw">break</span>;
         }
     }
 }
 
-<span class="doccomment">/// Sorts `v` using pattern-defeating quicksort in parallel.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The algorithm is unstable, in-place, and *O*(*n* \* log(*n*)) worst-case.</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">par_quicksort</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">v</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">T</span>], <span class="ident">is_less</span>: <span class="ident">F</span>)
-<span class="kw">where</span>
-    <span class="ident">T</span>: <span class="ident">Send</span>,
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="kw-2">&amp;</span><span class="ident">T</span>) -&gt; <span class="ident">bool</span> <span class="op">+</span> <span class="ident">Sync</span>,
+<span class="doccomment">/// Sorts `v` using pattern-defeating quicksort in parallel.
+///
+/// The algorithm is unstable, in-place, and *O*(*n* \* log(*n*)) worst-case.
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>par_quicksort&lt;T, F&gt;(v: <span class="kw-2">&amp;mut </span>[T], is_less: F)
+<span class="kw">where
+    </span>T: Send,
+    F: Fn(<span class="kw-2">&amp;</span>T, <span class="kw-2">&amp;</span>T) -&gt; bool + Sync,
 {
-    <span class="comment">// Sorting has no meaningful behavior on zero-sized types.</span>
-    <span class="kw">if</span> <span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>() <span class="op">==</span> <span class="number">0</span> {
+    <span class="comment">// Sorting has no meaningful behavior on zero-sized types.
+    </span><span class="kw">if </span>mem::size_of::&lt;T&gt;() == <span class="number">0 </span>{
         <span class="kw">return</span>;
     }
 
-    <span class="comment">// Limit the number of imbalanced partitions to `floor(log2(len)) + 1`.</span>
-    <span class="comment">// TODO 1.53: let limit = usize::BITS - v.len().leading_zeros();</span>
-    <span class="kw">let</span> <span class="ident">limit</span> <span class="op">=</span> <span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>() <span class="kw">as</span> <span class="ident">u32</span> <span class="op">*</span> <span class="number">8</span> <span class="op">-</span> <span class="ident">v</span>.<span class="ident">len</span>().<span class="ident">leading_zeros</span>();
+    <span class="comment">// Limit the number of imbalanced partitions to `floor(log2(len)) + 1`.
+    // TODO 1.53: let limit = usize::BITS - v.len().leading_zeros();
+    </span><span class="kw">let </span>limit = mem::size_of::&lt;usize&gt;() <span class="kw">as </span>u32 * <span class="number">8 </span>- v.len().leading_zeros();
 
-    <span class="ident">recurse</span>(<span class="ident">v</span>, <span class="kw-2">&amp;</span><span class="ident">is_less</span>, <span class="prelude-val">None</span>, <span class="ident">limit</span>);
+    recurse(v, <span class="kw-2">&amp;</span>is_less, <span class="prelude-val">None</span>, limit);
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::heapsort</span>;
-    <span class="kw">use</span> <span class="ident">rand::distributions::Uniform</span>;
-    <span class="kw">use</span> <span class="ident">rand</span>::{<span class="ident">thread_rng</span>, <span class="ident">Rng</span>};
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use </span><span class="kw">super</span>::heapsort;
+    <span class="kw">use </span>rand::distributions::Uniform;
+    <span class="kw">use </span>rand::{thread_rng, Rng};
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_heapsort</span>() {
-        <span class="kw">let</span> <span class="kw-2">ref</span> <span class="kw-2">mut</span> <span class="ident">rng</span> <span class="op">=</span> <span class="ident">thread_rng</span>();
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_heapsort() {
+        <span class="kw">let </span><span class="kw-2">ref mut </span>rng = thread_rng();
 
-        <span class="kw">for</span> <span class="ident">len</span> <span class="kw">in</span> (<span class="number">0</span>..<span class="number">25</span>).<span class="ident">chain</span>(<span class="number">500</span>..<span class="number">501</span>) {
-            <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">modulus</span> <span class="kw">in</span> <span class="kw-2">&amp;</span>[<span class="number">5</span>, <span class="number">10</span>, <span class="number">100</span>] {
-                <span class="kw">let</span> <span class="ident">dist</span> <span class="op">=</span> <span class="ident">Uniform::new</span>(<span class="number">0</span>, <span class="ident">modulus</span>);
-                <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">100</span> {
-                    <span class="kw">let</span> <span class="ident">v</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">i32</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">rng</span>.<span class="ident">sample_iter</span>(<span class="kw-2">&amp;</span><span class="ident">dist</span>).<span class="ident">take</span>(<span class="ident">len</span>).<span class="ident">collect</span>();
+        <span class="kw">for </span>len <span class="kw">in </span>(<span class="number">0</span>..<span class="number">25</span>).chain(<span class="number">500</span>..<span class="number">501</span>) {
+            <span class="kw">for </span><span class="kw-2">&amp;</span>modulus <span class="kw">in </span><span class="kw-2">&amp;</span>[<span class="number">5</span>, <span class="number">10</span>, <span class="number">100</span>] {
+                <span class="kw">let </span>dist = Uniform::new(<span class="number">0</span>, modulus);
+                <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">100 </span>{
+                    <span class="kw">let </span>v: Vec&lt;i32&gt; = rng.sample_iter(<span class="kw-2">&amp;</span>dist).take(len).collect();
 
-                    <span class="comment">// Test heapsort using `&lt;` operator.</span>
-                    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tmp</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">clone</span>();
-                    <span class="ident">heapsort</span>(<span class="kw-2">&amp;mut</span> <span class="ident">tmp</span>, <span class="kw-2">&amp;</span><span class="op">|</span><span class="ident">a</span>, <span class="ident">b</span><span class="op">|</span> <span class="ident">a</span> <span class="op">&lt;</span> <span class="ident">b</span>);
-                    <span class="macro">assert!</span>(<span class="ident">tmp</span>.<span class="ident">windows</span>(<span class="number">2</span>).<span class="ident">all</span>(<span class="op">|</span><span class="ident">w</span><span class="op">|</span> <span class="ident">w</span>[<span class="number">0</span>] <span class="op">&lt;</span><span class="op">=</span> <span class="ident">w</span>[<span class="number">1</span>]));
+                    <span class="comment">// Test heapsort using `&lt;` operator.
+                    </span><span class="kw">let </span><span class="kw-2">mut </span>tmp = v.clone();
+                    heapsort(<span class="kw-2">&amp;mut </span>tmp, <span class="kw-2">&amp;</span>|a, b| a &lt; b);
+                    <span class="macro">assert!</span>(tmp.windows(<span class="number">2</span>).all(|w| w[<span class="number">0</span>] &lt;= w[<span class="number">1</span>]));
 
-                    <span class="comment">// Test heapsort using `&gt;` operator.</span>
-                    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tmp</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">clone</span>();
-                    <span class="ident">heapsort</span>(<span class="kw-2">&amp;mut</span> <span class="ident">tmp</span>, <span class="kw-2">&amp;</span><span class="op">|</span><span class="ident">a</span>, <span class="ident">b</span><span class="op">|</span> <span class="ident">a</span> <span class="op">&gt;</span> <span class="ident">b</span>);
-                    <span class="macro">assert!</span>(<span class="ident">tmp</span>.<span class="ident">windows</span>(<span class="number">2</span>).<span class="ident">all</span>(<span class="op">|</span><span class="ident">w</span><span class="op">|</span> <span class="ident">w</span>[<span class="number">0</span>] <span class="op">&gt;</span><span class="op">=</span> <span class="ident">w</span>[<span class="number">1</span>]));
+                    <span class="comment">// Test heapsort using `&gt;` operator.
+                    </span><span class="kw">let </span><span class="kw-2">mut </span>tmp = v.clone();
+                    heapsort(<span class="kw-2">&amp;mut </span>tmp, <span class="kw-2">&amp;</span>|a, b| a &gt; b);
+                    <span class="macro">assert!</span>(tmp.windows(<span class="number">2</span>).all(|w| w[<span class="number">0</span>] &gt;= w[<span class="number">1</span>]));
                 }
             }
         }
 
-        <span class="comment">// Sort using a completely random comparison function.</span>
-        <span class="comment">// This will reorder the elements *somehow*, but won&#39;t panic.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">v</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> (<span class="number">0</span>..<span class="number">100</span>).<span class="ident">collect</span>();
-        <span class="ident">heapsort</span>(<span class="kw-2">&amp;mut</span> <span class="ident">v</span>, <span class="kw-2">&amp;</span><span class="op">|</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">|</span> <span class="ident">thread_rng</span>().<span class="ident">gen</span>());
-        <span class="ident">heapsort</span>(<span class="kw-2">&amp;mut</span> <span class="ident">v</span>, <span class="kw-2">&amp;</span><span class="op">|</span><span class="ident">a</span>, <span class="ident">b</span><span class="op">|</span> <span class="ident">a</span> <span class="op">&lt;</span> <span class="ident">b</span>);
+        <span class="comment">// Sort using a completely random comparison function.
+        // This will reorder the elements *somehow*, but won&#39;t panic.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>v: Vec&lt;<span class="kw">_</span>&gt; = (<span class="number">0</span>..<span class="number">100</span>).collect();
+        heapsort(<span class="kw-2">&amp;mut </span>v, <span class="kw-2">&amp;</span>|<span class="kw">_</span>, <span class="kw">_</span>| thread_rng().gen());
+        heapsort(<span class="kw-2">&amp;mut </span>v, <span class="kw-2">&amp;</span>|a, b| a &lt; b);
 
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">v</span>.<span class="ident">len</span>() {
-            <span class="macro">assert_eq!</span>(<span class="ident">v</span>[<span class="ident">i</span>], <span class="ident">i</span>);
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..v.len() {
+            <span class="macro">assert_eq!</span>(v[i], i);
         }
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="rayon" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.63.0-nightly (fee3a459d 2022-06-05)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="rayon" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (02654a084 2022-08-30)" ></div></body></html>

@@ -1,11 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/cfg-expr-0.10.3/src/expr/parser.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>parser.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../cfg_expr/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../cfg_expr/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../cfg_expr/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><div id="settings-menu" tabindex="-1">
-                                <a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div>
-                        </div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/cfg-expr-0.10.3/src/expr/parser.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>parser.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../cfg_expr/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../cfg_expr/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../cfg_expr/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -447,197 +440,197 @@
 <span id="440">440</span>
 <span id="441">441</span>
 <span id="442">442</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">error</span>::{<span class="ident">ParseError</span>, <span class="ident">Reason</span>},
-    <span class="ident">expr</span>::{
-        <span class="ident">lexer</span>::{<span class="ident">Lexer</span>, <span class="ident">Token</span>},
-        <span class="ident">ExprNode</span>, <span class="ident">Expression</span>, <span class="ident">Func</span>, <span class="ident">InnerPredicate</span>,
+</pre><pre class="rust"><code><span class="kw">use crate</span>::{
+    error::{ParseError, Reason},
+    expr::{
+        lexer::{Lexer, Token},
+        ExprNode, Expression, Func, InnerPredicate,
     },
 };
-<span class="kw">use</span> <span class="ident">smallvec::SmallVec</span>;
+<span class="kw">use </span>smallvec::SmallVec;
 
-<span class="kw">impl</span> <span class="ident">Expression</span> {
-    <span class="doccomment">/// Given a cfg() expression (the cfg( and ) are optional), attempts to</span>
-    <span class="doccomment">/// parse it into a form where it can be evaluated</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// assert!(cfg_expr::Expression::parse(r#&quot;cfg(all(unix, target_arch = &quot;x86_64&quot;))&quot;#).is_ok());</span>
-    <span class="doccomment">/// ```</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parse</span>(<span class="ident">original</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">ParseError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">lexer</span> <span class="op">=</span> <span class="ident">Lexer::new</span>(<span class="ident">original</span>);
+<span class="kw">impl </span>Expression {
+    <span class="doccomment">/// Given a cfg() expression (the cfg( and ) are optional), attempts to
+    /// parse it into a form where it can be evaluated
+    ///
+    /// ```
+    /// assert!(cfg_expr::Expression::parse(r#&quot;cfg(all(unix, target_arch = &quot;x86_64&quot;))&quot;#).is_ok());
+    /// ```
+    </span><span class="kw">pub fn </span>parse(original: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, ParseError&gt; {
+        <span class="kw">let </span>lexer = Lexer::new(original);
 
-        <span class="comment">// The lexer automatically trims any cfg( ), so reacquire</span>
-        <span class="comment">// the string before we start walking tokens</span>
-        <span class="kw">let</span> <span class="ident">original</span> <span class="op">=</span> <span class="ident">lexer</span>.<span class="ident">inner</span>;
+        <span class="comment">// The lexer automatically trims any cfg( ), so reacquire
+        // the string before we start walking tokens
+        </span><span class="kw">let </span>original = lexer.inner;
 
-        <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-        <span class="kw">struct</span> <span class="ident">FuncAndSpan</span> {
-            <span class="ident">func</span>: <span class="ident">Func</span>,
-            <span class="ident">parens_index</span>: <span class="ident">usize</span>,
-            <span class="ident">span</span>: <span class="ident">std::ops::Range</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
-            <span class="ident">predicates</span>: <span class="ident">SmallVec</span><span class="op">&lt;</span>[<span class="ident">InnerPredicate</span>; <span class="number">5</span>]<span class="op">&gt;</span>,
-            <span class="ident">nest_level</span>: <span class="ident">u8</span>,
+        <span class="attribute">#[derive(Debug)]
+        </span><span class="kw">struct </span>FuncAndSpan {
+            func: Func,
+            parens_index: usize,
+            span: std::ops::Range&lt;usize&gt;,
+            predicates: SmallVec&lt;[InnerPredicate; <span class="number">5</span>]&gt;,
+            nest_level: u8,
         }
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">func_stack</span> <span class="op">=</span> <span class="ident">SmallVec</span>::<span class="op">&lt;</span>[<span class="ident">FuncAndSpan</span>; <span class="number">5</span>]<span class="op">&gt;</span><span class="ident">::new</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">expr_queue</span> <span class="op">=</span> <span class="ident">SmallVec</span>::<span class="op">&lt;</span>[<span class="ident">ExprNode</span>; <span class="number">5</span>]<span class="op">&gt;</span><span class="ident">::new</span>();
+        <span class="kw">let </span><span class="kw-2">mut </span>func_stack = SmallVec::&lt;[FuncAndSpan; <span class="number">5</span>]&gt;::new();
+        <span class="kw">let </span><span class="kw-2">mut </span>expr_queue = SmallVec::&lt;[ExprNode; <span class="number">5</span>]&gt;::new();
 
-        <span class="comment">// Keep track of the last token to simplify validation of the token stream</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">last_token</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Token</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="prelude-val">None</span>;
+        <span class="comment">// Keep track of the last token to simplify validation of the token stream
+        </span><span class="kw">let </span><span class="kw-2">mut </span>last_token: <span class="prelude-ty">Option</span>&lt;Token&lt;<span class="lifetime">&#39;_</span>&gt;&gt; = <span class="prelude-val">None</span>;
 
-        <span class="kw">let</span> <span class="ident">parse_predicate</span> <span class="op">=</span> <span class="op">|</span><span class="ident">key</span>: (<span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">std::ops::Range</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>),
-                               <span class="ident">val</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">std::ops::Range</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>)<span class="op">&gt;</span><span class="op">|</span>
-         -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">InnerPredicate</span>, <span class="ident">ParseError</span><span class="op">&gt;</span> {
-            <span class="comment">// Warning: It is possible for arbitrarily-set configuration</span>
-            <span class="comment">// options to have the same value as compiler-set configuration</span>
-            <span class="comment">// options. For example, it is possible to do rustc --cfg &quot;unix&quot; program.rs</span>
-            <span class="comment">// while compiling to a Windows target, and have both unix and windows</span>
-            <span class="comment">// configuration options set at the same time. It is unwise to actually</span>
-            <span class="comment">// do this.</span>
-            <span class="comment">//</span>
-            <span class="comment">// rustc is very permissive in this regard, but I&#39;d rather be really</span>
-            <span class="comment">// strict, as it&#39;s much easier to loosen restrictions over time than add</span>
-            <span class="comment">// new ones</span>
-            <span class="macro">macro_rules!</span> <span class="ident">err_if_val</span> {
+        <span class="kw">let </span>parse_predicate = |key: (<span class="kw-2">&amp;</span>str, std::ops::Range&lt;usize&gt;),
+                               val: <span class="prelude-ty">Option</span>&lt;(<span class="kw-2">&amp;</span>str, std::ops::Range&lt;usize&gt;)&gt;|
+         -&gt; <span class="prelude-ty">Result</span>&lt;InnerPredicate, ParseError&gt; {
+            <span class="comment">// Warning: It is possible for arbitrarily-set configuration
+            // options to have the same value as compiler-set configuration
+            // options. For example, it is possible to do rustc --cfg &quot;unix&quot; program.rs
+            // while compiling to a Windows target, and have both unix and windows
+            // configuration options set at the same time. It is unwise to actually
+            // do this.
+            //
+            // rustc is very permissive in this regard, but I&#39;d rather be really
+            // strict, as it&#39;s much easier to loosen restrictions over time than add
+            // new ones
+            </span><span class="macro">macro_rules! </span>err_if_val {
                 () =&gt; {
-                    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="ident">vspan</span>)) <span class="op">=</span> <span class="ident">val</span> {
-                        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                            <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
-                            <span class="ident">span</span>: <span class="ident">vspan</span>,
-                            <span class="ident">reason</span>: <span class="ident">Reason::Unexpected</span>(<span class="kw-2">&amp;</span>[]),
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>((<span class="kw">_</span>, vspan)) = val {
+                        <span class="kw">return </span><span class="prelude-val">Err</span>(ParseError {
+                            original: original.to_owned(),
+                            span: vspan,
+                            reason: Reason::Unexpected(<span class="kw-2">&amp;</span>[]),
                         });
                     }
                 };
             }
 
-            <span class="kw">let</span> <span class="ident">span</span> <span class="op">=</span> <span class="ident">key</span>.<span class="number">1</span>;
-            <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="ident">key</span>.<span class="number">0</span>;
+            <span class="kw">let </span>span = key.<span class="number">1</span>;
+            <span class="kw">let </span>key = key.<span class="number">0</span>;
 
-            <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">InnerTarget</span>, <span class="ident">Which</span>};
+            <span class="kw">use super</span>::{InnerTarget, Which};
 
-            <span class="prelude-val">Ok</span>(<span class="kw">match</span> <span class="ident">key</span> {
-                <span class="comment">// These are special cases in the cfg language that are</span>
-                <span class="comment">// semantically the same as `target_family = &quot;&lt;family&gt;&quot;`,</span>
-                <span class="comment">// so we just make them not special</span>
-                <span class="comment">// NOTE: other target families like &quot;wasm&quot; are NOT allowed</span>
-                <span class="comment">// as naked predicates; they must be specified through</span>
-                <span class="comment">// `target_family`</span>
-                <span class="string">&quot;unix&quot;</span> <span class="op">|</span> <span class="string">&quot;windows&quot;</span> =&gt; {
+            <span class="prelude-val">Ok</span>(<span class="kw">match </span>key {
+                <span class="comment">// These are special cases in the cfg language that are
+                // semantically the same as `target_family = &quot;&lt;family&gt;&quot;`,
+                // so we just make them not special
+                // NOTE: other target families like &quot;wasm&quot; are NOT allowed
+                // as naked predicates; they must be specified through
+                // `target_family`
+                </span><span class="string">&quot;unix&quot; </span>| <span class="string">&quot;windows&quot; </span>=&gt; {
                     <span class="macro">err_if_val!</span>();
 
-                    <span class="ident">InnerPredicate::Target</span>(<span class="ident">InnerTarget</span> {
-                        <span class="ident">which</span>: <span class="ident">Which::Family</span>,
-                        <span class="ident">span</span>: <span class="prelude-val">Some</span>(<span class="ident">span</span>),
+                    InnerPredicate::Target(InnerTarget {
+                        which: Which::Family,
+                        span: <span class="prelude-val">Some</span>(span),
                     })
                 }
-                <span class="string">&quot;test&quot;</span> =&gt; {
+                <span class="string">&quot;test&quot; </span>=&gt; {
                     <span class="macro">err_if_val!</span>();
-                    <span class="ident">InnerPredicate::Test</span>
+                    InnerPredicate::Test
                 }
-                <span class="string">&quot;debug_assertions&quot;</span> =&gt; {
+                <span class="string">&quot;debug_assertions&quot; </span>=&gt; {
                     <span class="macro">err_if_val!</span>();
-                    <span class="ident">InnerPredicate::DebugAssertions</span>
+                    InnerPredicate::DebugAssertions
                 }
-                <span class="string">&quot;proc_macro&quot;</span> =&gt; {
+                <span class="string">&quot;proc_macro&quot; </span>=&gt; {
                     <span class="macro">err_if_val!</span>();
-                    <span class="ident">InnerPredicate::ProcMacro</span>
+                    InnerPredicate::ProcMacro
                 }
-                <span class="string">&quot;feature&quot;</span> =&gt; {
-                    <span class="comment">// rustc allows bare feature without a value, but the only way</span>
-                    <span class="comment">// such a predicate would ever evaluate to true would be if they</span>
-                    <span class="comment">// explicitly set --cfg feature, which would be terrible, so we</span>
-                    <span class="comment">// just error instead</span>
-                    <span class="kw">match</span> <span class="ident">val</span> {
-                        <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="ident">span</span>)) =&gt; <span class="ident">InnerPredicate::Feature</span>(<span class="ident">span</span>),
-                        <span class="prelude-val">None</span> =&gt; {
-                            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                                <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
-                                <span class="ident">span</span>,
-                                <span class="ident">reason</span>: <span class="ident">Reason::Unexpected</span>(<span class="kw-2">&amp;</span>[<span class="string">&quot;= \&quot;&lt;feature_name&gt;\&quot;&quot;</span>]),
+                <span class="string">&quot;feature&quot; </span>=&gt; {
+                    <span class="comment">// rustc allows bare feature without a value, but the only way
+                    // such a predicate would ever evaluate to true would be if they
+                    // explicitly set --cfg feature, which would be terrible, so we
+                    // just error instead
+                    </span><span class="kw">match </span>val {
+                        <span class="prelude-val">Some</span>((<span class="kw">_</span>, span)) =&gt; InnerPredicate::Feature(span),
+                        <span class="prelude-val">None </span>=&gt; {
+                            <span class="kw">return </span><span class="prelude-val">Err</span>(ParseError {
+                                original: original.to_owned(),
+                                span,
+                                reason: Reason::Unexpected(<span class="kw-2">&amp;</span>[<span class="string">&quot;= \&quot;&lt;feature_name&gt;\&quot;&quot;</span>]),
                             });
                         }
                     }
                 }
-                <span class="string">&quot;panic&quot;</span> =&gt; <span class="kw">match</span> <span class="ident">val</span> {
-                    <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="ident">vspan</span>)) =&gt; <span class="ident">InnerPredicate::Target</span>(<span class="ident">InnerTarget</span> {
-                        <span class="ident">which</span>: <span class="ident">Which::Panic</span>,
-                        <span class="ident">span</span>: <span class="prelude-val">Some</span>(<span class="ident">vspan</span>),
+                <span class="string">&quot;panic&quot; </span>=&gt; <span class="kw">match </span>val {
+                    <span class="prelude-val">Some</span>((<span class="kw">_</span>, vspan)) =&gt; InnerPredicate::Target(InnerTarget {
+                        which: Which::Panic,
+                        span: <span class="prelude-val">Some</span>(vspan),
                     }),
-                    <span class="prelude-val">None</span> =&gt; {
-                        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                            <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
-                            <span class="ident">span</span>,
-                            <span class="ident">reason</span>: <span class="ident">Reason::Unexpected</span>(<span class="kw-2">&amp;</span>[<span class="string">&quot;= \&quot;&lt;panic_strategy&gt;\&quot;&quot;</span>]),
+                    <span class="prelude-val">None </span>=&gt; {
+                        <span class="kw">return </span><span class="prelude-val">Err</span>(ParseError {
+                            original: original.to_owned(),
+                            span,
+                            reason: Reason::Unexpected(<span class="kw-2">&amp;</span>[<span class="string">&quot;= \&quot;&lt;panic_strategy&gt;\&quot;&quot;</span>]),
                         });
                     }
                 },
-                <span class="ident">target_key</span> <span class="kw">if</span> <span class="ident">key</span>.<span class="ident">starts_with</span>(<span class="string">&quot;target_&quot;</span>) =&gt; {
-                    <span class="kw">let</span> (<span class="ident">val</span>, <span class="ident">vspan</span>) <span class="op">=</span> <span class="kw">match</span> <span class="ident">val</span> {
-                        <span class="prelude-val">None</span> =&gt; {
-                            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                                <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
-                                <span class="ident">span</span>,
-                                <span class="ident">reason</span>: <span class="ident">Reason::Unexpected</span>(<span class="kw-2">&amp;</span>[<span class="string">&quot;= \&quot;&lt;target_cfg_value&gt;\&quot;&quot;</span>]),
+                target_key <span class="kw">if </span>key.starts_with(<span class="string">&quot;target_&quot;</span>) =&gt; {
+                    <span class="kw">let </span>(val, vspan) = <span class="kw">match </span>val {
+                        <span class="prelude-val">None </span>=&gt; {
+                            <span class="kw">return </span><span class="prelude-val">Err</span>(ParseError {
+                                original: original.to_owned(),
+                                span,
+                                reason: Reason::Unexpected(<span class="kw-2">&amp;</span>[<span class="string">&quot;= \&quot;&lt;target_cfg_value&gt;\&quot;&quot;</span>]),
                             });
                         }
-                        <span class="prelude-val">Some</span>((<span class="ident">val</span>, <span class="ident">vspan</span>)) =&gt; (<span class="ident">val</span>, <span class="ident">vspan</span>),
+                        <span class="prelude-val">Some</span>((val, vspan)) =&gt; (val, vspan),
                     };
 
-                    <span class="macro">macro_rules!</span> <span class="ident">tp</span> {
-                        (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">which</span>:<span class="ident">ident</span>) =&gt; {
-                            <span class="ident">InnerTarget</span> {
-                                <span class="ident">which</span>: <span class="ident">Which</span>::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">which</span>,
-                                <span class="ident">span</span>: <span class="prelude-val">Some</span>(<span class="ident">vspan</span>),
+                    <span class="macro">macro_rules! </span>tp {
+                        (<span class="macro-nonterminal">$which</span>:ident) =&gt; {
+                            InnerTarget {
+                                which: Which::<span class="macro-nonterminal">$which</span>,
+                                span: <span class="prelude-val">Some</span>(vspan),
                             }
                         };
                     }
 
-                    <span class="kw">let</span> <span class="ident">tp</span> <span class="op">=</span> <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">target_key</span>[<span class="number">7</span>..] {
-                        <span class="string">&quot;arch&quot;</span> =&gt; <span class="macro">tp!</span>(<span class="ident">Arch</span>),
-                        <span class="string">&quot;feature&quot;</span> =&gt; {
-                            <span class="kw">if</span> <span class="ident">val</span>.<span class="ident">is_empty</span>() {
-                                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                                    <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
-                                    <span class="ident">span</span>: <span class="ident">vspan</span>,
-                                    <span class="ident">reason</span>: <span class="ident">Reason::Unexpected</span>(<span class="kw-2">&amp;</span>[<span class="string">&quot;&lt;feature&gt;&quot;</span>]),
+                    <span class="kw">let </span>tp = <span class="kw">match </span><span class="kw-2">&amp;</span>target_key[<span class="number">7</span>..] {
+                        <span class="string">&quot;arch&quot; </span>=&gt; <span class="macro">tp!</span>(Arch),
+                        <span class="string">&quot;feature&quot; </span>=&gt; {
+                            <span class="kw">if </span>val.is_empty() {
+                                <span class="kw">return </span><span class="prelude-val">Err</span>(ParseError {
+                                    original: original.to_owned(),
+                                    span: vspan,
+                                    reason: Reason::Unexpected(<span class="kw-2">&amp;</span>[<span class="string">&quot;&lt;feature&gt;&quot;</span>]),
                                 });
                             }
 
-                            <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">InnerPredicate::TargetFeature</span>(<span class="ident">vspan</span>));
+                            <span class="kw">return </span><span class="prelude-val">Ok</span>(InnerPredicate::TargetFeature(vspan));
                         }
-                        <span class="string">&quot;os&quot;</span> =&gt; <span class="macro">tp!</span>(<span class="ident">Os</span>),
-                        <span class="string">&quot;family&quot;</span> =&gt; <span class="macro">tp!</span>(<span class="ident">Family</span>),
-                        <span class="string">&quot;env&quot;</span> =&gt; <span class="macro">tp!</span>(<span class="ident">Env</span>),
-                        <span class="string">&quot;endian&quot;</span> =&gt; <span class="ident">InnerTarget</span> {
-                            <span class="ident">which</span>: <span class="ident">Which::Endian</span>(<span class="ident">val</span>.<span class="ident">parse</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">_err</span><span class="op">|</span> <span class="ident">ParseError</span> {
-                                <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
-                                <span class="ident">span</span>: <span class="ident">vspan</span>,
-                                <span class="ident">reason</span>: <span class="ident">Reason::InvalidInteger</span>,
+                        <span class="string">&quot;os&quot; </span>=&gt; <span class="macro">tp!</span>(Os),
+                        <span class="string">&quot;family&quot; </span>=&gt; <span class="macro">tp!</span>(Family),
+                        <span class="string">&quot;env&quot; </span>=&gt; <span class="macro">tp!</span>(Env),
+                        <span class="string">&quot;endian&quot; </span>=&gt; InnerTarget {
+                            which: Which::Endian(val.parse().map_err(|_err| ParseError {
+                                original: original.to_owned(),
+                                span: vspan,
+                                reason: Reason::InvalidInteger,
                             })<span class="question-mark">?</span>),
-                            <span class="ident">span</span>: <span class="prelude-val">None</span>,
+                            span: <span class="prelude-val">None</span>,
                         },
-                        <span class="string">&quot;has_atomic&quot;</span> =&gt; <span class="ident">InnerTarget</span> {
-                            <span class="ident">which</span>: <span class="ident">Which::HasAtomic</span>(<span class="ident">val</span>.<span class="ident">parse</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">_err</span><span class="op">|</span> <span class="ident">ParseError</span> {
-                                <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
-                                <span class="ident">span</span>: <span class="ident">vspan</span>,
-                                <span class="ident">reason</span>: <span class="ident">Reason::InvalidHasAtomic</span>,
+                        <span class="string">&quot;has_atomic&quot; </span>=&gt; InnerTarget {
+                            which: Which::HasAtomic(val.parse().map_err(|_err| ParseError {
+                                original: original.to_owned(),
+                                span: vspan,
+                                reason: Reason::InvalidHasAtomic,
                             })<span class="question-mark">?</span>),
-                            <span class="ident">span</span>: <span class="prelude-val">None</span>,
+                            span: <span class="prelude-val">None</span>,
                         },
-                        <span class="string">&quot;pointer_width&quot;</span> =&gt; <span class="ident">InnerTarget</span> {
-                            <span class="ident">which</span>: <span class="ident">Which::PointerWidth</span>(<span class="ident">val</span>.<span class="ident">parse</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">_err</span><span class="op">|</span> <span class="ident">ParseError</span> {
-                                <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
-                                <span class="ident">span</span>: <span class="ident">vspan</span>,
-                                <span class="ident">reason</span>: <span class="ident">Reason::InvalidInteger</span>,
+                        <span class="string">&quot;pointer_width&quot; </span>=&gt; InnerTarget {
+                            which: Which::PointerWidth(val.parse().map_err(|_err| ParseError {
+                                original: original.to_owned(),
+                                span: vspan,
+                                reason: Reason::InvalidInteger,
                             })<span class="question-mark">?</span>),
-                            <span class="ident">span</span>: <span class="prelude-val">None</span>,
+                            span: <span class="prelude-val">None</span>,
                         },
-                        <span class="string">&quot;vendor&quot;</span> =&gt; <span class="macro">tp!</span>(<span class="ident">Vendor</span>),
-                        <span class="kw">_</span> =&gt; {
-                            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                                <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
-                                <span class="ident">span</span>,
-                                <span class="ident">reason</span>: <span class="ident">Reason::Unexpected</span>(<span class="kw-2">&amp;</span>[
+                        <span class="string">&quot;vendor&quot; </span>=&gt; <span class="macro">tp!</span>(Vendor),
+                        <span class="kw">_ </span>=&gt; {
+                            <span class="kw">return </span><span class="prelude-val">Err</span>(ParseError {
+                                original: original.to_owned(),
+                                span,
+                                reason: Reason::Unexpected(<span class="kw-2">&amp;</span>[
                                     <span class="string">&quot;target_arch&quot;</span>,
                                     <span class="string">&quot;target_feature&quot;</span>,
                                     <span class="string">&quot;target_os&quot;</span>,
@@ -652,237 +645,237 @@
                         }
                     };
 
-                    <span class="ident">InnerPredicate::Target</span>(<span class="ident">tp</span>)
+                    InnerPredicate::Target(tp)
                 }
-                <span class="ident">_other</span> =&gt; <span class="ident">InnerPredicate::Other</span> {
-                    <span class="ident">identifier</span>: <span class="ident">span</span>,
-                    <span class="ident">value</span>: <span class="ident">val</span>.<span class="ident">map</span>(<span class="op">|</span>(<span class="kw">_</span>, <span class="ident">span</span>)<span class="op">|</span> <span class="ident">span</span>),
+                _other =&gt; InnerPredicate::Other {
+                    identifier: span,
+                    value: val.map(|(<span class="kw">_</span>, span)| span),
                 },
             })
         };
 
-        <span class="macro">macro_rules!</span> <span class="ident">token_err</span> {
-            (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">span</span>:<span class="ident">expr</span>) =&gt; {{
-                <span class="kw">let</span> <span class="ident">expected</span>: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="ident">str</span>] <span class="op">=</span> <span class="kw">match</span> <span class="ident">last_token</span> {
-                    <span class="prelude-val">None</span> =&gt; <span class="kw-2">&amp;</span>[<span class="string">&quot;&lt;key&gt;&quot;</span>, <span class="string">&quot;all&quot;</span>, <span class="string">&quot;any&quot;</span>, <span class="string">&quot;not&quot;</span>],
-                    <span class="prelude-val">Some</span>(<span class="ident">Token::All</span>) <span class="op">|</span> <span class="prelude-val">Some</span>(<span class="ident">Token::Any</span>) <span class="op">|</span> <span class="prelude-val">Some</span>(<span class="ident">Token::Not</span>) =&gt; <span class="kw-2">&amp;</span>[<span class="string">&quot;(&quot;</span>],
-                    <span class="prelude-val">Some</span>(<span class="ident">Token::CloseParen</span>) =&gt; <span class="kw-2">&amp;</span>[<span class="string">&quot;)&quot;</span>, <span class="string">&quot;,&quot;</span>],
-                    <span class="prelude-val">Some</span>(<span class="ident">Token::Comma</span>) =&gt; <span class="kw-2">&amp;</span>[<span class="string">&quot;)&quot;</span>, <span class="string">&quot;&lt;key&gt;&quot;</span>],
-                    <span class="prelude-val">Some</span>(<span class="ident">Token::Equals</span>) =&gt; <span class="kw-2">&amp;</span>[<span class="string">&quot;\&quot;&quot;</span>],
-                    <span class="prelude-val">Some</span>(<span class="ident">Token::Key</span>(<span class="kw">_</span>)) =&gt; <span class="kw-2">&amp;</span>[<span class="string">&quot;=&quot;</span>, <span class="string">&quot;,&quot;</span>, <span class="string">&quot;)&quot;</span>],
-                    <span class="prelude-val">Some</span>(<span class="ident">Token::Value</span>(<span class="kw">_</span>)) =&gt; <span class="kw-2">&amp;</span>[<span class="string">&quot;,&quot;</span>, <span class="string">&quot;)&quot;</span>],
-                    <span class="prelude-val">Some</span>(<span class="ident">Token::OpenParen</span>) =&gt; <span class="kw-2">&amp;</span>[<span class="string">&quot;&lt;key&gt;&quot;</span>, <span class="string">&quot;)&quot;</span>, <span class="string">&quot;all&quot;</span>, <span class="string">&quot;any&quot;</span>, <span class="string">&quot;not&quot;</span>],
+        <span class="macro">macro_rules! </span>token_err {
+            (<span class="macro-nonterminal">$span</span>:expr) =&gt; {{
+                <span class="kw">let </span>expected: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str] = <span class="kw">match </span>last_token {
+                    <span class="prelude-val">None </span>=&gt; <span class="kw-2">&amp;</span>[<span class="string">&quot;&lt;key&gt;&quot;</span>, <span class="string">&quot;all&quot;</span>, <span class="string">&quot;any&quot;</span>, <span class="string">&quot;not&quot;</span>],
+                    <span class="prelude-val">Some</span>(Token::All) | <span class="prelude-val">Some</span>(Token::Any) | <span class="prelude-val">Some</span>(Token::Not) =&gt; <span class="kw-2">&amp;</span>[<span class="string">&quot;(&quot;</span>],
+                    <span class="prelude-val">Some</span>(Token::CloseParen) =&gt; <span class="kw-2">&amp;</span>[<span class="string">&quot;)&quot;</span>, <span class="string">&quot;,&quot;</span>],
+                    <span class="prelude-val">Some</span>(Token::Comma) =&gt; <span class="kw-2">&amp;</span>[<span class="string">&quot;)&quot;</span>, <span class="string">&quot;&lt;key&gt;&quot;</span>],
+                    <span class="prelude-val">Some</span>(Token::Equals) =&gt; <span class="kw-2">&amp;</span>[<span class="string">&quot;\&quot;&quot;</span>],
+                    <span class="prelude-val">Some</span>(Token::Key(<span class="kw">_</span>)) =&gt; <span class="kw-2">&amp;</span>[<span class="string">&quot;=&quot;</span>, <span class="string">&quot;,&quot;</span>, <span class="string">&quot;)&quot;</span>],
+                    <span class="prelude-val">Some</span>(Token::Value(<span class="kw">_</span>)) =&gt; <span class="kw-2">&amp;</span>[<span class="string">&quot;,&quot;</span>, <span class="string">&quot;)&quot;</span>],
+                    <span class="prelude-val">Some</span>(Token::OpenParen) =&gt; <span class="kw-2">&amp;</span>[<span class="string">&quot;&lt;key&gt;&quot;</span>, <span class="string">&quot;)&quot;</span>, <span class="string">&quot;all&quot;</span>, <span class="string">&quot;any&quot;</span>, <span class="string">&quot;not&quot;</span>],
                 };
 
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                    <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
-                    <span class="ident">span</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">span</span>,
-                    <span class="ident">reason</span>: <span class="ident">Reason::Unexpected</span>(<span class="kw-2">&amp;</span><span class="ident">expected</span>),
+                <span class="kw">return </span><span class="prelude-val">Err</span>(ParseError {
+                    original: original.to_owned(),
+                    span: <span class="macro-nonterminal">$span</span>,
+                    reason: Reason::Unexpected(<span class="kw-2">&amp;</span>expected),
                 });
             }};
         }
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pred_key</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="kw">_</span>)<span class="op">&gt;</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pred_val</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="kw">_</span>)<span class="op">&gt;</span> <span class="op">=</span> <span class="prelude-val">None</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>pred_key: <span class="prelude-ty">Option</span>&lt;(<span class="kw-2">&amp;</span>str, <span class="kw">_</span>)&gt; = <span class="prelude-val">None</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>pred_val: <span class="prelude-ty">Option</span>&lt;(<span class="kw-2">&amp;</span>str, <span class="kw">_</span>)&gt; = <span class="prelude-val">None</span>;
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">root_predicate_count</span> <span class="op">=</span> <span class="number">0</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>root_predicate_count = <span class="number">0</span>;
 
-        <span class="comment">// Basic implementation of the https://en.wikipedia.org/wiki/Shunting-yard_algorithm</span>
-        <span class="lifetime">&#39;outer</span>: <span class="kw">for</span> <span class="ident">lt</span> <span class="kw">in</span> <span class="ident">lexer</span> {
-            <span class="kw">let</span> <span class="ident">lt</span> <span class="op">=</span> <span class="ident">lt</span><span class="question-mark">?</span>;
-            <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">lt</span>.<span class="ident">token</span> {
-                <span class="ident">Token::Key</span>(<span class="ident">k</span>) =&gt; <span class="kw">match</span> <span class="ident">last_token</span> {
-                    <span class="prelude-val">None</span> <span class="op">|</span> <span class="prelude-val">Some</span>(<span class="ident">Token::OpenParen</span>) <span class="op">|</span> <span class="prelude-val">Some</span>(<span class="ident">Token::Comma</span>) =&gt; {
-                        <span class="ident">pred_key</span> <span class="op">=</span> <span class="prelude-val">Some</span>((<span class="ident">k</span>, <span class="ident">lt</span>.<span class="ident">span</span>.<span class="ident">clone</span>()));
+        <span class="comment">// Basic implementation of the https://en.wikipedia.org/wiki/Shunting-yard_algorithm
+        </span><span class="lifetime">&#39;outer</span>: <span class="kw">for </span>lt <span class="kw">in </span>lexer {
+            <span class="kw">let </span>lt = lt<span class="question-mark">?</span>;
+            <span class="kw">match </span><span class="kw-2">&amp;</span>lt.token {
+                Token::Key(k) =&gt; <span class="kw">match </span>last_token {
+                    <span class="prelude-val">None </span>| <span class="prelude-val">Some</span>(Token::OpenParen) | <span class="prelude-val">Some</span>(Token::Comma) =&gt; {
+                        pred_key = <span class="prelude-val">Some</span>((k, lt.span.clone()));
                     }
-                    <span class="kw">_</span> =&gt; <span class="macro">token_err!</span>(<span class="ident">lt</span>.<span class="ident">span</span>),
+                    <span class="kw">_ </span>=&gt; <span class="macro">token_err!</span>(lt.span),
                 },
-                <span class="ident">Token::Value</span>(<span class="ident">v</span>) =&gt; <span class="kw">match</span> <span class="ident">last_token</span> {
-                    <span class="prelude-val">Some</span>(<span class="ident">Token::Equals</span>) =&gt; {
-                        <span class="comment">// We only record the span for keys and values</span>
-                        <span class="comment">// so that the expression doesn&#39;t need a lifetime</span>
-                        <span class="comment">// but in the value case we need to strip off</span>
-                        <span class="comment">// the quotes so that the proper raw string is</span>
-                        <span class="comment">// provided to callers when evaluating the expression</span>
-                        <span class="ident">pred_val</span> <span class="op">=</span> <span class="prelude-val">Some</span>((<span class="ident">v</span>, <span class="ident">lt</span>.<span class="ident">span</span>.<span class="ident">start</span> <span class="op">+</span> <span class="number">1</span>..<span class="ident">lt</span>.<span class="ident">span</span>.<span class="ident">end</span> <span class="op">-</span> <span class="number">1</span>));
+                Token::Value(v) =&gt; <span class="kw">match </span>last_token {
+                    <span class="prelude-val">Some</span>(Token::Equals) =&gt; {
+                        <span class="comment">// We only record the span for keys and values
+                        // so that the expression doesn&#39;t need a lifetime
+                        // but in the value case we need to strip off
+                        // the quotes so that the proper raw string is
+                        // provided to callers when evaluating the expression
+                        </span>pred_val = <span class="prelude-val">Some</span>((v, lt.span.start + <span class="number">1</span>..lt.span.end - <span class="number">1</span>));
                     }
-                    <span class="kw">_</span> =&gt; <span class="macro">token_err!</span>(<span class="ident">lt</span>.<span class="ident">span</span>),
+                    <span class="kw">_ </span>=&gt; <span class="macro">token_err!</span>(lt.span),
                 },
-                <span class="ident">Token::Equals</span> =&gt; <span class="kw">match</span> <span class="ident">last_token</span> {
-                    <span class="prelude-val">Some</span>(<span class="ident">Token::Key</span>(<span class="kw">_</span>)) =&gt; {}
-                    <span class="kw">_</span> =&gt; <span class="macro">token_err!</span>(<span class="ident">lt</span>.<span class="ident">span</span>),
+                Token::Equals =&gt; <span class="kw">match </span>last_token {
+                    <span class="prelude-val">Some</span>(Token::Key(<span class="kw">_</span>)) =&gt; {}
+                    <span class="kw">_ </span>=&gt; <span class="macro">token_err!</span>(lt.span),
                 },
-                <span class="ident">Token::All</span> <span class="op">|</span> <span class="ident">Token::Any</span> <span class="op">|</span> <span class="ident">Token::Not</span> =&gt; <span class="kw">match</span> <span class="ident">last_token</span> {
-                    <span class="prelude-val">None</span> <span class="op">|</span> <span class="prelude-val">Some</span>(<span class="ident">Token::OpenParen</span>) <span class="op">|</span> <span class="prelude-val">Some</span>(<span class="ident">Token::Comma</span>) =&gt; {
-                        <span class="kw">let</span> <span class="ident">new_fn</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">lt</span>.<span class="ident">token</span> {
-                            <span class="comment">// the 0 is a dummy value -- it will be substituted for the real</span>
-                            <span class="comment">// number of predicates in the `CloseParen` branch below.</span>
-                            <span class="ident">Token::All</span> =&gt; <span class="ident">Func::All</span>(<span class="number">0</span>),
-                            <span class="ident">Token::Any</span> =&gt; <span class="ident">Func::Any</span>(<span class="number">0</span>),
-                            <span class="ident">Token::Not</span> =&gt; <span class="ident">Func::Not</span>,
-                            <span class="kw">_</span> =&gt; <span class="macro">unreachable!</span>(),
+                Token::All | Token::Any | Token::Not =&gt; <span class="kw">match </span>last_token {
+                    <span class="prelude-val">None </span>| <span class="prelude-val">Some</span>(Token::OpenParen) | <span class="prelude-val">Some</span>(Token::Comma) =&gt; {
+                        <span class="kw">let </span>new_fn = <span class="kw">match </span>lt.token {
+                            <span class="comment">// the 0 is a dummy value -- it will be substituted for the real
+                            // number of predicates in the `CloseParen` branch below.
+                            </span>Token::All =&gt; Func::All(<span class="number">0</span>),
+                            Token::Any =&gt; Func::Any(<span class="number">0</span>),
+                            Token::Not =&gt; Func::Not,
+                            <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
                         };
 
-                        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">fs</span>) <span class="op">=</span> <span class="ident">func_stack</span>.<span class="ident">last_mut</span>() {
-                            <span class="ident">fs</span>.<span class="ident">nest_level</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(fs) = func_stack.last_mut() {
+                            fs.nest_level += <span class="number">1</span>;
                         }
 
-                        <span class="ident">func_stack</span>.<span class="ident">push</span>(<span class="ident">FuncAndSpan</span> {
-                            <span class="ident">func</span>: <span class="ident">new_fn</span>,
-                            <span class="ident">span</span>: <span class="ident">lt</span>.<span class="ident">span</span>,
-                            <span class="ident">parens_index</span>: <span class="number">0</span>,
-                            <span class="ident">predicates</span>: <span class="ident">SmallVec::new</span>(),
-                            <span class="ident">nest_level</span>: <span class="number">0</span>,
+                        func_stack.push(FuncAndSpan {
+                            func: new_fn,
+                            span: lt.span,
+                            parens_index: <span class="number">0</span>,
+                            predicates: SmallVec::new(),
+                            nest_level: <span class="number">0</span>,
                         });
                     }
-                    <span class="kw">_</span> =&gt; <span class="macro">token_err!</span>(<span class="ident">lt</span>.<span class="ident">span</span>),
+                    <span class="kw">_ </span>=&gt; <span class="macro">token_err!</span>(lt.span),
                 },
-                <span class="ident">Token::OpenParen</span> =&gt; <span class="kw">match</span> <span class="ident">last_token</span> {
-                    <span class="prelude-val">Some</span>(<span class="ident">Token::All</span>) <span class="op">|</span> <span class="prelude-val">Some</span>(<span class="ident">Token::Any</span>) <span class="op">|</span> <span class="prelude-val">Some</span>(<span class="ident">Token::Not</span>) =&gt; {
-                        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="kw-2">mut</span> <span class="ident">fs</span>) <span class="op">=</span> <span class="ident">func_stack</span>.<span class="ident">last_mut</span>() {
-                            <span class="ident">fs</span>.<span class="ident">parens_index</span> <span class="op">=</span> <span class="ident">lt</span>.<span class="ident">span</span>.<span class="ident">start</span>;
+                Token::OpenParen =&gt; <span class="kw">match </span>last_token {
+                    <span class="prelude-val">Some</span>(Token::All) | <span class="prelude-val">Some</span>(Token::Any) | <span class="prelude-val">Some</span>(Token::Not) =&gt; {
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref mut </span>fs) = func_stack.last_mut() {
+                            fs.parens_index = lt.span.start;
                         }
                     }
-                    <span class="kw">_</span> =&gt; <span class="macro">token_err!</span>(<span class="ident">lt</span>.<span class="ident">span</span>),
+                    <span class="kw">_ </span>=&gt; <span class="macro">token_err!</span>(lt.span),
                 },
-                <span class="ident">Token::CloseParen</span> =&gt; <span class="kw">match</span> <span class="ident">last_token</span> {
-                    <span class="prelude-val">None</span> <span class="op">|</span> <span class="prelude-val">Some</span>(<span class="ident">Token::All</span>) <span class="op">|</span> <span class="prelude-val">Some</span>(<span class="ident">Token::Any</span>) <span class="op">|</span> <span class="prelude-val">Some</span>(<span class="ident">Token::Not</span>)
-                    <span class="op">|</span> <span class="prelude-val">Some</span>(<span class="ident">Token::Equals</span>) =&gt; {
-                        <span class="macro">token_err!</span>(<span class="ident">lt</span>.<span class="ident">span</span>)
+                Token::CloseParen =&gt; <span class="kw">match </span>last_token {
+                    <span class="prelude-val">None </span>| <span class="prelude-val">Some</span>(Token::All) | <span class="prelude-val">Some</span>(Token::Any) | <span class="prelude-val">Some</span>(Token::Not)
+                    | <span class="prelude-val">Some</span>(Token::Equals) =&gt; {
+                        <span class="macro">token_err!</span>(lt.span)
                     }
-                    <span class="kw">_</span> =&gt; {
-                        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">top</span>) <span class="op">=</span> <span class="ident">func_stack</span>.<span class="ident">pop</span>() {
-                            <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="ident">pred_key</span>.<span class="ident">take</span>();
-                            <span class="kw">let</span> <span class="ident">val</span> <span class="op">=</span> <span class="ident">pred_val</span>.<span class="ident">take</span>();
+                    <span class="kw">_ </span>=&gt; {
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(top) = func_stack.pop() {
+                            <span class="kw">let </span>key = pred_key.take();
+                            <span class="kw">let </span>val = pred_val.take();
 
-                            <span class="kw">let</span> <span class="ident">num_predicates</span> <span class="op">=</span> <span class="ident">top</span>.<span class="ident">predicates</span>.<span class="ident">len</span>()
-                                <span class="op">+</span> <span class="kw">if</span> <span class="ident">key</span>.<span class="ident">is_some</span>() { <span class="number">1</span> } <span class="kw">else</span> { <span class="number">0</span> }
-                                <span class="op">+</span> <span class="ident">top</span>.<span class="ident">nest_level</span> <span class="kw">as</span> <span class="ident">usize</span>;
+                            <span class="kw">let </span>num_predicates = top.predicates.len()
+                                + <span class="kw">if </span>key.is_some() { <span class="number">1 </span>} <span class="kw">else </span>{ <span class="number">0 </span>}
+                                + top.nest_level <span class="kw">as </span>usize;
 
-                            <span class="kw">let</span> <span class="ident">func</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">top</span>.<span class="ident">func</span> {
-                                <span class="ident">Func::All</span>(<span class="kw">_</span>) =&gt; <span class="ident">Func::All</span>(<span class="ident">num_predicates</span>),
-                                <span class="ident">Func::Any</span>(<span class="kw">_</span>) =&gt; <span class="ident">Func::Any</span>(<span class="ident">num_predicates</span>),
-                                <span class="ident">Func::Not</span> =&gt; {
-                                    <span class="comment">// not() doesn&#39;t take a predicate list, but only a single predicate,</span>
-                                    <span class="comment">// so ensure we have exactly 1</span>
-                                    <span class="kw">if</span> <span class="ident">num_predicates</span> <span class="op">!</span><span class="op">=</span> <span class="number">1</span> {
-                                        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                                            <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
-                                            <span class="ident">span</span>: <span class="ident">top</span>.<span class="ident">span</span>.<span class="ident">start</span>..<span class="ident">lt</span>.<span class="ident">span</span>.<span class="ident">end</span>,
-                                            <span class="ident">reason</span>: <span class="ident">Reason::InvalidNot</span>(<span class="ident">num_predicates</span>),
+                            <span class="kw">let </span>func = <span class="kw">match </span>top.func {
+                                Func::All(<span class="kw">_</span>) =&gt; Func::All(num_predicates),
+                                Func::Any(<span class="kw">_</span>) =&gt; Func::Any(num_predicates),
+                                Func::Not =&gt; {
+                                    <span class="comment">// not() doesn&#39;t take a predicate list, but only a single predicate,
+                                    // so ensure we have exactly 1
+                                    </span><span class="kw">if </span>num_predicates != <span class="number">1 </span>{
+                                        <span class="kw">return </span><span class="prelude-val">Err</span>(ParseError {
+                                            original: original.to_owned(),
+                                            span: top.span.start..lt.span.end,
+                                            reason: Reason::InvalidNot(num_predicates),
                                         });
                                     }
 
-                                    <span class="ident">Func::Not</span>
+                                    Func::Not
                                 }
                             };
 
-                            <span class="kw">for</span> <span class="ident">pred</span> <span class="kw">in</span> <span class="ident">top</span>.<span class="ident">predicates</span> {
-                                <span class="ident">expr_queue</span>.<span class="ident">push</span>(<span class="ident">ExprNode::Predicate</span>(<span class="ident">pred</span>));
+                            <span class="kw">for </span>pred <span class="kw">in </span>top.predicates {
+                                expr_queue.push(ExprNode::Predicate(pred));
                             }
 
-                            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">key</span>) <span class="op">=</span> <span class="ident">key</span> {
-                                <span class="kw">let</span> <span class="ident">inner_pred</span> <span class="op">=</span> <span class="ident">parse_predicate</span>(<span class="ident">key</span>, <span class="ident">val</span>)<span class="question-mark">?</span>;
-                                <span class="ident">expr_queue</span>.<span class="ident">push</span>(<span class="ident">ExprNode::Predicate</span>(<span class="ident">inner_pred</span>));
+                            <span class="kw">if let </span><span class="prelude-val">Some</span>(key) = key {
+                                <span class="kw">let </span>inner_pred = parse_predicate(key, val)<span class="question-mark">?</span>;
+                                expr_queue.push(ExprNode::Predicate(inner_pred));
                             }
 
-                            <span class="ident">expr_queue</span>.<span class="ident">push</span>(<span class="ident">ExprNode::Fn</span>(<span class="ident">func</span>));
+                            expr_queue.push(ExprNode::Fn(func));
 
-                            <span class="comment">// This is the only place we go back to the top of the outer loop,</span>
-                            <span class="comment">// so make sure we correctly record this token</span>
-                            <span class="ident">last_token</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">Token::CloseParen</span>);
-                            <span class="kw">continue</span> <span class="lifetime">&#39;outer</span>;
+                            <span class="comment">// This is the only place we go back to the top of the outer loop,
+                            // so make sure we correctly record this token
+                            </span>last_token = <span class="prelude-val">Some</span>(Token::CloseParen);
+                            <span class="kw">continue </span><span class="lifetime">&#39;outer</span>;
                         }
 
-                        <span class="comment">// We didn&#39;t have an opening parentheses if we get here</span>
-                        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                            <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
-                            <span class="ident">span</span>: <span class="ident">lt</span>.<span class="ident">span</span>,
-                            <span class="ident">reason</span>: <span class="ident">Reason::UnopenedParens</span>,
+                        <span class="comment">// We didn&#39;t have an opening parentheses if we get here
+                        </span><span class="kw">return </span><span class="prelude-val">Err</span>(ParseError {
+                            original: original.to_owned(),
+                            span: lt.span,
+                            reason: Reason::UnopenedParens,
                         });
                     }
                 },
-                <span class="ident">Token::Comma</span> =&gt; <span class="kw">match</span> <span class="ident">last_token</span> {
-                    <span class="prelude-val">None</span>
-                    <span class="op">|</span> <span class="prelude-val">Some</span>(<span class="ident">Token::OpenParen</span>)
-                    <span class="op">|</span> <span class="prelude-val">Some</span>(<span class="ident">Token::All</span>)
-                    <span class="op">|</span> <span class="prelude-val">Some</span>(<span class="ident">Token::Any</span>)
-                    <span class="op">|</span> <span class="prelude-val">Some</span>(<span class="ident">Token::Not</span>)
-                    <span class="op">|</span> <span class="prelude-val">Some</span>(<span class="ident">Token::Equals</span>) =&gt; <span class="macro">token_err!</span>(<span class="ident">lt</span>.<span class="ident">span</span>),
-                    <span class="kw">_</span> =&gt; {
-                        <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="ident">pred_key</span>.<span class="ident">take</span>();
-                        <span class="kw">let</span> <span class="ident">val</span> <span class="op">=</span> <span class="ident">pred_val</span>.<span class="ident">take</span>();
+                Token::Comma =&gt; <span class="kw">match </span>last_token {
+                    <span class="prelude-val">None
+                    </span>| <span class="prelude-val">Some</span>(Token::OpenParen)
+                    | <span class="prelude-val">Some</span>(Token::All)
+                    | <span class="prelude-val">Some</span>(Token::Any)
+                    | <span class="prelude-val">Some</span>(Token::Not)
+                    | <span class="prelude-val">Some</span>(Token::Equals) =&gt; <span class="macro">token_err!</span>(lt.span),
+                    <span class="kw">_ </span>=&gt; {
+                        <span class="kw">let </span>key = pred_key.take();
+                        <span class="kw">let </span>val = pred_val.take();
 
-                        <span class="kw">let</span> <span class="ident">inner_pred</span> <span class="op">=</span> <span class="ident">key</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">key</span><span class="op">|</span> <span class="ident">parse_predicate</span>(<span class="ident">key</span>, <span class="ident">val</span>)).<span class="ident">transpose</span>()<span class="question-mark">?</span>;
+                        <span class="kw">let </span>inner_pred = key.map(|key| parse_predicate(key, val)).transpose()<span class="question-mark">?</span>;
 
-                        <span class="kw">match</span> (<span class="ident">inner_pred</span>, <span class="ident">func_stack</span>.<span class="ident">last_mut</span>()) {
-                            (<span class="prelude-val">Some</span>(<span class="ident">pred</span>), <span class="prelude-val">Some</span>(<span class="ident">func</span>)) =&gt; {
-                                <span class="ident">func</span>.<span class="ident">predicates</span>.<span class="ident">push</span>(<span class="ident">pred</span>);
+                        <span class="kw">match </span>(inner_pred, func_stack.last_mut()) {
+                            (<span class="prelude-val">Some</span>(pred), <span class="prelude-val">Some</span>(func)) =&gt; {
+                                func.predicates.push(pred);
                             }
-                            (<span class="prelude-val">Some</span>(<span class="ident">pred</span>), <span class="prelude-val">None</span>) =&gt; {
-                                <span class="ident">root_predicate_count</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+                            (<span class="prelude-val">Some</span>(pred), <span class="prelude-val">None</span>) =&gt; {
+                                root_predicate_count += <span class="number">1</span>;
 
-                                <span class="ident">expr_queue</span>.<span class="ident">push</span>(<span class="ident">ExprNode::Predicate</span>(<span class="ident">pred</span>));
+                                expr_queue.push(ExprNode::Predicate(pred));
                             }
-                            <span class="kw">_</span> =&gt; {}
+                            <span class="kw">_ </span>=&gt; {}
                         }
                     }
                 },
             }
 
-            <span class="ident">last_token</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">lt</span>.<span class="ident">token</span>);
+            last_token = <span class="prelude-val">Some</span>(lt.token);
         }
 
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">Token::Equals</span>) <span class="op">=</span> <span class="ident">last_token</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
-                <span class="ident">span</span>: <span class="ident">original</span>.<span class="ident">len</span>()..<span class="ident">original</span>.<span class="ident">len</span>(),
-                <span class="ident">reason</span>: <span class="ident">Reason::Unexpected</span>(<span class="kw-2">&amp;</span>[<span class="string">&quot;\&quot;&lt;value&gt;\&quot;&quot;</span>]),
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(Token::Equals) = last_token {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(ParseError {
+                original: original.to_owned(),
+                span: original.len()..original.len(),
+                reason: Reason::Unexpected(<span class="kw-2">&amp;</span>[<span class="string">&quot;\&quot;&lt;value&gt;\&quot;&quot;</span>]),
             });
         }
 
-        <span class="comment">// If we still have functions on the stack, it means we have an unclosed parens</span>
-        <span class="kw">match</span> <span class="ident">func_stack</span>.<span class="ident">pop</span>() {
-            <span class="prelude-val">Some</span>(<span class="ident">top</span>) =&gt; {
-                <span class="kw">if</span> <span class="ident">top</span>.<span class="ident">parens_index</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
-                    <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                        <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
-                        <span class="ident">span</span>: <span class="ident">top</span>.<span class="ident">parens_index</span>..<span class="ident">original</span>.<span class="ident">len</span>(),
-                        <span class="ident">reason</span>: <span class="ident">Reason::UnclosedParens</span>,
+        <span class="comment">// If we still have functions on the stack, it means we have an unclosed parens
+        </span><span class="kw">match </span>func_stack.pop() {
+            <span class="prelude-val">Some</span>(top) =&gt; {
+                <span class="kw">if </span>top.parens_index != <span class="number">0 </span>{
+                    <span class="prelude-val">Err</span>(ParseError {
+                        original: original.to_owned(),
+                        span: top.parens_index..original.len(),
+                        reason: Reason::UnclosedParens,
                     })
-                } <span class="kw">else</span> {
-                    <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                        <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
-                        <span class="ident">span</span>: <span class="ident">top</span>.<span class="ident">span</span>,
-                        <span class="ident">reason</span>: <span class="ident">Reason::Unexpected</span>(<span class="kw-2">&amp;</span>[<span class="string">&quot;(&quot;</span>]),
+                } <span class="kw">else </span>{
+                    <span class="prelude-val">Err</span>(ParseError {
+                        original: original.to_owned(),
+                        span: top.span,
+                        reason: Reason::Unexpected(<span class="kw-2">&amp;</span>[<span class="string">&quot;(&quot;</span>]),
                     })
                 }
             }
-            <span class="prelude-val">None</span> =&gt; {
-                <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="ident">pred_key</span>.<span class="ident">take</span>();
-                <span class="kw">let</span> <span class="ident">val</span> <span class="op">=</span> <span class="ident">pred_val</span>.<span class="ident">take</span>();
+            <span class="prelude-val">None </span>=&gt; {
+                <span class="kw">let </span>key = pred_key.take();
+                <span class="kw">let </span>val = pred_val.take();
 
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">key</span>) <span class="op">=</span> <span class="ident">key</span> {
-                    <span class="ident">root_predicate_count</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-                    <span class="ident">expr_queue</span>.<span class="ident">push</span>(<span class="ident">ExprNode::Predicate</span>(<span class="ident">parse_predicate</span>(<span class="ident">key</span>, <span class="ident">val</span>)<span class="question-mark">?</span>));
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(key) = key {
+                    root_predicate_count += <span class="number">1</span>;
+                    expr_queue.push(ExprNode::Predicate(parse_predicate(key, val)<span class="question-mark">?</span>));
                 }
 
-                <span class="kw">if</span> <span class="ident">expr_queue</span>.<span class="ident">is_empty</span>() {
-                    <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                        <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
-                        <span class="ident">span</span>: <span class="number">0</span>..<span class="ident">original</span>.<span class="ident">len</span>(),
-                        <span class="ident">reason</span>: <span class="ident">Reason::Empty</span>,
+                <span class="kw">if </span>expr_queue.is_empty() {
+                    <span class="prelude-val">Err</span>(ParseError {
+                        original: original.to_owned(),
+                        span: <span class="number">0</span>..original.len(),
+                        reason: Reason::Empty,
                     })
-                } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">root_predicate_count</span> <span class="op">&gt;</span> <span class="number">1</span> {
-                    <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                        <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
-                        <span class="ident">span</span>: <span class="number">0</span>..<span class="ident">original</span>.<span class="ident">len</span>(),
-                        <span class="ident">reason</span>: <span class="ident">Reason::MultipleRootPredicates</span>,
+                } <span class="kw">else if </span>root_predicate_count &gt; <span class="number">1 </span>{
+                    <span class="prelude-val">Err</span>(ParseError {
+                        original: original.to_owned(),
+                        span: <span class="number">0</span>..original.len(),
+                        reason: Reason::MultipleRootPredicates,
                     })
-                } <span class="kw">else</span> {
-                    <span class="prelude-val">Ok</span>(<span class="ident">Expression</span> {
-                        <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
-                        <span class="ident">expr</span>: <span class="ident">expr_queue</span>,
+                } <span class="kw">else </span>{
+                    <span class="prelude-val">Ok</span>(Expression {
+                        original: original.to_owned(),
+                        expr: expr_queue,
                     })
                 }
             }
@@ -890,5 +883,4 @@
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="cfg_expr" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.63.0-nightly (fee3a459d 2022-06-05)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="cfg_expr" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (02654a084 2022-08-30)" ></div></body></html>

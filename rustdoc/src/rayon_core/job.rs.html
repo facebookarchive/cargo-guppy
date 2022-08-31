@@ -1,11 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/rayon-core-1.9.3/src/job.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>job.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../rayon_core/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../rayon_core/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../rayon_core/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><div id="settings-menu" tabindex="-1">
-                                <a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div>
-                        </div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/rayon-core-1.9.3/src/job.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>job.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../rayon_core/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../rayon_core/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../rayon_core/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -222,223 +215,222 @@
 <span id="215">215</span>
 <span id="216">216</span>
 <span id="217">217</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::latch::Latch</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::unwind</span>;
-<span class="kw">use</span> <span class="ident">crossbeam_deque</span>::{<span class="ident">Injector</span>, <span class="ident">Steal</span>};
-<span class="kw">use</span> <span class="ident">std::any::Any</span>;
-<span class="kw">use</span> <span class="ident">std::cell::UnsafeCell</span>;
-<span class="kw">use</span> <span class="ident">std::mem</span>;
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::latch::Latch;
+<span class="kw">use </span><span class="kw">crate</span>::unwind;
+<span class="kw">use </span>crossbeam_deque::{Injector, Steal};
+<span class="kw">use </span>std::any::Any;
+<span class="kw">use </span>std::cell::UnsafeCell;
+<span class="kw">use </span>std::mem;
 
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">enum</span> <span class="ident">JobResult</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">enum </span>JobResult&lt;T&gt; {
     <span class="prelude-val">None</span>,
-    <span class="prelude-val">Ok</span>(<span class="ident">T</span>),
-    <span class="ident">Panic</span>(<span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Any</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span>),
+    <span class="prelude-val">Ok</span>(T),
+    Panic(Box&lt;<span class="kw">dyn </span>Any + Send&gt;),
 }
 
-<span class="doccomment">/// A `Job` is used to advertise work for other threads that they may</span>
-<span class="doccomment">/// want to steal. In accordance with time honored tradition, jobs are</span>
-<span class="doccomment">/// arranged in a deque, so that thieves can take from the top of the</span>
-<span class="doccomment">/// deque while the main worker manages the bottom of the deque. This</span>
-<span class="doccomment">/// deque is managed by the `thread_pool` module.</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">trait</span> <span class="ident">Job</span> {
-    <span class="doccomment">/// Unsafe: this may be called from a different thread than the one</span>
-    <span class="doccomment">/// which scheduled the job, so the implementer must ensure the</span>
-    <span class="doccomment">/// appropriate traits are met, whether `Send`, `Sync`, or both.</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">execute</span>(<span class="ident">this</span>: <span class="kw-2">*const</span> <span class="self">Self</span>);
+<span class="doccomment">/// A `Job` is used to advertise work for other threads that they may
+/// want to steal. In accordance with time honored tradition, jobs are
+/// arranged in a deque, so that thieves can take from the top of the
+/// deque while the main worker manages the bottom of the deque. This
+/// deque is managed by the `thread_pool` module.
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">trait </span>Job {
+    <span class="doccomment">/// Unsafe: this may be called from a different thread than the one
+    /// which scheduled the job, so the implementer must ensure the
+    /// appropriate traits are met, whether `Send`, `Sync`, or both.
+    </span><span class="kw">unsafe fn </span>execute(this: <span class="kw-2">*const </span><span class="self">Self</span>);
 }
 
-<span class="doccomment">/// Effectively a Job trait object. Each JobRef **must** be executed</span>
-<span class="doccomment">/// exactly once, or else data may leak.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Internally, we store the job&#39;s data in a `*const ()` pointer.  The</span>
-<span class="doccomment">/// true type is something like `*const StackJob&lt;...&gt;`, but we hide</span>
-<span class="doccomment">/// it. We also carry the &quot;execute fn&quot; from the `Job` trait.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">JobRef</span> {
-    <span class="ident">pointer</span>: <span class="kw-2">*const</span> (),
-    <span class="ident">execute_fn</span>: <span class="kw">unsafe</span> <span class="kw">fn</span>(<span class="kw-2">*const</span> ()),
+<span class="doccomment">/// Effectively a Job trait object. Each JobRef **must** be executed
+/// exactly once, or else data may leak.
+///
+/// Internally, we store the job&#39;s data in a `*const ()` pointer.  The
+/// true type is something like `*const StackJob&lt;...&gt;`, but we hide
+/// it. We also carry the &quot;execute fn&quot; from the `Job` trait.
+</span><span class="attribute">#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>JobRef {
+    pointer: <span class="kw-2">*const </span>(),
+    execute_fn: <span class="kw">unsafe fn</span>(<span class="kw-2">*const </span>()),
 }
 
-<span class="kw">unsafe</span> <span class="kw">impl</span> <span class="ident">Send</span> <span class="kw">for</span> <span class="ident">JobRef</span> {}
-<span class="kw">unsafe</span> <span class="kw">impl</span> <span class="ident">Sync</span> <span class="kw">for</span> <span class="ident">JobRef</span> {}
+<span class="kw">unsafe impl </span>Send <span class="kw">for </span>JobRef {}
+<span class="kw">unsafe impl </span>Sync <span class="kw">for </span>JobRef {}
 
-<span class="kw">impl</span> <span class="ident">JobRef</span> {
-    <span class="doccomment">/// Unsafe: caller asserts that `data` will remain valid until the</span>
-    <span class="doccomment">/// job is executed.</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">data</span>: <span class="kw-2">*const</span> <span class="ident">T</span>) -&gt; <span class="ident">JobRef</span>
-    <span class="kw">where</span>
-        <span class="ident">T</span>: <span class="ident">Job</span>,
+<span class="kw">impl </span>JobRef {
+    <span class="doccomment">/// Unsafe: caller asserts that `data` will remain valid until the
+    /// job is executed.
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe fn </span>new&lt;T&gt;(data: <span class="kw-2">*const </span>T) -&gt; JobRef
+    <span class="kw">where
+        </span>T: Job,
     {
-        <span class="kw">let</span> <span class="ident">fn_ptr</span>: <span class="kw">unsafe</span> <span class="kw">fn</span>(<span class="kw-2">*const</span> <span class="ident">T</span>) <span class="op">=</span> <span class="op">&lt;</span><span class="ident">T</span> <span class="kw">as</span> <span class="ident">Job</span><span class="op">&gt;</span><span class="ident">::execute</span>;
+        <span class="kw">let </span>fn_ptr: <span class="kw">unsafe fn</span>(<span class="kw-2">*const </span>T) = &lt;T <span class="kw">as </span>Job&gt;::execute;
 
-        <span class="comment">// erase types:</span>
-        <span class="ident">JobRef</span> {
-            <span class="ident">pointer</span>: <span class="ident">data</span> <span class="kw">as</span> <span class="kw-2">*const</span> (),
-            <span class="ident">execute_fn</span>: <span class="ident">mem::transmute</span>(<span class="ident">fn_ptr</span>),
+        <span class="comment">// erase types:
+        </span>JobRef {
+            pointer: data <span class="kw">as </span><span class="kw-2">*const </span>(),
+            execute_fn: mem::transmute(fn_ptr),
         }
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">execute</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        (<span class="self">self</span>.<span class="ident">execute_fn</span>)(<span class="self">self</span>.<span class="ident">pointer</span>)
+    <span class="attribute">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        (<span class="self">self</span>.execute_fn)(<span class="self">self</span>.pointer)
     }
 }
 
-<span class="doccomment">/// A job that will be owned by a stack slot. This means that when it</span>
-<span class="doccomment">/// executes it need not free any heap data, the cleanup occurs when</span>
-<span class="doccomment">/// the stack frame is later popped.  The function parameter indicates</span>
-<span class="doccomment">/// `true` if the job was stolen -- executed on a different thread.</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">StackJob</span><span class="op">&lt;</span><span class="ident">L</span>, <span class="ident">F</span>, <span class="ident">R</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">L</span>: <span class="ident">Latch</span> <span class="op">+</span> <span class="ident">Sync</span>,
-    <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="ident">bool</span>) -&gt; <span class="ident">R</span> <span class="op">+</span> <span class="ident">Send</span>,
-    <span class="ident">R</span>: <span class="ident">Send</span>,
+<span class="doccomment">/// A job that will be owned by a stack slot. This means that when it
+/// executes it need not free any heap data, the cleanup occurs when
+/// the stack frame is later popped.  The function parameter indicates
+/// `true` if the job was stolen -- executed on a different thread.
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>StackJob&lt;L, F, R&gt;
+<span class="kw">where
+    </span>L: Latch + Sync,
+    F: FnOnce(bool) -&gt; R + Send,
+    R: Send,
 {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">latch</span>: <span class="ident">L</span>,
-    <span class="ident">func</span>: <span class="ident">UnsafeCell</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">result</span>: <span class="ident">UnsafeCell</span><span class="op">&lt;</span><span class="ident">JobResult</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span>(<span class="kw">super</span>) latch: L,
+    func: UnsafeCell&lt;<span class="prelude-ty">Option</span>&lt;F&gt;&gt;,
+    result: UnsafeCell&lt;JobResult&lt;R&gt;&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">L</span>, <span class="ident">F</span>, <span class="ident">R</span><span class="op">&gt;</span> <span class="ident">StackJob</span><span class="op">&lt;</span><span class="ident">L</span>, <span class="ident">F</span>, <span class="ident">R</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">L</span>: <span class="ident">Latch</span> <span class="op">+</span> <span class="ident">Sync</span>,
-    <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="ident">bool</span>) -&gt; <span class="ident">R</span> <span class="op">+</span> <span class="ident">Send</span>,
-    <span class="ident">R</span>: <span class="ident">Send</span>,
+<span class="kw">impl</span>&lt;L, F, R&gt; StackJob&lt;L, F, R&gt;
+<span class="kw">where
+    </span>L: Latch + Sync,
+    F: FnOnce(bool) -&gt; R + Send,
+    R: Send,
 {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">func</span>: <span class="ident">F</span>, <span class="ident">latch</span>: <span class="ident">L</span>) -&gt; <span class="ident">StackJob</span><span class="op">&lt;</span><span class="ident">L</span>, <span class="ident">F</span>, <span class="ident">R</span><span class="op">&gt;</span> {
-        <span class="ident">StackJob</span> {
-            <span class="ident">latch</span>,
-            <span class="ident">func</span>: <span class="ident">UnsafeCell::new</span>(<span class="prelude-val">Some</span>(<span class="ident">func</span>)),
-            <span class="ident">result</span>: <span class="ident">UnsafeCell::new</span>(<span class="ident">JobResult::None</span>),
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new(func: F, latch: L) -&gt; StackJob&lt;L, F, R&gt; {
+        StackJob {
+            latch,
+            func: UnsafeCell::new(<span class="prelude-val">Some</span>(func)),
+            result: UnsafeCell::new(JobResult::None),
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">as_job_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">JobRef</span> {
-        <span class="ident">JobRef::new</span>(<span class="self">self</span>)
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe fn </span>as_job_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; JobRef {
+        JobRef::new(<span class="self">self</span>)
     }
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">run_inline</span>(<span class="self">self</span>, <span class="ident">stolen</span>: <span class="ident">bool</span>) -&gt; <span class="ident">R</span> {
-        <span class="self">self</span>.<span class="ident">func</span>.<span class="ident">into_inner</span>().<span class="ident">unwrap</span>()(<span class="ident">stolen</span>)
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe fn </span>run_inline(<span class="self">self</span>, stolen: bool) -&gt; R {
+        <span class="self">self</span>.func.into_inner().unwrap()(stolen)
     }
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">into_result</span>(<span class="self">self</span>) -&gt; <span class="ident">R</span> {
-        <span class="self">self</span>.<span class="ident">result</span>.<span class="ident">into_inner</span>().<span class="ident">into_return_value</span>()
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe fn </span>into_result(<span class="self">self</span>) -&gt; R {
+        <span class="self">self</span>.result.into_inner().into_return_value()
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">L</span>, <span class="ident">F</span>, <span class="ident">R</span><span class="op">&gt;</span> <span class="ident">Job</span> <span class="kw">for</span> <span class="ident">StackJob</span><span class="op">&lt;</span><span class="ident">L</span>, <span class="ident">F</span>, <span class="ident">R</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">L</span>: <span class="ident">Latch</span> <span class="op">+</span> <span class="ident">Sync</span>,
-    <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="ident">bool</span>) -&gt; <span class="ident">R</span> <span class="op">+</span> <span class="ident">Send</span>,
-    <span class="ident">R</span>: <span class="ident">Send</span>,
+<span class="kw">impl</span>&lt;L, F, R&gt; Job <span class="kw">for </span>StackJob&lt;L, F, R&gt;
+<span class="kw">where
+    </span>L: Latch + Sync,
+    F: FnOnce(bool) -&gt; R + Send,
+    R: Send,
 {
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">execute</span>(<span class="ident">this</span>: <span class="kw-2">*const</span> <span class="self">Self</span>) {
-        <span class="kw">fn</span> <span class="ident">call</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>(<span class="ident">func</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>(<span class="ident">bool</span>) -&gt; <span class="ident">R</span>) -&gt; <span class="kw">impl</span> <span class="ident">FnOnce</span>() -&gt; <span class="ident">R</span> {
-            <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> <span class="ident">func</span>(<span class="bool-val">true</span>)
+    <span class="kw">unsafe fn </span>execute(this: <span class="kw-2">*const </span><span class="self">Self</span>) {
+        <span class="kw">fn </span>call&lt;R&gt;(func: <span class="kw">impl </span>FnOnce(bool) -&gt; R) -&gt; <span class="kw">impl </span>FnOnce() -&gt; R {
+            <span class="kw">move </span>|| func(<span class="bool-val">true</span>)
         }
 
-        <span class="kw">let</span> <span class="ident">this</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">this</span>;
-        <span class="kw">let</span> <span class="ident">abort</span> <span class="op">=</span> <span class="ident">unwind::AbortIfPanic</span>;
-        <span class="kw">let</span> <span class="ident">func</span> <span class="op">=</span> (<span class="kw-2">*</span><span class="ident">this</span>.<span class="ident">func</span>.<span class="ident">get</span>()).<span class="ident">take</span>().<span class="ident">unwrap</span>();
-        (<span class="kw-2">*</span><span class="ident">this</span>.<span class="ident">result</span>.<span class="ident">get</span>()) <span class="op">=</span> <span class="kw">match</span> <span class="ident">unwind::halt_unwinding</span>(<span class="ident">call</span>(<span class="ident">func</span>)) {
-            <span class="prelude-val">Ok</span>(<span class="ident">x</span>) =&gt; <span class="ident">JobResult::Ok</span>(<span class="ident">x</span>),
-            <span class="prelude-val">Err</span>(<span class="ident">x</span>) =&gt; <span class="ident">JobResult::Panic</span>(<span class="ident">x</span>),
+        <span class="kw">let </span>this = <span class="kw-2">&amp;*</span>this;
+        <span class="kw">let </span>abort = unwind::AbortIfPanic;
+        <span class="kw">let </span>func = (<span class="kw-2">*</span>this.func.get()).take().unwrap();
+        (<span class="kw-2">*</span>this.result.get()) = <span class="kw">match </span>unwind::halt_unwinding(call(func)) {
+            <span class="prelude-val">Ok</span>(x) =&gt; JobResult::Ok(x),
+            <span class="prelude-val">Err</span>(x) =&gt; JobResult::Panic(x),
         };
-        <span class="ident">this</span>.<span class="ident">latch</span>.<span class="ident">set</span>();
-        <span class="ident">mem::forget</span>(<span class="ident">abort</span>);
+        this.latch.set();
+        mem::forget(abort);
     }
 }
 
-<span class="doccomment">/// Represents a job stored in the heap. Used to implement</span>
-<span class="doccomment">/// `scope`. Unlike `StackJob`, when executed, `HeapJob` simply</span>
-<span class="doccomment">/// invokes a closure, which then triggers the appropriate logic to</span>
-<span class="doccomment">/// signal that the job executed.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// (Probably `StackJob` should be refactored in a similar fashion.)</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">HeapJob</span><span class="op">&lt;</span><span class="ident">BODY</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">BODY</span>: <span class="ident">FnOnce</span>() <span class="op">+</span> <span class="ident">Send</span>,
+<span class="doccomment">/// Represents a job stored in the heap. Used to implement
+/// `scope`. Unlike `StackJob`, when executed, `HeapJob` simply
+/// invokes a closure, which then triggers the appropriate logic to
+/// signal that the job executed.
+///
+/// (Probably `StackJob` should be refactored in a similar fashion.)
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>HeapJob&lt;BODY&gt;
+<span class="kw">where
+    </span>BODY: FnOnce() + Send,
 {
-    <span class="ident">job</span>: <span class="ident">UnsafeCell</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">BODY</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    job: UnsafeCell&lt;<span class="prelude-ty">Option</span>&lt;BODY&gt;&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">BODY</span><span class="op">&gt;</span> <span class="ident">HeapJob</span><span class="op">&lt;</span><span class="ident">BODY</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">BODY</span>: <span class="ident">FnOnce</span>() <span class="op">+</span> <span class="ident">Send</span>,
+<span class="kw">impl</span>&lt;BODY&gt; HeapJob&lt;BODY&gt;
+<span class="kw">where
+    </span>BODY: FnOnce() + Send,
 {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">func</span>: <span class="ident">BODY</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">HeapJob</span> {
-            <span class="ident">job</span>: <span class="ident">UnsafeCell::new</span>(<span class="prelude-val">Some</span>(<span class="ident">func</span>)),
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new(func: BODY) -&gt; <span class="self">Self </span>{
+        HeapJob {
+            job: UnsafeCell::new(<span class="prelude-val">Some</span>(func)),
         }
     }
 
-    <span class="doccomment">/// Creates a `JobRef` from this job -- note that this hides all</span>
-    <span class="doccomment">/// lifetimes, so it is up to you to ensure that this JobRef</span>
-    <span class="doccomment">/// doesn&#39;t outlive any data that it closes over.</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">as_job_ref</span>(<span class="self">self</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>) -&gt; <span class="ident">JobRef</span> {
-        <span class="kw">let</span> <span class="ident">this</span>: <span class="kw-2">*const</span> <span class="self">Self</span> <span class="op">=</span> <span class="ident">mem::transmute</span>(<span class="self">self</span>);
-        <span class="ident">JobRef::new</span>(<span class="ident">this</span>)
+    <span class="doccomment">/// Creates a `JobRef` from this job -- note that this hides all
+    /// lifetimes, so it is up to you to ensure that this JobRef
+    /// doesn&#39;t outlive any data that it closes over.
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe fn </span>as_job_ref(<span class="self">self</span>: Box&lt;<span class="self">Self</span>&gt;) -&gt; JobRef {
+        <span class="kw">let </span>this: <span class="kw-2">*const </span><span class="self">Self </span>= mem::transmute(<span class="self">self</span>);
+        JobRef::new(this)
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">BODY</span><span class="op">&gt;</span> <span class="ident">Job</span> <span class="kw">for</span> <span class="ident">HeapJob</span><span class="op">&lt;</span><span class="ident">BODY</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">BODY</span>: <span class="ident">FnOnce</span>() <span class="op">+</span> <span class="ident">Send</span>,
+<span class="kw">impl</span>&lt;BODY&gt; Job <span class="kw">for </span>HeapJob&lt;BODY&gt;
+<span class="kw">where
+    </span>BODY: FnOnce() + Send,
 {
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">execute</span>(<span class="ident">this</span>: <span class="kw-2">*const</span> <span class="self">Self</span>) {
-        <span class="kw">let</span> <span class="ident">this</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">mem::transmute</span>(<span class="ident">this</span>);
-        <span class="kw">let</span> <span class="ident">job</span> <span class="op">=</span> (<span class="kw-2">*</span><span class="ident">this</span>.<span class="ident">job</span>.<span class="ident">get</span>()).<span class="ident">take</span>().<span class="ident">unwrap</span>();
-        <span class="ident">job</span>();
+    <span class="kw">unsafe fn </span>execute(this: <span class="kw-2">*const </span><span class="self">Self</span>) {
+        <span class="kw">let </span>this: Box&lt;<span class="self">Self</span>&gt; = mem::transmute(this);
+        <span class="kw">let </span>job = (<span class="kw-2">*</span>this.job.get()).take().unwrap();
+        job();
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">JobResult</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Convert the `JobResult` for a job that has finished (and hence</span>
-    <span class="doccomment">/// its JobResult is populated) into its return value.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// NB. This will panic if the job panicked.</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">into_return_value</span>(<span class="self">self</span>) -&gt; <span class="ident">T</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">JobResult::None</span> =&gt; <span class="macro">unreachable!</span>(),
-            <span class="ident">JobResult::Ok</span>(<span class="ident">x</span>) =&gt; <span class="ident">x</span>,
-            <span class="ident">JobResult::Panic</span>(<span class="ident">x</span>) =&gt; <span class="ident">unwind::resume_unwinding</span>(<span class="ident">x</span>),
+<span class="kw">impl</span>&lt;T&gt; JobResult&lt;T&gt; {
+    <span class="doccomment">/// Convert the `JobResult` for a job that has finished (and hence
+    /// its JobResult is populated) into its return value.
+    ///
+    /// NB. This will panic if the job panicked.
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>into_return_value(<span class="self">self</span>) -&gt; T {
+        <span class="kw">match </span><span class="self">self </span>{
+            JobResult::None =&gt; <span class="macro">unreachable!</span>(),
+            JobResult::Ok(x) =&gt; x,
+            JobResult::Panic(x) =&gt; unwind::resume_unwinding(x),
         }
     }
 }
 
-<span class="doccomment">/// Indirect queue to provide FIFO job priority.</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">JobFifo</span> {
-    <span class="ident">inner</span>: <span class="ident">Injector</span><span class="op">&lt;</span><span class="ident">JobRef</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Indirect queue to provide FIFO job priority.
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>JobFifo {
+    inner: Injector&lt;JobRef&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">JobFifo</span> {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-        <span class="ident">JobFifo</span> {
-            <span class="ident">inner</span>: <span class="ident">Injector::new</span>(),
+<span class="kw">impl </span>JobFifo {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new() -&gt; <span class="self">Self </span>{
+        JobFifo {
+            inner: Injector::new(),
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">push</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">job_ref</span>: <span class="ident">JobRef</span>) -&gt; <span class="ident">JobRef</span> {
-        <span class="comment">// A little indirection ensures that spawns are always prioritized in FIFO order.  The</span>
-        <span class="comment">// jobs in a thread&#39;s deque may be popped from the back (LIFO) or stolen from the front</span>
-        <span class="comment">// (FIFO), but either way they will end up popping from the front of this queue.</span>
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">push</span>(<span class="ident">job_ref</span>);
-        <span class="ident">JobRef::new</span>(<span class="self">self</span>)
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe fn </span>push(<span class="kw-2">&amp;</span><span class="self">self</span>, job_ref: JobRef) -&gt; JobRef {
+        <span class="comment">// A little indirection ensures that spawns are always prioritized in FIFO order.  The
+        // jobs in a thread&#39;s deque may be popped from the back (LIFO) or stolen from the front
+        // (FIFO), but either way they will end up popping from the front of this queue.
+        </span><span class="self">self</span>.inner.push(job_ref);
+        JobRef::new(<span class="self">self</span>)
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Job</span> <span class="kw">for</span> <span class="ident">JobFifo</span> {
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">execute</span>(<span class="ident">this</span>: <span class="kw-2">*const</span> <span class="self">Self</span>) {
-        <span class="comment">// We &quot;execute&quot; a queue by executing its first job, FIFO.</span>
-        <span class="kw">loop</span> {
-            <span class="kw">match</span> (<span class="kw-2">*</span><span class="ident">this</span>).<span class="ident">inner</span>.<span class="ident">steal</span>() {
-                <span class="ident">Steal::Success</span>(<span class="ident">job_ref</span>) =&gt; <span class="kw">break</span> <span class="ident">job_ref</span>.<span class="ident">execute</span>(),
-                <span class="ident">Steal::Empty</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;FIFO is empty&quot;</span>),
-                <span class="ident">Steal::Retry</span> =&gt; {}
+<span class="kw">impl </span>Job <span class="kw">for </span>JobFifo {
+    <span class="kw">unsafe fn </span>execute(this: <span class="kw-2">*const </span><span class="self">Self</span>) {
+        <span class="comment">// We &quot;execute&quot; a queue by executing its first job, FIFO.
+        </span><span class="kw">loop </span>{
+            <span class="kw">match </span>(<span class="kw-2">*</span>this).inner.steal() {
+                Steal::Success(job_ref) =&gt; <span class="kw">break </span>job_ref.execute(),
+                Steal::Empty =&gt; <span class="macro">panic!</span>(<span class="string">&quot;FIFO is empty&quot;</span>),
+                Steal::Retry =&gt; {}
             }
         }
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="rayon_core" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.63.0-nightly (fee3a459d 2022-06-05)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="rayon_core" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (02654a084 2022-08-30)" ></div></body></html>

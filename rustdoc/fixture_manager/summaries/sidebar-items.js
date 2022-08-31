@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["SummaryContext",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["SummaryContext",""]]};

@@ -1,11 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `guppy/src/petgraph_support/scc.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>scc.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../guppy/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../guppy/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../guppy/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><div id="settings-menu" tabindex="-1">
-                                <a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div>
-                        </div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `guppy/src/petgraph_support/scc.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>scc.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../guppy/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../guppy/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../guppy/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -159,160 +152,159 @@
 <span id="152">152</span>
 <span id="153">153</span>
 <span id="154">154</span>
-</pre><pre class="rust"><code><span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
-<span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
+</pre><pre class="rust"><code><span class="comment">// Copyright (c) The cargo-guppy Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
 
-<span class="kw">use</span> <span class="ident">fixedbitset::FixedBitSet</span>;
-<span class="kw">use</span> <span class="ident">nested::Nested</span>;
-<span class="kw">use</span> <span class="ident">petgraph</span>::{
-    <span class="ident">algo::kosaraju_scc</span>,
-    <span class="ident">graph::IndexType</span>,
-    <span class="ident">prelude</span>::<span class="kw-2">*</span>,
-    <span class="ident">visit</span>::{<span class="ident">IntoNeighborsDirected</span>, <span class="ident">IntoNodeIdentifiers</span>, <span class="ident">VisitMap</span>, <span class="ident">Visitable</span>},
+</span><span class="kw">use </span>fixedbitset::FixedBitSet;
+<span class="kw">use </span>nested::Nested;
+<span class="kw">use </span>petgraph::{
+    algo::kosaraju_scc,
+    graph::IndexType,
+    prelude::<span class="kw-2">*</span>,
+    visit::{IntoNeighborsDirected, IntoNodeIdentifiers, VisitMap, Visitable},
 };
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">collections::HashMap</span>, <span class="ident">slice</span>};
+<span class="kw">use </span>std::{collections::HashMap, slice};
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">Sccs</span><span class="op">&lt;</span><span class="ident">Ix</span>: <span class="ident">IndexType</span><span class="op">&gt;</span> {
-    <span class="ident">sccs</span>: <span class="ident">Nested</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">multi_map</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span>, <span class="ident">usize</span><span class="op">&gt;</span>,
+<span class="attribute">#[derive(Clone, Debug)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Sccs&lt;Ix: IndexType&gt; {
+    sccs: Nested&lt;Vec&lt;NodeIndex&lt;Ix&gt;&gt;&gt;,
+    multi_map: HashMap&lt;NodeIndex&lt;Ix&gt;, usize&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Ix</span>: <span class="ident">IndexType</span><span class="op">&gt;</span> <span class="ident">Sccs</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Creates a new instance from the provided graph and the given sorter.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>(<span class="ident">graph</span>: <span class="ident">G</span>, <span class="kw-2">mut</span> <span class="ident">scc_sorter</span>: <span class="kw">impl</span> <span class="ident">FnMut</span>(<span class="kw-2">&amp;mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span><span class="op">&gt;</span>)) -&gt; <span class="self">Self</span>
-    <span class="kw">where</span>
-        <span class="ident">G</span>: <span class="ident">IntoNeighborsDirected</span><span class="op">&lt;</span><span class="ident">NodeId</span> <span class="op">=</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Visitable</span> <span class="op">+</span> <span class="ident">IntoNodeIdentifiers</span>,
-        <span class="op">&lt;</span><span class="ident">G</span> <span class="kw">as</span> <span class="ident">Visitable</span><span class="op">&gt;</span><span class="ident">::Map</span>: <span class="ident">VisitMap</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;Ix: IndexType&gt; Sccs&lt;Ix&gt; {
+    <span class="doccomment">/// Creates a new instance from the provided graph and the given sorter.
+    </span><span class="kw">pub fn </span>new&lt;G&gt;(graph: G, <span class="kw-2">mut </span>scc_sorter: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;mut </span>Vec&lt;NodeIndex&lt;Ix&gt;&gt;)) -&gt; <span class="self">Self
+    </span><span class="kw">where
+        </span>G: IntoNeighborsDirected&lt;NodeId = NodeIndex&lt;Ix&gt;&gt; + Visitable + IntoNodeIdentifiers,
+        &lt;G <span class="kw">as </span>Visitable&gt;::Map: VisitMap&lt;NodeIndex&lt;Ix&gt;&gt;,
     {
-        <span class="comment">// Use kosaraju_scc since it is iterative (tarjan_scc is recursive) and package graphs</span>
-        <span class="comment">// have unbounded depth.</span>
-        <span class="kw">let</span> <span class="ident">sccs</span> <span class="op">=</span> <span class="ident">kosaraju_scc</span>(<span class="ident">graph</span>);
-        <span class="kw">let</span> <span class="ident">sccs</span>: <span class="ident">Nested</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">sccs</span>
-            .<span class="ident">into_iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span><span class="kw-2">mut</span> <span class="ident">scc</span><span class="op">|</span> {
-                <span class="kw">if</span> <span class="ident">scc</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">1</span> {
-                    <span class="ident">scc_sorter</span>(<span class="kw-2">&amp;mut</span> <span class="ident">scc</span>);
+        <span class="comment">// Use kosaraju_scc since it is iterative (tarjan_scc is recursive) and package graphs
+        // have unbounded depth.
+        </span><span class="kw">let </span>sccs = kosaraju_scc(graph);
+        <span class="kw">let </span>sccs: Nested&lt;Vec&lt;<span class="kw">_</span>&gt;&gt; = sccs
+            .into_iter()
+            .map(|<span class="kw-2">mut </span>scc| {
+                <span class="kw">if </span>scc.len() &gt; <span class="number">1 </span>{
+                    scc_sorter(<span class="kw-2">&amp;mut </span>scc);
                 }
-                <span class="ident">scc</span>
+                scc
             })
-            <span class="comment">// kosaraju_scc returns its sccs in reverse topological order. Reverse it again for</span>
-            <span class="comment">// forward topological order.</span>
-            .<span class="ident">rev</span>()
-            .<span class="ident">collect</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">multi_map</span> <span class="op">=</span> <span class="ident">HashMap::new</span>();
-        <span class="kw">for</span> (<span class="ident">idx</span>, <span class="ident">scc</span>) <span class="kw">in</span> <span class="ident">sccs</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>() {
-            <span class="kw">if</span> <span class="ident">scc</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">1</span> {
-                <span class="ident">multi_map</span>.<span class="ident">extend</span>(<span class="ident">scc</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">ix</span><span class="op">|</span> (<span class="kw-2">*</span><span class="ident">ix</span>, <span class="ident">idx</span>)));
+            <span class="comment">// kosaraju_scc returns its sccs in reverse topological order. Reverse it again for
+            // forward topological order.
+            </span>.rev()
+            .collect();
+        <span class="kw">let </span><span class="kw-2">mut </span>multi_map = HashMap::new();
+        <span class="kw">for </span>(idx, scc) <span class="kw">in </span>sccs.iter().enumerate() {
+            <span class="kw">if </span>scc.len() &gt; <span class="number">1 </span>{
+                multi_map.extend(scc.iter().map(|ix| (<span class="kw-2">*</span>ix, idx)));
             }
         }
-        <span class="self">Self</span> { <span class="ident">sccs</span>, <span class="ident">multi_map</span> }
+        <span class="self">Self </span>{ sccs, multi_map }
     }
 
-    <span class="doccomment">/// Returns true if `a` and `b` are in the same scc.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_same_scc</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">a</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span>, <span class="ident">b</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">if</span> <span class="ident">a</span> <span class="op">==</span> <span class="ident">b</span> {
-            <span class="kw">return</span> <span class="bool-val">true</span>;
+    <span class="doccomment">/// Returns true if `a` and `b` are in the same scc.
+    </span><span class="kw">pub fn </span>is_same_scc(<span class="kw-2">&amp;</span><span class="self">self</span>, a: NodeIndex&lt;Ix&gt;, b: NodeIndex&lt;Ix&gt;) -&gt; bool {
+        <span class="kw">if </span>a == b {
+            <span class="kw">return </span><span class="bool-val">true</span>;
         }
-        <span class="kw">match</span> (<span class="self">self</span>.<span class="ident">multi_map</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">a</span>), <span class="self">self</span>.<span class="ident">multi_map</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">b</span>)) {
-            (<span class="prelude-val">Some</span>(<span class="ident">a_scc</span>), <span class="prelude-val">Some</span>(<span class="ident">b_scc</span>)) =&gt; <span class="ident">a_scc</span> <span class="op">==</span> <span class="ident">b_scc</span>,
-            <span class="kw">_</span> =&gt; <span class="bool-val">false</span>,
+        <span class="kw">match </span>(<span class="self">self</span>.multi_map.get(<span class="kw-2">&amp;</span>a), <span class="self">self</span>.multi_map.get(<span class="kw-2">&amp;</span>b)) {
+            (<span class="prelude-val">Some</span>(a_scc), <span class="prelude-val">Some</span>(b_scc)) =&gt; a_scc == b_scc,
+            <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
         }
     }
 
-    <span class="doccomment">/// Returns all the SCCs with more than one element.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">multi_sccs</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[<span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span>]<span class="op">&gt;</span> <span class="op">+</span> <span class="ident">DoubleEndedIterator</span> {
-        <span class="self">self</span>.<span class="ident">sccs</span>.<span class="ident">iter</span>().<span class="ident">filter</span>(<span class="op">|</span><span class="ident">scc</span><span class="op">|</span> <span class="ident">scc</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">1</span>)
+    <span class="doccomment">/// Returns all the SCCs with more than one element.
+    </span><span class="kw">pub fn </span>multi_sccs(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span>[NodeIndex&lt;Ix&gt;]&gt; + DoubleEndedIterator {
+        <span class="self">self</span>.sccs.iter().filter(|scc| scc.len() &gt; <span class="number">1</span>)
     }
 
-    <span class="doccomment">/// Returns all the nodes of this graph that have no incoming edges to them, and all the nodes</span>
-    <span class="doccomment">/// in an SCC into which there are no incoming edges.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">externals</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">G</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>, <span class="ident">graph</span>: <span class="ident">G</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span>
-    <span class="kw">where</span>
-        <span class="ident">G</span>: <span class="lifetime">&#39;a</span> <span class="op">+</span> <span class="ident">IntoNodeIdentifiers</span> <span class="op">+</span> <span class="ident">IntoNeighborsDirected</span><span class="op">&lt;</span><span class="ident">NodeId</span> <span class="op">=</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-        <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
+    <span class="doccomment">/// Returns all the nodes of this graph that have no incoming edges to them, and all the nodes
+    /// in an SCC into which there are no incoming edges.
+    </span><span class="kw">pub fn </span>externals&lt;<span class="lifetime">&#39;a</span>, G&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, graph: G) -&gt; <span class="kw">impl </span>Iterator&lt;Item = NodeIndex&lt;Ix&gt;&gt; + <span class="lifetime">&#39;a
+    </span><span class="kw">where
+        </span>G: <span class="lifetime">&#39;a </span>+ IntoNodeIdentifiers + IntoNeighborsDirected&lt;NodeId = NodeIndex&lt;Ix&gt;&gt;,
+        Ix: IndexType,
     {
-        <span class="comment">// Consider each SCC as one logical node.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">external_sccs</span> <span class="op">=</span> <span class="ident">FixedBitSet::with_capacity</span>(<span class="self">self</span>.<span class="ident">sccs</span>.<span class="ident">len</span>());
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">internal_sccs</span> <span class="op">=</span> <span class="ident">FixedBitSet::with_capacity</span>(<span class="self">self</span>.<span class="ident">sccs</span>.<span class="ident">len</span>());
-        <span class="ident">graph</span>
-            .<span class="ident">node_identifiers</span>()
-            .<span class="ident">filter</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">ix</span><span class="op">|</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">multi_map</span>.<span class="ident">get</span>(<span class="ident">ix</span>) {
-                <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">scc_idx</span>) =&gt; {
-                    <span class="comment">// Consider one node identifier for each scc -- whichever one comes first.</span>
-                    <span class="kw">if</span> <span class="ident">external_sccs</span>.<span class="ident">contains</span>(<span class="ident">scc_idx</span>) {
-                        <span class="kw">return</span> <span class="bool-val">true</span>;
+        <span class="comment">// Consider each SCC as one logical node.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>external_sccs = FixedBitSet::with_capacity(<span class="self">self</span>.sccs.len());
+        <span class="kw">let </span><span class="kw-2">mut </span>internal_sccs = FixedBitSet::with_capacity(<span class="self">self</span>.sccs.len());
+        graph
+            .node_identifiers()
+            .filter(<span class="kw">move </span>|ix| <span class="kw">match </span><span class="self">self</span>.multi_map.get(ix) {
+                <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>scc_idx) =&gt; {
+                    <span class="comment">// Consider one node identifier for each scc -- whichever one comes first.
+                    </span><span class="kw">if </span>external_sccs.contains(scc_idx) {
+                        <span class="kw">return </span><span class="bool-val">true</span>;
                     }
-                    <span class="kw">if</span> <span class="ident">internal_sccs</span>.<span class="ident">contains</span>(<span class="ident">scc_idx</span>) {
-                        <span class="kw">return</span> <span class="bool-val">false</span>;
+                    <span class="kw">if </span>internal_sccs.contains(scc_idx) {
+                        <span class="kw">return </span><span class="bool-val">false</span>;
                     }
 
-                    <span class="kw">let</span> <span class="ident">scc</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">sccs</span>[<span class="ident">scc_idx</span>];
-                    <span class="kw">let</span> <span class="ident">is_external</span> <span class="op">=</span> <span class="ident">scc</span>
-                        .<span class="ident">iter</span>()
-                        .<span class="ident">flat_map</span>(<span class="op">|</span><span class="ident">ix</span><span class="op">|</span> {
-                            <span class="comment">// Look at all incoming nodes from every SCC member.</span>
-                            <span class="ident">graph</span>.<span class="ident">neighbors_directed</span>(<span class="kw-2">*</span><span class="ident">ix</span>, <span class="ident">Incoming</span>)
+                    <span class="kw">let </span>scc = <span class="kw-2">&amp;</span><span class="self">self</span>.sccs[scc_idx];
+                    <span class="kw">let </span>is_external = scc
+                        .iter()
+                        .flat_map(|ix| {
+                            <span class="comment">// Look at all incoming nodes from every SCC member.
+                            </span>graph.neighbors_directed(<span class="kw-2">*</span>ix, Incoming)
                         })
-                        .<span class="ident">all</span>(<span class="op">|</span><span class="ident">neighbor_ix</span><span class="op">|</span> {
-                            <span class="comment">// * Accept any nodes are in the same SCC.</span>
-                            <span class="comment">// * Any other results imply that this isn&#39;t an external scc.</span>
-                            <span class="kw">match</span> <span class="self">self</span>.<span class="ident">multi_map</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">neighbor_ix</span>) {
-                                <span class="prelude-val">Some</span>(<span class="ident">neighbor_scc_idx</span>) =&gt; <span class="ident">neighbor_scc_idx</span> <span class="op">==</span> <span class="kw-2">&amp;</span><span class="ident">scc_idx</span>,
-                                <span class="prelude-val">None</span> =&gt; <span class="bool-val">false</span>,
+                        .all(|neighbor_ix| {
+                            <span class="comment">// * Accept any nodes are in the same SCC.
+                            // * Any other results imply that this isn&#39;t an external scc.
+                            </span><span class="kw">match </span><span class="self">self</span>.multi_map.get(<span class="kw-2">&amp;</span>neighbor_ix) {
+                                <span class="prelude-val">Some</span>(neighbor_scc_idx) =&gt; neighbor_scc_idx == <span class="kw-2">&amp;</span>scc_idx,
+                                <span class="prelude-val">None </span>=&gt; <span class="bool-val">false</span>,
                             }
                         });
-                    <span class="kw">if</span> <span class="ident">is_external</span> {
-                        <span class="ident">external_sccs</span>.<span class="ident">insert</span>(<span class="ident">scc_idx</span>);
-                    } <span class="kw">else</span> {
-                        <span class="ident">internal_sccs</span>.<span class="ident">insert</span>(<span class="ident">scc_idx</span>);
+                    <span class="kw">if </span>is_external {
+                        external_sccs.insert(scc_idx);
+                    } <span class="kw">else </span>{
+                        internal_sccs.insert(scc_idx);
                     }
-                    <span class="ident">is_external</span>
+                    is_external
                 }
-                <span class="prelude-val">None</span> =&gt; {
-                    <span class="comment">// Not part of an SCC -- just look at whether there are any incoming nodes</span>
-                    <span class="comment">// at all.</span>
-                    <span class="ident">graph</span>.<span class="ident">neighbors_directed</span>(<span class="kw-2">*</span><span class="ident">ix</span>, <span class="ident">Incoming</span>).<span class="ident">next</span>().<span class="ident">is_none</span>()
+                <span class="prelude-val">None </span>=&gt; {
+                    <span class="comment">// Not part of an SCC -- just look at whether there are any incoming nodes
+                    // at all.
+                    </span>graph.neighbors_directed(<span class="kw-2">*</span>ix, Incoming).next().is_none()
                 }
             })
     }
 
-    <span class="doccomment">/// Iterate over all nodes in the direction specified.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">node_iter</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">direction</span>: <span class="ident">Direction</span>) -&gt; <span class="ident">NodeIter</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span> {
-        <span class="ident">NodeIter</span> {
-            <span class="ident">node_ixs</span>: <span class="self">self</span>.<span class="ident">sccs</span>.<span class="ident">data</span>().<span class="ident">iter</span>(),
-            <span class="ident">direction</span>,
+    <span class="doccomment">/// Iterate over all nodes in the direction specified.
+    </span><span class="kw">pub fn </span>node_iter(<span class="kw-2">&amp;</span><span class="self">self</span>, direction: Direction) -&gt; NodeIter&lt;Ix&gt; {
+        NodeIter {
+            node_ixs: <span class="self">self</span>.sccs.data().iter(),
+            direction,
         }
     }
 }
 
-<span class="doccomment">/// An iterator over the nodes of strongly connected components.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">NodeIter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Ix</span><span class="op">&gt;</span> {
-    <span class="ident">node_ixs</span>: <span class="ident">slice::Iter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">direction</span>: <span class="ident">Direction</span>,
+<span class="doccomment">/// An iterator over the nodes of strongly connected components.
+</span><span class="attribute">#[derive(Clone, Debug)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>NodeIter&lt;<span class="lifetime">&#39;a</span>, Ix&gt; {
+    node_ixs: slice::Iter&lt;<span class="lifetime">&#39;a</span>, NodeIndex&lt;Ix&gt;&gt;,
+    direction: Direction,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="ident">NodeIter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Ix</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Returns the direction this iteration is happening in.</span>
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">direction</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Direction</span> {
-        <span class="self">self</span>.<span class="ident">direction</span>
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, Ix&gt; NodeIter&lt;<span class="lifetime">&#39;a</span>, Ix&gt; {
+    <span class="doccomment">/// Returns the direction this iteration is happening in.
+    </span><span class="attribute">#[allow(dead_code)]
+    </span><span class="kw">pub fn </span>direction(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Direction {
+        <span class="self">self</span>.direction
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Ix</span>: <span class="ident">IndexType</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">NodeIter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Ix</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span>;
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, Ix: IndexType&gt; Iterator <span class="kw">for </span>NodeIter&lt;<span class="lifetime">&#39;a</span>, Ix&gt; {
+    <span class="kw">type </span>Item = NodeIndex&lt;Ix&gt;;
 
-    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="comment">// Note that outgoing implies iterating over the sccs in forward order, while incoming means</span>
-        <span class="comment">// sccs in reverse order.</span>
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">direction</span> {
-            <span class="ident">Direction::Outgoing</span> =&gt; <span class="self">self</span>.<span class="ident">node_ixs</span>.<span class="ident">next</span>().<span class="ident">copied</span>(),
-            <span class="ident">Direction::Incoming</span> =&gt; <span class="self">self</span>.<span class="ident">node_ixs</span>.<span class="ident">next_back</span>().<span class="ident">copied</span>(),
+    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;NodeIndex&lt;Ix&gt;&gt; {
+        <span class="comment">// Note that outgoing implies iterating over the sccs in forward order, while incoming means
+        // sccs in reverse order.
+        </span><span class="kw">match </span><span class="self">self</span>.direction {
+            Direction::Outgoing =&gt; <span class="self">self</span>.node_ixs.next().copied(),
+            Direction::Incoming =&gt; <span class="self">self</span>.node_ixs.next_back().copied(),
         }
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="guppy" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.63.0-nightly (fee3a459d 2022-06-05)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="guppy" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (02654a084 2022-08-30)" ></div></body></html>

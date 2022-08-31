@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["enable_ansi_support","Enables ANSI code support on Windows 10."]]});
+window.SIDEBAR_ITEMS = {"fn":[["enable_ansi_support","Enables ANSI code support on Windows 10."]]};

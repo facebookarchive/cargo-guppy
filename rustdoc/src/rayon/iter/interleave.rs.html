@@ -1,11 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/rayon-1.5.3/src/iter/interleave.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>interleave.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../rayon/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><div id="settings-menu" tabindex="-1">
-                                <a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div>
-                        </div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/rayon-1.5.3/src/iter/interleave.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>interleave.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../rayon/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -341,342 +334,341 @@
 <span id="334">334</span>
 <span id="335">335</span>
 <span id="336">336</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">super</span>::plumbing</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident">std::cmp</span>;
-<span class="kw">use</span> <span class="ident">std::iter::Fuse</span>;
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::plumbing::<span class="kw-2">*</span>;
+<span class="kw">use super</span>::<span class="kw-2">*</span>;
+<span class="kw">use </span>std::cmp;
+<span class="kw">use </span>std::iter::Fuse;
 
-<span class="doccomment">/// `Interleave` is an iterator that interleaves elements of iterators</span>
-<span class="doccomment">/// `i` and `j` in one continuous iterator. This struct is created by</span>
-<span class="doccomment">/// the [`interleave()`] method on [`IndexedParallelIterator`]</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [`interleave()`]: trait.IndexedParallelIterator.html#method.interleave</span>
-<span class="doccomment">/// [`IndexedParallelIterator`]: trait.IndexedParallelIterator.html</span>
-<span class="attribute">#[<span class="ident">must_use</span> <span class="op">=</span> <span class="string">&quot;iterator adaptors are lazy and do nothing unless consumed&quot;</span>]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Interleave</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">J</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">I</span>: <span class="ident">IndexedParallelIterator</span>,
-    <span class="ident">J</span>: <span class="ident">IndexedParallelIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">I::Item</span><span class="op">&gt;</span>,
+<span class="doccomment">/// `Interleave` is an iterator that interleaves elements of iterators
+/// `i` and `j` in one continuous iterator. This struct is created by
+/// the [`interleave()`] method on [`IndexedParallelIterator`]
+///
+/// [`interleave()`]: trait.IndexedParallelIterator.html#method.interleave
+/// [`IndexedParallelIterator`]: trait.IndexedParallelIterator.html
+</span><span class="attribute">#[must_use = <span class="string">&quot;iterator adaptors are lazy and do nothing unless consumed&quot;</span>]
+#[derive(Debug, Clone)]
+</span><span class="kw">pub struct </span>Interleave&lt;I, J&gt;
+<span class="kw">where
+    </span>I: IndexedParallelIterator,
+    J: IndexedParallelIterator&lt;Item = I::Item&gt;,
 {
-    <span class="ident">i</span>: <span class="ident">I</span>,
-    <span class="ident">j</span>: <span class="ident">J</span>,
+    i: I,
+    j: J,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">J</span><span class="op">&gt;</span> <span class="ident">Interleave</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">J</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">I</span>: <span class="ident">IndexedParallelIterator</span>,
-    <span class="ident">J</span>: <span class="ident">IndexedParallelIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">I::Item</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;I, J&gt; Interleave&lt;I, J&gt;
+<span class="kw">where
+    </span>I: IndexedParallelIterator,
+    J: IndexedParallelIterator&lt;Item = I::Item&gt;,
 {
-    <span class="doccomment">/// Creates a new `Interleave` iterator</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">i</span>: <span class="ident">I</span>, <span class="ident">j</span>: <span class="ident">J</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">Interleave</span> { <span class="ident">i</span>, <span class="ident">j</span> }
-    }
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">J</span><span class="op">&gt;</span> <span class="ident">ParallelIterator</span> <span class="kw">for</span> <span class="ident">Interleave</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">J</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">I</span>: <span class="ident">IndexedParallelIterator</span>,
-    <span class="ident">J</span>: <span class="ident">IndexedParallelIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">I::Item</span><span class="op">&gt;</span>,
-{
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">I::Item</span>;
-
-    <span class="kw">fn</span> <span class="ident">drive_unindexed</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">consumer</span>: <span class="ident">C</span>) -&gt; <span class="ident">C::Result</span>
-    <span class="kw">where</span>
-        <span class="ident">C</span>: <span class="ident">Consumer</span><span class="op">&lt;</span><span class="ident">I::Item</span><span class="op">&gt;</span>,
-    {
-        <span class="ident">bridge</span>(<span class="self">self</span>, <span class="ident">consumer</span>)
-    }
-
-    <span class="kw">fn</span> <span class="ident">opt_len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">len</span>())
+    <span class="doccomment">/// Creates a new `Interleave` iterator
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new(i: I, j: J) -&gt; <span class="self">Self </span>{
+        Interleave { i, j }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">J</span><span class="op">&gt;</span> <span class="ident">IndexedParallelIterator</span> <span class="kw">for</span> <span class="ident">Interleave</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">J</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">I</span>: <span class="ident">IndexedParallelIterator</span>,
-    <span class="ident">J</span>: <span class="ident">IndexedParallelIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">I::Item</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;I, J&gt; ParallelIterator <span class="kw">for </span>Interleave&lt;I, J&gt;
+<span class="kw">where
+    </span>I: IndexedParallelIterator,
+    J: IndexedParallelIterator&lt;Item = I::Item&gt;,
 {
-    <span class="kw">fn</span> <span class="ident">drive</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">consumer</span>: <span class="ident">C</span>) -&gt; <span class="ident">C::Result</span>
-    <span class="kw">where</span>
-        <span class="ident">C</span>: <span class="ident">Consumer</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span>,
+    <span class="kw">type </span>Item = I::Item;
+
+    <span class="kw">fn </span>drive_unindexed&lt;C&gt;(<span class="self">self</span>, consumer: C) -&gt; C::Result
+    <span class="kw">where
+        </span>C: Consumer&lt;I::Item&gt;,
     {
-        <span class="ident">bridge</span>(<span class="self">self</span>, <span class="ident">consumer</span>)
+        bridge(<span class="self">self</span>, consumer)
     }
 
-    <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span>.<span class="ident">i</span>.<span class="ident">len</span>().<span class="ident">checked_add</span>(<span class="self">self</span>.<span class="ident">j</span>.<span class="ident">len</span>()).<span class="ident">expect</span>(<span class="string">&quot;overflow&quot;</span>)
+    <span class="kw">fn </span>opt_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
+        <span class="prelude-val">Some</span>(<span class="self">self</span>.len())
+    }
+}
+
+<span class="kw">impl</span>&lt;I, J&gt; IndexedParallelIterator <span class="kw">for </span>Interleave&lt;I, J&gt;
+<span class="kw">where
+    </span>I: IndexedParallelIterator,
+    J: IndexedParallelIterator&lt;Item = I::Item&gt;,
+{
+    <span class="kw">fn </span>drive&lt;C&gt;(<span class="self">self</span>, consumer: C) -&gt; C::Result
+    <span class="kw">where
+        </span>C: Consumer&lt;<span class="self">Self</span>::Item&gt;,
+    {
+        bridge(<span class="self">self</span>, consumer)
     }
 
-    <span class="kw">fn</span> <span class="ident">with_producer</span><span class="op">&lt;</span><span class="ident">CB</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">callback</span>: <span class="ident">CB</span>) -&gt; <span class="ident">CB::Output</span>
-    <span class="kw">where</span>
-        <span class="ident">CB</span>: <span class="ident">ProducerCallback</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span>,
+    <span class="kw">fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.i.len().checked_add(<span class="self">self</span>.j.len()).expect(<span class="string">&quot;overflow&quot;</span>)
+    }
+
+    <span class="kw">fn </span>with_producer&lt;CB&gt;(<span class="self">self</span>, callback: CB) -&gt; CB::Output
+    <span class="kw">where
+        </span>CB: ProducerCallback&lt;<span class="self">Self</span>::Item&gt;,
     {
-        <span class="kw">let</span> (<span class="ident">i_len</span>, <span class="ident">j_len</span>) <span class="op">=</span> (<span class="self">self</span>.<span class="ident">i</span>.<span class="ident">len</span>(), <span class="self">self</span>.<span class="ident">j</span>.<span class="ident">len</span>());
-        <span class="kw">return</span> <span class="self">self</span>.<span class="ident">i</span>.<span class="ident">with_producer</span>(<span class="ident">CallbackI</span> {
-            <span class="ident">callback</span>,
-            <span class="ident">i_len</span>,
-            <span class="ident">j_len</span>,
-            <span class="ident">i_next</span>: <span class="bool-val">false</span>,
-            <span class="ident">j</span>: <span class="self">self</span>.<span class="ident">j</span>,
+        <span class="kw">let </span>(i_len, j_len) = (<span class="self">self</span>.i.len(), <span class="self">self</span>.j.len());
+        <span class="kw">return </span><span class="self">self</span>.i.with_producer(CallbackI {
+            callback,
+            i_len,
+            j_len,
+            i_next: <span class="bool-val">false</span>,
+            j: <span class="self">self</span>.j,
         });
 
-        <span class="kw">struct</span> <span class="ident">CallbackI</span><span class="op">&lt;</span><span class="ident">CB</span>, <span class="ident">J</span><span class="op">&gt;</span> {
-            <span class="ident">callback</span>: <span class="ident">CB</span>,
-            <span class="ident">i_len</span>: <span class="ident">usize</span>,
-            <span class="ident">j_len</span>: <span class="ident">usize</span>,
-            <span class="ident">i_next</span>: <span class="ident">bool</span>,
-            <span class="ident">j</span>: <span class="ident">J</span>,
+        <span class="kw">struct </span>CallbackI&lt;CB, J&gt; {
+            callback: CB,
+            i_len: usize,
+            j_len: usize,
+            i_next: bool,
+            j: J,
         }
 
-        <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">CB</span>, <span class="ident">J</span><span class="op">&gt;</span> <span class="ident">ProducerCallback</span><span class="op">&lt;</span><span class="ident">J::Item</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">CallbackI</span><span class="op">&lt;</span><span class="ident">CB</span>, <span class="ident">J</span><span class="op">&gt;</span>
-        <span class="kw">where</span>
-            <span class="ident">J</span>: <span class="ident">IndexedParallelIterator</span>,
-            <span class="ident">CB</span>: <span class="ident">ProducerCallback</span><span class="op">&lt;</span><span class="ident">J::Item</span><span class="op">&gt;</span>,
+        <span class="kw">impl</span>&lt;CB, J&gt; ProducerCallback&lt;J::Item&gt; <span class="kw">for </span>CallbackI&lt;CB, J&gt;
+        <span class="kw">where
+            </span>J: IndexedParallelIterator,
+            CB: ProducerCallback&lt;J::Item&gt;,
         {
-            <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">CB::Output</span>;
+            <span class="kw">type </span>Output = CB::Output;
 
-            <span class="kw">fn</span> <span class="ident">callback</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">i_producer</span>: <span class="ident">I</span>) -&gt; <span class="ident"><span class="self">Self</span>::Output</span>
-            <span class="kw">where</span>
-                <span class="ident">I</span>: <span class="ident">Producer</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">J::Item</span><span class="op">&gt;</span>,
+            <span class="kw">fn </span>callback&lt;I&gt;(<span class="self">self</span>, i_producer: I) -&gt; <span class="self">Self</span>::Output
+            <span class="kw">where
+                </span>I: Producer&lt;Item = J::Item&gt;,
             {
-                <span class="self">self</span>.<span class="ident">j</span>.<span class="ident">with_producer</span>(<span class="ident">CallbackJ</span> {
-                    <span class="ident">i_producer</span>,
-                    <span class="ident">i_len</span>: <span class="self">self</span>.<span class="ident">i_len</span>,
-                    <span class="ident">j_len</span>: <span class="self">self</span>.<span class="ident">j_len</span>,
-                    <span class="ident">i_next</span>: <span class="self">self</span>.<span class="ident">i_next</span>,
-                    <span class="ident">callback</span>: <span class="self">self</span>.<span class="ident">callback</span>,
+                <span class="self">self</span>.j.with_producer(CallbackJ {
+                    i_producer,
+                    i_len: <span class="self">self</span>.i_len,
+                    j_len: <span class="self">self</span>.j_len,
+                    i_next: <span class="self">self</span>.i_next,
+                    callback: <span class="self">self</span>.callback,
                 })
             }
         }
 
-        <span class="kw">struct</span> <span class="ident">CallbackJ</span><span class="op">&lt;</span><span class="ident">CB</span>, <span class="ident">I</span><span class="op">&gt;</span> {
-            <span class="ident">callback</span>: <span class="ident">CB</span>,
-            <span class="ident">i_len</span>: <span class="ident">usize</span>,
-            <span class="ident">j_len</span>: <span class="ident">usize</span>,
-            <span class="ident">i_next</span>: <span class="ident">bool</span>,
-            <span class="ident">i_producer</span>: <span class="ident">I</span>,
+        <span class="kw">struct </span>CallbackJ&lt;CB, I&gt; {
+            callback: CB,
+            i_len: usize,
+            j_len: usize,
+            i_next: bool,
+            i_producer: I,
         }
 
-        <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">CB</span>, <span class="ident">I</span><span class="op">&gt;</span> <span class="ident">ProducerCallback</span><span class="op">&lt;</span><span class="ident">I::Item</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">CallbackJ</span><span class="op">&lt;</span><span class="ident">CB</span>, <span class="ident">I</span><span class="op">&gt;</span>
-        <span class="kw">where</span>
-            <span class="ident">I</span>: <span class="ident">Producer</span>,
-            <span class="ident">CB</span>: <span class="ident">ProducerCallback</span><span class="op">&lt;</span><span class="ident">I::Item</span><span class="op">&gt;</span>,
+        <span class="kw">impl</span>&lt;CB, I&gt; ProducerCallback&lt;I::Item&gt; <span class="kw">for </span>CallbackJ&lt;CB, I&gt;
+        <span class="kw">where
+            </span>I: Producer,
+            CB: ProducerCallback&lt;I::Item&gt;,
         {
-            <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">CB::Output</span>;
+            <span class="kw">type </span>Output = CB::Output;
 
-            <span class="kw">fn</span> <span class="ident">callback</span><span class="op">&lt;</span><span class="ident">J</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">j_producer</span>: <span class="ident">J</span>) -&gt; <span class="ident"><span class="self">Self</span>::Output</span>
-            <span class="kw">where</span>
-                <span class="ident">J</span>: <span class="ident">Producer</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">I::Item</span><span class="op">&gt;</span>,
+            <span class="kw">fn </span>callback&lt;J&gt;(<span class="self">self</span>, j_producer: J) -&gt; <span class="self">Self</span>::Output
+            <span class="kw">where
+                </span>J: Producer&lt;Item = I::Item&gt;,
             {
-                <span class="kw">let</span> <span class="ident">producer</span> <span class="op">=</span> <span class="ident">InterleaveProducer::new</span>(
-                    <span class="self">self</span>.<span class="ident">i_producer</span>,
-                    <span class="ident">j_producer</span>,
-                    <span class="self">self</span>.<span class="ident">i_len</span>,
-                    <span class="self">self</span>.<span class="ident">j_len</span>,
-                    <span class="self">self</span>.<span class="ident">i_next</span>,
+                <span class="kw">let </span>producer = InterleaveProducer::new(
+                    <span class="self">self</span>.i_producer,
+                    j_producer,
+                    <span class="self">self</span>.i_len,
+                    <span class="self">self</span>.j_len,
+                    <span class="self">self</span>.i_next,
                 );
-                <span class="self">self</span>.<span class="ident">callback</span>.<span class="ident">callback</span>(<span class="ident">producer</span>)
+                <span class="self">self</span>.callback.callback(producer)
             }
         }
     }
 }
 
-<span class="kw">struct</span> <span class="ident">InterleaveProducer</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">J</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">I</span>: <span class="ident">Producer</span>,
-    <span class="ident">J</span>: <span class="ident">Producer</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">I::Item</span><span class="op">&gt;</span>,
+<span class="kw">struct </span>InterleaveProducer&lt;I, J&gt;
+<span class="kw">where
+    </span>I: Producer,
+    J: Producer&lt;Item = I::Item&gt;,
 {
-    <span class="ident">i</span>: <span class="ident">I</span>,
-    <span class="ident">j</span>: <span class="ident">J</span>,
-    <span class="ident">i_len</span>: <span class="ident">usize</span>,
-    <span class="ident">j_len</span>: <span class="ident">usize</span>,
-    <span class="ident">i_next</span>: <span class="ident">bool</span>,
+    i: I,
+    j: J,
+    i_len: usize,
+    j_len: usize,
+    i_next: bool,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">J</span><span class="op">&gt;</span> <span class="ident">InterleaveProducer</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">J</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">I</span>: <span class="ident">Producer</span>,
-    <span class="ident">J</span>: <span class="ident">Producer</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">I::Item</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;I, J&gt; InterleaveProducer&lt;I, J&gt;
+<span class="kw">where
+    </span>I: Producer,
+    J: Producer&lt;Item = I::Item&gt;,
 {
-    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">i</span>: <span class="ident">I</span>, <span class="ident">j</span>: <span class="ident">J</span>, <span class="ident">i_len</span>: <span class="ident">usize</span>, <span class="ident">j_len</span>: <span class="ident">usize</span>, <span class="ident">i_next</span>: <span class="ident">bool</span>) -&gt; <span class="ident">InterleaveProducer</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">J</span><span class="op">&gt;</span> {
-        <span class="ident">InterleaveProducer</span> {
-            <span class="ident">i</span>,
-            <span class="ident">j</span>,
-            <span class="ident">i_len</span>,
-            <span class="ident">j_len</span>,
-            <span class="ident">i_next</span>,
+    <span class="kw">fn </span>new(i: I, j: J, i_len: usize, j_len: usize, i_next: bool) -&gt; InterleaveProducer&lt;I, J&gt; {
+        InterleaveProducer {
+            i,
+            j,
+            i_len,
+            j_len,
+            i_next,
         }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">J</span><span class="op">&gt;</span> <span class="ident">Producer</span> <span class="kw">for</span> <span class="ident">InterleaveProducer</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">J</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">I</span>: <span class="ident">Producer</span>,
-    <span class="ident">J</span>: <span class="ident">Producer</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">I::Item</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;I, J&gt; Producer <span class="kw">for </span>InterleaveProducer&lt;I, J&gt;
+<span class="kw">where
+    </span>I: Producer,
+    J: Producer&lt;Item = I::Item&gt;,
 {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">I::Item</span>;
-    <span class="kw">type</span> <span class="ident">IntoIter</span> <span class="op">=</span> <span class="ident">InterleaveSeq</span><span class="op">&lt;</span><span class="ident">I::IntoIter</span>, <span class="ident">J::IntoIter</span><span class="op">&gt;</span>;
+    <span class="kw">type </span>Item = I::Item;
+    <span class="kw">type </span>IntoIter = InterleaveSeq&lt;I::IntoIter, J::IntoIter&gt;;
 
-    <span class="kw">fn</span> <span class="ident">into_iter</span>(<span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::IntoIter</span> {
-        <span class="ident">InterleaveSeq</span> {
-            <span class="ident">i</span>: <span class="self">self</span>.<span class="ident">i</span>.<span class="ident">into_iter</span>().<span class="ident">fuse</span>(),
-            <span class="ident">j</span>: <span class="self">self</span>.<span class="ident">j</span>.<span class="ident">into_iter</span>().<span class="ident">fuse</span>(),
-            <span class="ident">i_next</span>: <span class="self">self</span>.<span class="ident">i_next</span>,
+    <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
+        InterleaveSeq {
+            i: <span class="self">self</span>.i.into_iter().fuse(),
+            j: <span class="self">self</span>.j.into_iter().fuse(),
+            i_next: <span class="self">self</span>.i_next,
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">min_len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="ident">cmp::max</span>(<span class="self">self</span>.<span class="ident">i</span>.<span class="ident">min_len</span>(), <span class="self">self</span>.<span class="ident">j</span>.<span class="ident">min_len</span>())
+    <span class="kw">fn </span>min_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        cmp::max(<span class="self">self</span>.i.min_len(), <span class="self">self</span>.j.min_len())
     }
 
-    <span class="kw">fn</span> <span class="ident">max_len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="ident">cmp::min</span>(<span class="self">self</span>.<span class="ident">i</span>.<span class="ident">max_len</span>(), <span class="self">self</span>.<span class="ident">j</span>.<span class="ident">max_len</span>())
+    <span class="kw">fn </span>max_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        cmp::min(<span class="self">self</span>.i.max_len(), <span class="self">self</span>.j.max_len())
     }
 
-    <span class="doccomment">/// We know 0 &lt; index &lt;= self.i_len + self.j_len</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Find a, b satisfying:</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">///  (1) 0 &lt; a &lt;= self.i_len</span>
-    <span class="doccomment">///  (2) 0 &lt; b &lt;= self.j_len</span>
-    <span class="doccomment">///  (3) a + b == index</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// For even splits, set a = b = index/2.</span>
-    <span class="doccomment">/// For odd splits, set a = (index/2)+1, b = index/2, if `i`</span>
-    <span class="doccomment">/// should yield the next element, otherwise, if `j` should yield</span>
-    <span class="doccomment">/// the next element, set a = index/2 and b = (index/2)+1</span>
-    <span class="kw">fn</span> <span class="ident">split_at</span>(<span class="self">self</span>, <span class="ident">index</span>: <span class="ident">usize</span>) -&gt; (<span class="self">Self</span>, <span class="self">Self</span>) {
-        <span class="attribute">#[<span class="ident">inline</span>]</span>
-        <span class="kw">fn</span> <span class="ident">odd_offset</span>(<span class="ident">flag</span>: <span class="ident">bool</span>) -&gt; <span class="ident">usize</span> {
-            (<span class="op">!</span><span class="ident">flag</span>) <span class="kw">as</span> <span class="ident">usize</span>
+    <span class="doccomment">/// We know 0 &lt; index &lt;= self.i_len + self.j_len
+    ///
+    /// Find a, b satisfying:
+    ///
+    ///  (1) 0 &lt; a &lt;= self.i_len
+    ///  (2) 0 &lt; b &lt;= self.j_len
+    ///  (3) a + b == index
+    ///
+    /// For even splits, set a = b = index/2.
+    /// For odd splits, set a = (index/2)+1, b = index/2, if `i`
+    /// should yield the next element, otherwise, if `j` should yield
+    /// the next element, set a = index/2 and b = (index/2)+1
+    </span><span class="kw">fn </span>split_at(<span class="self">self</span>, index: usize) -&gt; (<span class="self">Self</span>, <span class="self">Self</span>) {
+        <span class="attribute">#[inline]
+        </span><span class="kw">fn </span>odd_offset(flag: bool) -&gt; usize {
+            (!flag) <span class="kw">as </span>usize
         }
 
-        <span class="kw">let</span> <span class="ident">even</span> <span class="op">=</span> <span class="ident">index</span> <span class="op">%</span> <span class="number">2</span> <span class="op">==</span> <span class="number">0</span>;
-        <span class="kw">let</span> <span class="ident">idx</span> <span class="op">=</span> <span class="ident">index</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">1</span>;
+        <span class="kw">let </span>even = index % <span class="number">2 </span>== <span class="number">0</span>;
+        <span class="kw">let </span>idx = index &gt;&gt; <span class="number">1</span>;
 
-        <span class="comment">// desired split</span>
-        <span class="kw">let</span> (<span class="ident">i_idx</span>, <span class="ident">j_idx</span>) <span class="op">=</span> (
-            <span class="ident">idx</span> <span class="op">+</span> <span class="ident">odd_offset</span>(<span class="ident">even</span> <span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">i_next</span>),
-            <span class="ident">idx</span> <span class="op">+</span> <span class="ident">odd_offset</span>(<span class="ident">even</span> <span class="op">|</span><span class="op">|</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">i_next</span>),
+        <span class="comment">// desired split
+        </span><span class="kw">let </span>(i_idx, j_idx) = (
+            idx + odd_offset(even || <span class="self">self</span>.i_next),
+            idx + odd_offset(even || !<span class="self">self</span>.i_next),
         );
 
-        <span class="kw">let</span> (<span class="ident">i_split</span>, <span class="ident">j_split</span>) <span class="op">=</span> <span class="kw">if</span> <span class="self">self</span>.<span class="ident">i_len</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">i_idx</span> <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">j_len</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">j_idx</span> {
-            (<span class="ident">i_idx</span>, <span class="ident">j_idx</span>)
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="self">self</span>.<span class="ident">i_len</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">i_idx</span> {
-            <span class="comment">// j too short</span>
-            (<span class="ident">index</span> <span class="op">-</span> <span class="self">self</span>.<span class="ident">j_len</span>, <span class="self">self</span>.<span class="ident">j_len</span>)
-        } <span class="kw">else</span> {
-            <span class="comment">// i too short</span>
-            (<span class="self">self</span>.<span class="ident">i_len</span>, <span class="ident">index</span> <span class="op">-</span> <span class="self">self</span>.<span class="ident">i_len</span>)
+        <span class="kw">let </span>(i_split, j_split) = <span class="kw">if </span><span class="self">self</span>.i_len &gt;= i_idx &amp;&amp; <span class="self">self</span>.j_len &gt;= j_idx {
+            (i_idx, j_idx)
+        } <span class="kw">else if </span><span class="self">self</span>.i_len &gt;= i_idx {
+            <span class="comment">// j too short
+            </span>(index - <span class="self">self</span>.j_len, <span class="self">self</span>.j_len)
+        } <span class="kw">else </span>{
+            <span class="comment">// i too short
+            </span>(<span class="self">self</span>.i_len, index - <span class="self">self</span>.i_len)
         };
 
-        <span class="kw">let</span> <span class="ident">trailing_i_next</span> <span class="op">=</span> <span class="ident">even</span> <span class="op">==</span> <span class="self">self</span>.<span class="ident">i_next</span>;
-        <span class="kw">let</span> (<span class="ident">i_left</span>, <span class="ident">i_right</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">i</span>.<span class="ident">split_at</span>(<span class="ident">i_split</span>);
-        <span class="kw">let</span> (<span class="ident">j_left</span>, <span class="ident">j_right</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">j</span>.<span class="ident">split_at</span>(<span class="ident">j_split</span>);
+        <span class="kw">let </span>trailing_i_next = even == <span class="self">self</span>.i_next;
+        <span class="kw">let </span>(i_left, i_right) = <span class="self">self</span>.i.split_at(i_split);
+        <span class="kw">let </span>(j_left, j_right) = <span class="self">self</span>.j.split_at(j_split);
 
         (
-            <span class="ident">InterleaveProducer::new</span>(<span class="ident">i_left</span>, <span class="ident">j_left</span>, <span class="ident">i_split</span>, <span class="ident">j_split</span>, <span class="self">self</span>.<span class="ident">i_next</span>),
-            <span class="ident">InterleaveProducer::new</span>(
-                <span class="ident">i_right</span>,
-                <span class="ident">j_right</span>,
-                <span class="self">self</span>.<span class="ident">i_len</span> <span class="op">-</span> <span class="ident">i_split</span>,
-                <span class="self">self</span>.<span class="ident">j_len</span> <span class="op">-</span> <span class="ident">j_split</span>,
-                <span class="ident">trailing_i_next</span>,
+            InterleaveProducer::new(i_left, j_left, i_split, j_split, <span class="self">self</span>.i_next),
+            InterleaveProducer::new(
+                i_right,
+                j_right,
+                <span class="self">self</span>.i_len - i_split,
+                <span class="self">self</span>.j_len - j_split,
+                trailing_i_next,
             ),
         )
     }
 }
 
-<span class="doccomment">/// Wrapper for Interleave to implement DoubleEndedIterator and</span>
-<span class="doccomment">/// ExactSizeIterator.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This iterator is fused.</span>
-<span class="kw">struct</span> <span class="ident">InterleaveSeq</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">J</span><span class="op">&gt;</span> {
-    <span class="ident">i</span>: <span class="ident">Fuse</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span>,
-    <span class="ident">j</span>: <span class="ident">Fuse</span><span class="op">&lt;</span><span class="ident">J</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Wrapper for Interleave to implement DoubleEndedIterator and
+/// ExactSizeIterator.
+///
+/// This iterator is fused.
+</span><span class="kw">struct </span>InterleaveSeq&lt;I, J&gt; {
+    i: Fuse&lt;I&gt;,
+    j: Fuse&lt;J&gt;,
 
-    <span class="doccomment">/// Flag to control which iterator should provide the next element. When</span>
-    <span class="doccomment">/// `false` then `i` produces the next element, otherwise `j` produces the</span>
-    <span class="doccomment">/// next element.</span>
-    <span class="ident">i_next</span>: <span class="ident">bool</span>,
+    <span class="doccomment">/// Flag to control which iterator should provide the next element. When
+    /// `false` then `i` produces the next element, otherwise `j` produces the
+    /// next element.
+    </span>i_next: bool,
 }
 
-<span class="doccomment">/// Iterator implementation for InterleaveSeq. This implementation is</span>
-<span class="doccomment">/// taken more or less verbatim from itertools. It is replicated here</span>
-<span class="doccomment">/// (instead of calling itertools directly), because we also need to</span>
-<span class="doccomment">/// implement `DoubledEndedIterator` and `ExactSizeIterator`.</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">J</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">InterleaveSeq</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">J</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">I</span>: <span class="ident">Iterator</span>,
-    <span class="ident">J</span>: <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">I::Item</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Iterator implementation for InterleaveSeq. This implementation is
+/// taken more or less verbatim from itertools. It is replicated here
+/// (instead of calling itertools directly), because we also need to
+/// implement `DoubledEndedIterator` and `ExactSizeIterator`.
+</span><span class="kw">impl</span>&lt;I, J&gt; Iterator <span class="kw">for </span>InterleaveSeq&lt;I, J&gt;
+<span class="kw">where
+    </span>I: Iterator,
+    J: Iterator&lt;Item = I::Item&gt;,
 {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">I::Item</span>;
+    <span class="kw">type </span>Item = I::Item;
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">i_next</span> <span class="op">=</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">i_next</span>;
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">i_next</span> {
-            <span class="kw">match</span> <span class="self">self</span>.<span class="ident">i</span>.<span class="ident">next</span>() {
-                <span class="prelude-val">None</span> =&gt; <span class="self">self</span>.<span class="ident">j</span>.<span class="ident">next</span>(),
-                <span class="ident">r</span> =&gt; <span class="ident">r</span>,
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
+        <span class="self">self</span>.i_next = !<span class="self">self</span>.i_next;
+        <span class="kw">if </span><span class="self">self</span>.i_next {
+            <span class="kw">match </span><span class="self">self</span>.i.next() {
+                <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.j.next(),
+                r =&gt; r,
             }
-        } <span class="kw">else</span> {
-            <span class="kw">match</span> <span class="self">self</span>.<span class="ident">j</span>.<span class="ident">next</span>() {
-                <span class="prelude-val">None</span> =&gt; <span class="self">self</span>.<span class="ident">i</span>.<span class="ident">next</span>(),
-                <span class="ident">r</span> =&gt; <span class="ident">r</span>,
+        } <span class="kw">else </span>{
+            <span class="kw">match </span><span class="self">self</span>.j.next() {
+                <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.i.next(),
+                r =&gt; r,
             }
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">size_hint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) {
-        <span class="kw">let</span> (<span class="ident">ih</span>, <span class="ident">jh</span>) <span class="op">=</span> (<span class="self">self</span>.<span class="ident">i</span>.<span class="ident">size_hint</span>(), <span class="self">self</span>.<span class="ident">j</span>.<span class="ident">size_hint</span>());
-        <span class="kw">let</span> <span class="ident">min</span> <span class="op">=</span> <span class="ident">ih</span>.<span class="number">0</span>.<span class="ident">saturating_add</span>(<span class="ident">jh</span>.<span class="number">0</span>);
-        <span class="kw">let</span> <span class="ident">max</span> <span class="op">=</span> <span class="kw">match</span> (<span class="ident">ih</span>.<span class="number">1</span>, <span class="ident">jh</span>.<span class="number">1</span>) {
-            (<span class="prelude-val">Some</span>(<span class="ident">x</span>), <span class="prelude-val">Some</span>(<span class="ident">y</span>)) =&gt; <span class="ident">x</span>.<span class="ident">checked_add</span>(<span class="ident">y</span>),
-            <span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
+    <span class="kw">fn </span>size_hint(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (usize, <span class="prelude-ty">Option</span>&lt;usize&gt;) {
+        <span class="kw">let </span>(ih, jh) = (<span class="self">self</span>.i.size_hint(), <span class="self">self</span>.j.size_hint());
+        <span class="kw">let </span>min = ih.<span class="number">0</span>.saturating_add(jh.<span class="number">0</span>);
+        <span class="kw">let </span>max = <span class="kw">match </span>(ih.<span class="number">1</span>, jh.<span class="number">1</span>) {
+            (<span class="prelude-val">Some</span>(x), <span class="prelude-val">Some</span>(y)) =&gt; x.checked_add(y),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
         };
-        (<span class="ident">min</span>, <span class="ident">max</span>)
+        (min, max)
     }
 }
 
-<span class="comment">// The implementation for DoubleEndedIterator requires</span>
-<span class="comment">// ExactSizeIterator to provide `next_back()`. The last element will</span>
-<span class="comment">// come from the iterator that runs out last (ie has the most elements</span>
-<span class="comment">// in it). If the iterators have the same number of elements, then the</span>
-<span class="comment">// last iterator will provide the last element.</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">J</span><span class="op">&gt;</span> <span class="ident">DoubleEndedIterator</span> <span class="kw">for</span> <span class="ident">InterleaveSeq</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">J</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">I</span>: <span class="ident">DoubleEndedIterator</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span>,
-    <span class="ident">J</span>: <span class="ident">DoubleEndedIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">I::Item</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">I::Item</span><span class="op">&gt;</span>,
+<span class="comment">// The implementation for DoubleEndedIterator requires
+// ExactSizeIterator to provide `next_back()`. The last element will
+// come from the iterator that runs out last (ie has the most elements
+// in it). If the iterators have the same number of elements, then the
+// last iterator will provide the last element.
+</span><span class="kw">impl</span>&lt;I, J&gt; DoubleEndedIterator <span class="kw">for </span>InterleaveSeq&lt;I, J&gt;
+<span class="kw">where
+    </span>I: DoubleEndedIterator + ExactSizeIterator,
+    J: DoubleEndedIterator&lt;Item = I::Item&gt; + ExactSizeIterator&lt;Item = I::Item&gt;,
 {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">next_back</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">I::Item</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">i</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="self">self</span>.<span class="ident">j</span>.<span class="ident">len</span>() {
-            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">i_next</span> {
-                <span class="self">self</span>.<span class="ident">i</span>.<span class="ident">next_back</span>()
-            } <span class="kw">else</span> {
-                <span class="self">self</span>.<span class="ident">j</span>.<span class="ident">next_back</span>()
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>next_back(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;I::Item&gt; {
+        <span class="kw">if </span><span class="self">self</span>.i.len() == <span class="self">self</span>.j.len() {
+            <span class="kw">if </span><span class="self">self</span>.i_next {
+                <span class="self">self</span>.i.next_back()
+            } <span class="kw">else </span>{
+                <span class="self">self</span>.j.next_back()
             }
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="self">self</span>.<span class="ident">i</span>.<span class="ident">len</span>() <span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">j</span>.<span class="ident">len</span>() {
-            <span class="self">self</span>.<span class="ident">j</span>.<span class="ident">next_back</span>()
-        } <span class="kw">else</span> {
-            <span class="self">self</span>.<span class="ident">i</span>.<span class="ident">next_back</span>()
+        } <span class="kw">else if </span><span class="self">self</span>.i.len() &lt; <span class="self">self</span>.j.len() {
+            <span class="self">self</span>.j.next_back()
+        } <span class="kw">else </span>{
+            <span class="self">self</span>.i.next_back()
         }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">J</span><span class="op">&gt;</span> <span class="ident">ExactSizeIterator</span> <span class="kw">for</span> <span class="ident">InterleaveSeq</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">J</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">I</span>: <span class="ident">ExactSizeIterator</span>,
-    <span class="ident">J</span>: <span class="ident">ExactSizeIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">I::Item</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;I, J&gt; ExactSizeIterator <span class="kw">for </span>InterleaveSeq&lt;I, J&gt;
+<span class="kw">where
+    </span>I: ExactSizeIterator,
+    J: ExactSizeIterator&lt;Item = I::Item&gt;,
 {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span>.<span class="ident">i</span>.<span class="ident">len</span>() <span class="op">+</span> <span class="self">self</span>.<span class="ident">j</span>.<span class="ident">len</span>()
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.i.len() + <span class="self">self</span>.j.len()
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="rayon" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.63.0-nightly (fee3a459d 2022-06-05)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="rayon" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (02654a084 2022-08-30)" ></div></body></html>

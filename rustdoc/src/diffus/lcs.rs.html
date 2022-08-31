@@ -1,11 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/diffus-0.10.0/src/lcs.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lcs.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../diffus/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../diffus/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../diffus/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><div id="settings-menu" tabindex="-1">
-                                <a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div>
-                        </div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/diffus-0.10.0/src/lcs.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lcs.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../diffus/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../diffus/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../diffus/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -233,234 +226,233 @@
 <span id="226">226</span>
 <span id="227">227</span>
 <span id="228">228</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">edit</span>, <span class="ident">Diffable</span>, <span class="ident">Same</span>};
+</pre><pre class="rust"><code><span class="kw">use crate</span>::{edit, Diffable, Same};
 
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serialize-impl&quot;</span>, <span class="ident">derive</span>(<span class="ident">serde::Serialize</span>))]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Edit</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="ident">Same</span>(<span class="ident">T</span>, <span class="ident">T</span>),
-    <span class="ident">Insert</span>(<span class="ident">T</span>),
-    <span class="ident">Remove</span>(<span class="ident">T</span>),
+<span class="attribute">#[cfg_attr(feature = <span class="string">&quot;serialize-impl&quot;</span>, derive(serde::Serialize))]
+#[derive(Debug, PartialEq, Eq)]
+</span><span class="kw">pub enum </span>Edit&lt;T&gt; {
+    Same(T, T),
+    Insert(T),
+    Remove(T),
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Edit</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_same</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">if</span> <span class="kw">let</span> <span class="ident">Edit::Same</span>(<span class="kw">_</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="self">self</span> {
-            <span class="bool-val">true</span>
-        } <span class="kw">else</span> {
-            <span class="bool-val">false</span>
-        }
+<span class="kw">impl</span>&lt;T&gt; Edit&lt;T&gt; {
+    <span class="kw">pub fn </span>is_same(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="kw">if let </span>Edit::Same(<span class="kw">_</span>, <span class="kw">_</span>) = <span class="self">self </span>{
+            <span class="bool-val">true
+        </span>} <span class="kw">else </span>{
+            <span class="bool-val">false
+        </span>}
     }
 }
 
-<span class="kw">fn</span> <span class="ident">c_matrix</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Same</span>, <span class="ident">I</span>, <span class="ident">J</span><span class="op">&gt;</span>(
-    <span class="ident">x</span>: <span class="kw">impl</span> <span class="ident">Fn</span>() -&gt; <span class="ident">I</span>,
-    <span class="ident">y</span>: <span class="kw">impl</span> <span class="ident">Fn</span>() -&gt; <span class="ident">J</span>,
-    <span class="ident">x_len</span>: <span class="ident">usize</span>,
-    <span class="ident">y_len</span>: <span class="ident">usize</span>,
-) -&gt; (<span class="ident">usize</span>, <span class="ident"><span class="kw">crate</span>::twodvec::TwoDVec</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="ident">usize</span>)
-<span class="kw">where</span>
-    <span class="ident">I</span>: <span class="ident">DoubleEndedIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">T</span><span class="op">&gt;</span>,
-    <span class="ident">J</span>: <span class="ident">DoubleEndedIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">T</span><span class="op">&gt;</span>,
+<span class="kw">fn </span>c_matrix&lt;T: Same, I, J&gt;(
+    x: <span class="kw">impl </span>Fn() -&gt; I,
+    y: <span class="kw">impl </span>Fn() -&gt; J,
+    x_len: usize,
+    y_len: usize,
+) -&gt; (usize, <span class="kw">crate</span>::twodvec::TwoDVec&lt;usize&gt;, usize)
+<span class="kw">where
+    </span>I: DoubleEndedIterator&lt;Item = T&gt;,
+    J: DoubleEndedIterator&lt;Item = T&gt;,
 {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">x_iter</span> <span class="op">=</span> <span class="ident">x</span>();
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">y_iter</span> <span class="op">=</span> <span class="ident">y</span>();
-    <span class="kw">let</span> <span class="ident">prefix_eq</span> <span class="op">=</span> <span class="ident">x_iter</span>
-        .<span class="ident">by_ref</span>()
-        .<span class="ident">zip</span>(<span class="ident">y_iter</span>.<span class="ident">by_ref</span>())
-        .<span class="ident">take_while</span>(<span class="op">|</span>(<span class="ident">x</span>, <span class="ident">y</span>)<span class="op">|</span> <span class="ident">x</span>.<span class="ident">same</span>(<span class="ident">y</span>))
-        .<span class="ident">count</span>();
-    <span class="comment">// Only check the suffix if we did not consume the entirety of either of the iterators</span>
-    <span class="comment">// (If one of them are consumed, we would double count elements)</span>
-    <span class="kw">let</span> <span class="ident">check_suffix</span> <span class="op">=</span> <span class="ident">x_len</span>.<span class="ident">min</span>(<span class="ident">y_len</span>) <span class="op">!</span><span class="op">=</span> <span class="ident">prefix_eq</span>;
-    <span class="kw">let</span> <span class="ident">suffix_eq</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">check_suffix</span> {
-        <span class="ident">x_iter</span>
-            .<span class="ident">rev</span>()
-            .<span class="ident">zip</span>(<span class="ident">y_iter</span>.<span class="ident">rev</span>())
-            .<span class="ident">take_while</span>(<span class="op">|</span>(<span class="ident">x</span>, <span class="ident">y</span>)<span class="op">|</span> <span class="ident">x</span>.<span class="ident">same</span>(<span class="ident">y</span>))
-            .<span class="ident">count</span>()
-    } <span class="kw">else</span> {
-        <span class="number">0</span>
-    };
+    <span class="kw">let </span><span class="kw-2">mut </span>x_iter = x();
+    <span class="kw">let </span><span class="kw-2">mut </span>y_iter = y();
+    <span class="kw">let </span>prefix_eq = x_iter
+        .by_ref()
+        .zip(y_iter.by_ref())
+        .take_while(|(x, y)| x.same(y))
+        .count();
+    <span class="comment">// Only check the suffix if we did not consume the entirety of either of the iterators
+    // (If one of them are consumed, we would double count elements)
+    </span><span class="kw">let </span>check_suffix = x_len.min(y_len) != prefix_eq;
+    <span class="kw">let </span>suffix_eq = <span class="kw">if </span>check_suffix {
+        x_iter
+            .rev()
+            .zip(y_iter.rev())
+            .take_while(|(x, y)| x.same(y))
+            .count()
+    } <span class="kw">else </span>{
+        <span class="number">0
+    </span>};
 
-    <span class="kw">let</span> <span class="ident">width</span> <span class="op">=</span> <span class="ident">x_len</span>.<span class="ident">saturating_sub</span>(<span class="ident">prefix_eq</span> <span class="op">+</span> <span class="ident">suffix_eq</span>) <span class="op">+</span> <span class="number">1</span>;
-    <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="ident">y_len</span>.<span class="ident">saturating_sub</span>(<span class="ident">prefix_eq</span> <span class="op">+</span> <span class="ident">suffix_eq</span>) <span class="op">+</span> <span class="number">1</span>;
+    <span class="kw">let </span>width = x_len.saturating_sub(prefix_eq + suffix_eq) + <span class="number">1</span>;
+    <span class="kw">let </span>height = y_len.saturating_sub(prefix_eq + suffix_eq) + <span class="number">1</span>;
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">c</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::twodvec::TwoDVec::new</span>(<span class="number">0</span>, <span class="ident">width</span>, <span class="ident">height</span>);
+    <span class="kw">let </span><span class="kw-2">mut </span>c = <span class="kw">crate</span>::twodvec::TwoDVec::new(<span class="number">0</span>, width, height);
 
-    <span class="kw">for</span> (<span class="ident">i</span>, <span class="ident">x</span>) <span class="kw">in</span> <span class="ident">x</span>().<span class="ident">skip</span>(<span class="ident">prefix_eq</span>).<span class="ident">take</span>(<span class="ident">width</span> <span class="op">-</span> <span class="number">1</span>).<span class="ident">enumerate</span>() {
-        <span class="kw">for</span> (<span class="ident">j</span>, <span class="ident">y</span>) <span class="kw">in</span> <span class="ident">y</span>().<span class="ident">skip</span>(<span class="ident">prefix_eq</span>).<span class="ident">take</span>(<span class="ident">height</span> <span class="op">-</span> <span class="number">1</span>).<span class="ident">enumerate</span>() {
-            <span class="ident">c</span>[<span class="ident">j</span> <span class="op">+</span> <span class="number">1</span>][<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>] <span class="op">=</span> <span class="kw">if</span> <span class="ident">x</span>.<span class="ident">same</span>(<span class="kw-2">&amp;</span><span class="ident">y</span>) {
-                <span class="ident">c</span>[<span class="ident">j</span>][<span class="ident">i</span>] <span class="op">+</span> <span class="number">1</span>
-            } <span class="kw">else</span> {
-                <span class="ident">c</span>[<span class="ident">j</span>][<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>].<span class="ident">max</span>(<span class="ident">c</span>[<span class="ident">j</span> <span class="op">+</span> <span class="number">1</span>][<span class="ident">i</span>])
+    <span class="kw">for </span>(i, x) <span class="kw">in </span>x().skip(prefix_eq).take(width - <span class="number">1</span>).enumerate() {
+        <span class="kw">for </span>(j, y) <span class="kw">in </span>y().skip(prefix_eq).take(height - <span class="number">1</span>).enumerate() {
+            c[j + <span class="number">1</span>][i + <span class="number">1</span>] = <span class="kw">if </span>x.same(<span class="kw-2">&amp;</span>y) {
+                c[j][i] + <span class="number">1
+            </span>} <span class="kw">else </span>{
+                c[j][i + <span class="number">1</span>].max(c[j + <span class="number">1</span>][i])
             };
         }
     }
 
-    (<span class="ident">prefix_eq</span>, <span class="ident">c</span>, <span class="ident">suffix_eq</span>)
+    (prefix_eq, c, suffix_eq)
 }
 
-<span class="kw">fn</span> <span class="ident">lcs_base</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Same</span><span class="op">&gt;</span>(
-    <span class="ident">c</span>: <span class="ident"><span class="kw">crate</span>::twodvec::TwoDVec</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
-    <span class="kw-2">mut</span> <span class="ident">x</span>: <span class="ident">itertools::PutBack</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="kw-2">mut</span> <span class="ident">y</span>: <span class="ident">itertools::PutBack</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">Edit</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">i</span> <span class="op">=</span> <span class="ident">c</span>.<span class="ident">width</span>() <span class="op">-</span> <span class="number">1</span>;
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">j</span> <span class="op">=</span> <span class="ident">c</span>.<span class="ident">height</span>() <span class="op">-</span> <span class="number">1</span>;
+<span class="kw">fn </span>lcs_base&lt;T: Same&gt;(
+    c: <span class="kw">crate</span>::twodvec::TwoDVec&lt;usize&gt;,
+    <span class="kw-2">mut </span>x: itertools::PutBack&lt;<span class="kw">impl </span>Iterator&lt;Item = T&gt;&gt;,
+    <span class="kw-2">mut </span>y: itertools::PutBack&lt;<span class="kw">impl </span>Iterator&lt;Item = T&gt;&gt;,
+) -&gt; <span class="kw">impl </span>Iterator&lt;Item = Edit&lt;T&gt;&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>i = c.width() - <span class="number">1</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>j = c.height() - <span class="number">1</span>;
 
-    <span class="ident">std::iter::from_fn</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
-        <span class="kw">let</span> <span class="ident">current_x</span> <span class="op">=</span> <span class="ident">x</span>.<span class="ident">next</span>();
-        <span class="kw">let</span> <span class="ident">current_y</span> <span class="op">=</span> <span class="ident">y</span>.<span class="ident">next</span>();
+    std::iter::from_fn(<span class="kw">move </span>|| {
+        <span class="kw">let </span>current_x = x.next();
+        <span class="kw">let </span>current_y = y.next();
 
-        <span class="kw">let</span> <span class="ident">left</span> <span class="op">=</span> <span class="ident">j</span>.<span class="ident">checked_sub</span>(<span class="number">1</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">j_minus</span><span class="op">|</span> <span class="ident">c</span>[<span class="ident">j_minus</span>][<span class="ident">i</span>]);
-        <span class="kw">let</span> <span class="ident">above</span> <span class="op">=</span> <span class="ident">i</span>.<span class="ident">checked_sub</span>(<span class="number">1</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">i_minus</span><span class="op">|</span> <span class="ident">c</span>[<span class="ident">j</span>][<span class="ident">i_minus</span>]);
+        <span class="kw">let </span>left = j.checked_sub(<span class="number">1</span>).map(|j_minus| c[j_minus][i]);
+        <span class="kw">let </span>above = i.checked_sub(<span class="number">1</span>).map(|i_minus| c[j][i_minus]);
 
-        <span class="kw">if</span> <span class="ident">current_x</span>.<span class="ident">is_some</span>()
-            <span class="op">&amp;&amp;</span> <span class="ident">current_y</span>.<span class="ident">is_some</span>()
-            <span class="op">&amp;&amp;</span> <span class="ident">current_x</span>
-                .<span class="ident">as_ref</span>()
-                .<span class="ident">unwrap</span>()
-                .<span class="ident">same</span>(<span class="ident">current_y</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>())
+        <span class="kw">if </span>current_x.is_some()
+            &amp;&amp; current_y.is_some()
+            &amp;&amp; current_x
+                .as_ref()
+                .unwrap()
+                .same(current_y.as_ref().unwrap())
         {
-            <span class="ident">i</span> <span class="op">=</span> <span class="ident">i</span> <span class="op">-</span> <span class="number">1</span>;
-            <span class="ident">j</span> <span class="op">=</span> <span class="ident">j</span> <span class="op">-</span> <span class="number">1</span>;
+            i = i - <span class="number">1</span>;
+            j = j - <span class="number">1</span>;
 
-            <span class="kw">match</span> (<span class="ident">current_x</span>, <span class="ident">current_y</span>) {
-                (<span class="prelude-val">Some</span>(<span class="ident">current_x</span>), <span class="prelude-val">Some</span>(<span class="ident">current_y</span>)) =&gt; <span class="prelude-val">Some</span>(<span class="ident">Edit::Same</span>(<span class="ident">current_x</span>, <span class="ident">current_y</span>)),
-                <span class="kw">_</span> =&gt; <span class="macro">unreachable!</span>(),
+            <span class="kw">match </span>(current_x, current_y) {
+                (<span class="prelude-val">Some</span>(current_x), <span class="prelude-val">Some</span>(current_y)) =&gt; <span class="prelude-val">Some</span>(Edit::Same(current_x, current_y)),
+                <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
             }
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">current_y</span>.<span class="ident">is_some</span>() <span class="op">&amp;&amp;</span> (<span class="ident">current_x</span>.<span class="ident">is_none</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">left</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">above</span>) {
-            <span class="ident">current_x</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">c</span><span class="op">|</span> <span class="ident">x</span>.<span class="ident">put_back</span>(<span class="ident">c</span>));
-            <span class="ident">j</span> <span class="op">=</span> <span class="ident">j</span> <span class="op">-</span> <span class="number">1</span>;
-            <span class="ident">current_y</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">value</span><span class="op">|</span> <span class="ident">Edit::Insert</span>(<span class="ident">value</span>))
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">current_x</span>.<span class="ident">is_some</span>() <span class="op">&amp;&amp;</span> (<span class="ident">current_y</span>.<span class="ident">is_none</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">left</span> <span class="op">&lt;</span> <span class="ident">above</span>) {
-            <span class="ident">current_y</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">c</span><span class="op">|</span> <span class="ident">y</span>.<span class="ident">put_back</span>(<span class="ident">c</span>));
-            <span class="ident">i</span> <span class="op">=</span> <span class="ident">i</span> <span class="op">-</span> <span class="number">1</span>;
-            <span class="ident">current_x</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">value</span><span class="op">|</span> <span class="ident">Edit::Remove</span>(<span class="ident">value</span>))
-        } <span class="kw">else</span> {
-            <span class="prelude-val">None</span>
-        }
+        } <span class="kw">else if </span>current_y.is_some() &amp;&amp; (current_x.is_none() || left &gt;= above) {
+            current_x.map(|c| x.put_back(c));
+            j = j - <span class="number">1</span>;
+            current_y.map(|value| Edit::Insert(value))
+        } <span class="kw">else if </span>current_x.is_some() &amp;&amp; (current_y.is_none() || left &lt; above) {
+            current_y.map(|c| y.put_back(c));
+            i = i - <span class="number">1</span>;
+            current_x.map(|value| Edit::Remove(value))
+        } <span class="kw">else </span>{
+            <span class="prelude-val">None
+        </span>}
     })
-    .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>()
-    .<span class="ident">into_iter</span>()
-    .<span class="ident">rev</span>()
+    .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
+    .into_iter()
+    .rev()
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">lcs</span><span class="op">&lt;</span>
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>lcs&lt;
     <span class="lifetime">&#39;a</span>,
-    <span class="ident">T</span>: <span class="ident">Same</span>,
-    <span class="ident">I</span>: <span class="ident">DoubleEndedIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">T</span><span class="op">&gt;</span>,
-    <span class="ident">J</span>: <span class="ident">DoubleEndedIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">T</span><span class="op">&gt;</span>,
-<span class="op">&gt;</span>(
-    <span class="ident">x</span>: <span class="kw">impl</span> <span class="ident">Fn</span>() -&gt; <span class="ident">I</span>,
-    <span class="ident">y</span>: <span class="kw">impl</span> <span class="ident">Fn</span>() -&gt; <span class="ident">J</span>,
-    <span class="ident">x_len</span>: <span class="ident">usize</span>,
-    <span class="ident">y_len</span>: <span class="ident">usize</span>,
-) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">Edit</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> (<span class="ident">prefix_eq</span>, <span class="ident">c</span>, <span class="ident">suffix_eq</span>) <span class="op">=</span> <span class="ident">c_matrix</span>(<span class="kw-2">&amp;</span><span class="ident">x</span>, <span class="kw-2">&amp;</span><span class="ident">y</span>, <span class="ident">x_len</span>, <span class="ident">y_len</span>);
+    T: Same,
+    I: DoubleEndedIterator&lt;Item = T&gt;,
+    J: DoubleEndedIterator&lt;Item = T&gt;,
+&gt;(
+    x: <span class="kw">impl </span>Fn() -&gt; I,
+    y: <span class="kw">impl </span>Fn() -&gt; J,
+    x_len: usize,
+    y_len: usize,
+) -&gt; <span class="kw">impl </span>Iterator&lt;Item = Edit&lt;T&gt;&gt; {
+    <span class="kw">let </span>(prefix_eq, c, suffix_eq) = c_matrix(<span class="kw-2">&amp;</span>x, <span class="kw-2">&amp;</span>y, x_len, y_len);
 
-    <span class="ident">x</span>().<span class="ident">zip</span>(<span class="ident">y</span>())
-        .<span class="ident">take</span>(<span class="ident">prefix_eq</span>)
-        .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">x</span>, <span class="ident">y</span>)<span class="op">|</span> <span class="ident">Edit::Same</span>(<span class="ident">x</span>, <span class="ident">y</span>))
-        .<span class="ident">chain</span>(<span class="ident">lcs_base</span>(
-            <span class="ident">c</span>,
-            <span class="ident">itertools::put_back</span>(
-                <span class="ident">x</span>().<span class="ident">rev</span>()
-                    .<span class="ident">skip</span>(<span class="ident">suffix_eq</span>)
-                    .<span class="ident">take</span>(<span class="ident">x_len</span>.<span class="ident">saturating_sub</span>(<span class="ident">prefix_eq</span> <span class="op">+</span> <span class="ident">suffix_eq</span>)),
+    x().zip(y())
+        .take(prefix_eq)
+        .map(|(x, y)| Edit::Same(x, y))
+        .chain(lcs_base(
+            c,
+            itertools::put_back(
+                x().rev()
+                    .skip(suffix_eq)
+                    .take(x_len.saturating_sub(prefix_eq + suffix_eq)),
             ),
-            <span class="ident">itertools::put_back</span>(
-                <span class="ident">y</span>().<span class="ident">rev</span>()
-                    .<span class="ident">skip</span>(<span class="ident">suffix_eq</span>)
-                    .<span class="ident">take</span>(<span class="ident">y_len</span>.<span class="ident">saturating_sub</span>(<span class="ident">prefix_eq</span> <span class="op">+</span> <span class="ident">suffix_eq</span>)),
+            itertools::put_back(
+                y().rev()
+                    .skip(suffix_eq)
+                    .take(y_len.saturating_sub(prefix_eq + suffix_eq)),
             ),
         ))
-        .<span class="ident">chain</span>(
-            <span class="ident">x</span>().<span class="ident">skip</span>(<span class="ident">x_len</span> <span class="op">-</span> <span class="ident">suffix_eq</span>)
-                .<span class="ident">zip</span>(<span class="ident">y</span>().<span class="ident">skip</span>(<span class="ident">y_len</span> <span class="op">-</span> <span class="ident">suffix_eq</span>))
-                .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">x</span>, <span class="ident">y</span>)<span class="op">|</span> <span class="ident">Edit::Same</span>(<span class="ident">x</span>, <span class="ident">y</span>)),
+        .chain(
+            x().skip(x_len - suffix_eq)
+                .zip(y().skip(y_len - suffix_eq))
+                .map(|(x, y)| Edit::Same(x, y)),
         )
 }
 
-<span class="comment">// FIXME move out from lcs</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">lcs_post_change</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>: <span class="ident">Same</span> <span class="op">+</span> <span class="ident">Diffable</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
-    <span class="ident">result</span>: <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">Edit</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">edit::collection::Edit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>, <span class="op">&lt;</span><span class="ident">T</span> <span class="kw">as</span> <span class="ident">Diffable</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::Diff</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="ident">result</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">edit</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">edit</span> {
-        <span class="ident">Edit::Same</span>(<span class="ident">left</span>, <span class="ident">right</span>) =&gt; <span class="kw">match</span> <span class="ident">left</span>.<span class="ident">diff</span>(<span class="ident">right</span>) {
-            <span class="ident">edit::Edit::Copy</span>(<span class="ident">t</span>) =&gt; <span class="ident">edit::collection::Edit::Copy</span>(<span class="ident">t</span>),
-            <span class="ident">edit::Edit::Change</span>(<span class="ident">diff</span>) =&gt; <span class="ident">edit::collection::Edit::Change</span>(<span class="ident">diff</span>),
+<span class="comment">// FIXME move out from lcs
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>lcs_post_change&lt;<span class="lifetime">&#39;a</span>, T: Same + Diffable&lt;<span class="lifetime">&#39;a</span>&gt; + <span class="question-mark">?</span>Sized + <span class="lifetime">&#39;a</span>&gt;(
+    result: <span class="kw">impl </span>Iterator&lt;Item = Edit&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>T&gt;&gt;,
+) -&gt; <span class="kw">impl </span>Iterator&lt;Item = edit::collection::Edit&lt;<span class="lifetime">&#39;a</span>, T, &lt;T <span class="kw">as </span>Diffable&lt;<span class="lifetime">&#39;a</span>&gt;&gt;::Diff&gt;&gt; {
+    result.map(|edit| <span class="kw">match </span>edit {
+        Edit::Same(left, right) =&gt; <span class="kw">match </span>left.diff(right) {
+            edit::Edit::Copy(t) =&gt; edit::collection::Edit::Copy(t),
+            edit::Edit::Change(diff) =&gt; edit::collection::Edit::Change(diff),
         },
-        <span class="ident">Edit::Insert</span>(<span class="ident">value</span>) =&gt; <span class="ident">edit::collection::Edit::Insert</span>(<span class="ident">value</span>),
-        <span class="ident">Edit::Remove</span>(<span class="ident">value</span>) =&gt; <span class="ident">edit::collection::Edit::Remove</span>(<span class="ident">value</span>),
+        Edit::Insert(value) =&gt; edit::collection::Edit::Insert(value),
+        Edit::Remove(value) =&gt; edit::collection::Edit::Remove(value),
     })
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">characters</span>() {
-        <span class="kw">let</span> <span class="ident">left</span> <span class="op">=</span> <span class="string">&quot;XMJYAUZ&quot;</span>;
-        <span class="kw">let</span> <span class="ident">right</span> <span class="op">=</span> <span class="string">&quot;MZJAWXU&quot;</span>;
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>characters() {
+        <span class="kw">let </span>left = <span class="string">&quot;XMJYAUZ&quot;</span>;
+        <span class="kw">let </span>right = <span class="string">&quot;MZJAWXU&quot;</span>;
 
-        <span class="kw">let</span> <span class="ident">s</span> <span class="op">=</span> <span class="ident">lcs</span>(
-            <span class="op">|</span><span class="op">|</span> <span class="ident">left</span>.<span class="ident">chars</span>(),
-            <span class="op">|</span><span class="op">|</span> <span class="ident">right</span>.<span class="ident">chars</span>(),
-            <span class="ident">left</span>.<span class="ident">chars</span>().<span class="ident">count</span>(),
-            <span class="ident">right</span>.<span class="ident">chars</span>().<span class="ident">count</span>(),
+        <span class="kw">let </span>s = lcs(
+            || left.chars(),
+            || right.chars(),
+            left.chars().count(),
+            right.chars().count(),
         );
 
         <span class="macro">assert_eq!</span>(
-            <span class="ident">s</span>.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>(),
+            s.collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
             <span class="macro">vec!</span>[
-                <span class="ident">Edit::Remove</span>(<span class="string">&#39;X&#39;</span>),
-                <span class="ident">Edit::Same</span>(<span class="string">&#39;M&#39;</span>, <span class="string">&#39;M&#39;</span>),
-                <span class="ident">Edit::Insert</span>(<span class="string">&#39;Z&#39;</span>),
-                <span class="ident">Edit::Same</span>(<span class="string">&#39;J&#39;</span>, <span class="string">&#39;J&#39;</span>),
-                <span class="ident">Edit::Remove</span>(<span class="string">&#39;Y&#39;</span>),
-                <span class="ident">Edit::Same</span>(<span class="string">&#39;A&#39;</span>, <span class="string">&#39;A&#39;</span>),
-                <span class="ident">Edit::Insert</span>(<span class="string">&#39;W&#39;</span>),
-                <span class="ident">Edit::Insert</span>(<span class="string">&#39;X&#39;</span>),
-                <span class="ident">Edit::Same</span>(<span class="string">&#39;U&#39;</span>, <span class="string">&#39;U&#39;</span>),
-                <span class="ident">Edit::Remove</span>(<span class="string">&#39;Z&#39;</span>)
+                Edit::Remove(<span class="string">&#39;X&#39;</span>),
+                Edit::Same(<span class="string">&#39;M&#39;</span>, <span class="string">&#39;M&#39;</span>),
+                Edit::Insert(<span class="string">&#39;Z&#39;</span>),
+                Edit::Same(<span class="string">&#39;J&#39;</span>, <span class="string">&#39;J&#39;</span>),
+                Edit::Remove(<span class="string">&#39;Y&#39;</span>),
+                Edit::Same(<span class="string">&#39;A&#39;</span>, <span class="string">&#39;A&#39;</span>),
+                Edit::Insert(<span class="string">&#39;W&#39;</span>),
+                Edit::Insert(<span class="string">&#39;X&#39;</span>),
+                Edit::Same(<span class="string">&#39;U&#39;</span>, <span class="string">&#39;U&#39;</span>),
+                Edit::Remove(<span class="string">&#39;Z&#39;</span>)
             ]
         );
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">words</span>() {
-        <span class="kw">let</span> <span class="ident">left</span> <span class="op">=</span> <span class="string">&quot;The quick brown fox jumps over the lazy dog&quot;</span>;
-        <span class="kw">let</span> <span class="ident">right</span> <span class="op">=</span> <span class="string">&quot;The quick brown dog leaps over the lazy cat&quot;</span>;
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>words() {
+        <span class="kw">let </span>left = <span class="string">&quot;The quick brown fox jumps over the lazy dog&quot;</span>;
+        <span class="kw">let </span>right = <span class="string">&quot;The quick brown dog leaps over the lazy cat&quot;</span>;
 
-        <span class="kw">let</span> <span class="ident">s</span> <span class="op">=</span> <span class="ident">lcs</span>(
-            <span class="op">|</span><span class="op">|</span> <span class="ident">left</span>.<span class="ident">split_whitespace</span>(),
-            <span class="op">|</span><span class="op">|</span> <span class="ident">right</span>.<span class="ident">split_whitespace</span>(),
-            <span class="ident">left</span>.<span class="ident">split_whitespace</span>().<span class="ident">count</span>(),
-            <span class="ident">right</span>.<span class="ident">split_whitespace</span>().<span class="ident">count</span>(),
+        <span class="kw">let </span>s = lcs(
+            || left.split_whitespace(),
+            || right.split_whitespace(),
+            left.split_whitespace().count(),
+            right.split_whitespace().count(),
         );
 
         <span class="macro">assert_eq!</span>(
-            <span class="ident">s</span>.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>(),
+            s.collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
             <span class="macro">vec!</span>[
-                <span class="ident">Edit::Same</span>(<span class="string">&quot;The&quot;</span>, <span class="string">&quot;The&quot;</span>),
-                <span class="ident">Edit::Same</span>(<span class="string">&quot;quick&quot;</span>, <span class="string">&quot;quick&quot;</span>),
-                <span class="ident">Edit::Same</span>(<span class="string">&quot;brown&quot;</span>, <span class="string">&quot;brown&quot;</span>),
-                <span class="ident">Edit::Remove</span>(<span class="string">&quot;fox&quot;</span>),
-                <span class="ident">Edit::Remove</span>(<span class="string">&quot;jumps&quot;</span>),
-                <span class="ident">Edit::Insert</span>(<span class="string">&quot;dog&quot;</span>),
-                <span class="ident">Edit::Insert</span>(<span class="string">&quot;leaps&quot;</span>),
-                <span class="ident">Edit::Same</span>(<span class="string">&quot;over&quot;</span>, <span class="string">&quot;over&quot;</span>),
-                <span class="ident">Edit::Same</span>(<span class="string">&quot;the&quot;</span>, <span class="string">&quot;the&quot;</span>),
-                <span class="ident">Edit::Same</span>(<span class="string">&quot;lazy&quot;</span>, <span class="string">&quot;lazy&quot;</span>),
-                <span class="ident">Edit::Remove</span>(<span class="string">&quot;dog&quot;</span>),
-                <span class="ident">Edit::Insert</span>(<span class="string">&quot;cat&quot;</span>)
+                Edit::Same(<span class="string">&quot;The&quot;</span>, <span class="string">&quot;The&quot;</span>),
+                Edit::Same(<span class="string">&quot;quick&quot;</span>, <span class="string">&quot;quick&quot;</span>),
+                Edit::Same(<span class="string">&quot;brown&quot;</span>, <span class="string">&quot;brown&quot;</span>),
+                Edit::Remove(<span class="string">&quot;fox&quot;</span>),
+                Edit::Remove(<span class="string">&quot;jumps&quot;</span>),
+                Edit::Insert(<span class="string">&quot;dog&quot;</span>),
+                Edit::Insert(<span class="string">&quot;leaps&quot;</span>),
+                Edit::Same(<span class="string">&quot;over&quot;</span>, <span class="string">&quot;over&quot;</span>),
+                Edit::Same(<span class="string">&quot;the&quot;</span>, <span class="string">&quot;the&quot;</span>),
+                Edit::Same(<span class="string">&quot;lazy&quot;</span>, <span class="string">&quot;lazy&quot;</span>),
+                Edit::Remove(<span class="string">&quot;dog&quot;</span>),
+                Edit::Insert(<span class="string">&quot;cat&quot;</span>)
             ]
         );
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="diffus" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.63.0-nightly (fee3a459d 2022-06-05)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="diffus" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (02654a084 2022-08-30)" ></div></body></html>

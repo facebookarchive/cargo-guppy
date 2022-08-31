@@ -1,11 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/proptest-1.0.0/src/test_runner/replay.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>replay.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../proptest/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../proptest/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../proptest/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><div id="settings-menu" tabindex="-1">
-                                <a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div>
-                        </div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/proptest-1.0.0/src/test_runner/replay.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>replay.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../proptest/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../proptest/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../proptest/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -194,195 +187,194 @@
 <span id="187">187</span>
 <span id="188">188</span>
 <span id="189">189</span>
-</pre><pre class="rust"><code><span class="comment">//-</span>
-<span class="comment">// Copyright 2018 The proptest developers</span>
-<span class="comment">//</span>
-<span class="comment">// Licensed under the Apache License, Version 2.0 &lt;LICENSE-APACHE or</span>
-<span class="comment">// http://www.apache.org/licenses/LICENSE-2.0&gt; or the MIT license</span>
-<span class="comment">// &lt;LICENSE-MIT or http://opensource.org/licenses/MIT&gt;, at your</span>
-<span class="comment">// option. This file may not be copied, modified, or distributed</span>
-<span class="comment">// except according to those terms.</span>
+</pre><pre class="rust"><code><span class="comment">//-
+// Copyright 2018 The proptest developers
+//
+// Licensed under the Apache License, Version 2.0 &lt;LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0&gt; or the MIT license
+// &lt;LICENSE-MIT or http://opensource.org/licenses/MIT&gt;, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
 
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
+</span><span class="attribute">#![allow(dead_code)]
 
-<span class="kw">use</span> <span class="ident">std::fs</span>;
-<span class="kw">use</span> <span class="ident">std::io</span>::{<span class="self">self</span>, <span class="ident">BufRead</span>, <span class="ident">Read</span>, <span class="ident">Seek</span>, <span class="ident">Write</span>};
-<span class="kw">use</span> <span class="ident">std::path::Path</span>;
-<span class="kw">use</span> <span class="ident">std::string::String</span>;
-<span class="kw">use</span> <span class="ident">std::vec::Vec</span>;
+</span><span class="kw">use </span>std::fs;
+<span class="kw">use </span>std::io::{<span class="self">self</span>, BufRead, Read, Seek, Write};
+<span class="kw">use </span>std::path::Path;
+<span class="kw">use </span>std::string::String;
+<span class="kw">use </span>std::vec::Vec;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::test_runner</span>::{<span class="ident">Seed</span>, <span class="ident">TestCaseError</span>, <span class="ident">TestCaseResult</span>};
+<span class="kw">use </span><span class="kw">crate</span>::test_runner::{Seed, TestCaseError, TestCaseResult};
 
-<span class="kw">const</span> <span class="ident">SENTINEL</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;proptest-forkfile&quot;</span>;
+<span class="kw">const </span>SENTINEL: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str = <span class="string">&quot;proptest-forkfile&quot;</span>;
 
-<span class="doccomment">/// A &quot;replay&quot; of a `TestRunner` invocation.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The replay mechanism is used to support forking. When a child process</span>
-<span class="doccomment">/// exits, the parent can read the replay to reproduce the state the child had;</span>
-<span class="doccomment">/// similarly, if a child crashes, a new one can be started and given a replay</span>
-<span class="doccomment">/// which steps it one complication past the input that caused the crash.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The replay system is tightly coupled to the `TestRunner` itself. It does</span>
-<span class="doccomment">/// not carry enough information to be used in different builds of the same</span>
-<span class="doccomment">/// application, or even two different runs of the test process since changes</span>
-<span class="doccomment">/// to the persistence file will perturb the replay.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// `Replay` has a special string format for being stored in files. It starts</span>
-<span class="doccomment">/// with a line just containing the text in `SENTINEL`, then 16 lines</span>
-<span class="doccomment">/// containing the values of `seed`, then an unterminated line consisting of</span>
-<span class="doccomment">/// `+`, `-`, and `!` characters to indicate test case passes/failures/rejects,</span>
-<span class="doccomment">/// `.` to indicate termination of the test run, or ` ` as a dummy &quot;I&#39;m alive&quot;</span>
-<span class="doccomment">/// signal. This format makes it easy for the child process to blindly append</span>
-<span class="doccomment">/// to the file without having to worry about the possibility of appends being</span>
-<span class="doccomment">/// non-atomic.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">Replay</span> {
-    <span class="doccomment">/// The seed of the RNG used to start running the test cases.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">seed</span>: <span class="ident">Seed</span>,
-    <span class="doccomment">/// A log of whether certain test cases passed or failed. The runner will</span>
-    <span class="doccomment">/// assume the same results occur without actually running the test cases.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">steps</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TestCaseResult</span><span class="op">&gt;</span>,
+<span class="doccomment">/// A &quot;replay&quot; of a `TestRunner` invocation.
+///
+/// The replay mechanism is used to support forking. When a child process
+/// exits, the parent can read the replay to reproduce the state the child had;
+/// similarly, if a child crashes, a new one can be started and given a replay
+/// which steps it one complication past the input that caused the crash.
+///
+/// The replay system is tightly coupled to the `TestRunner` itself. It does
+/// not carry enough information to be used in different builds of the same
+/// application, or even two different runs of the test process since changes
+/// to the persistence file will perturb the replay.
+///
+/// `Replay` has a special string format for being stored in files. It starts
+/// with a line just containing the text in `SENTINEL`, then 16 lines
+/// containing the values of `seed`, then an unterminated line consisting of
+/// `+`, `-`, and `!` characters to indicate test case passes/failures/rejects,
+/// `.` to indicate termination of the test run, or ` ` as a dummy &quot;I&#39;m alive&quot;
+/// signal. This format makes it easy for the child process to blindly append
+/// to the file without having to worry about the possibility of appends being
+/// non-atomic.
+</span><span class="attribute">#[derive(Clone, Debug)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Replay {
+    <span class="doccomment">/// The seed of the RNG used to start running the test cases.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) seed: Seed,
+    <span class="doccomment">/// A log of whether certain test cases passed or failed. The runner will
+    /// assume the same results occur without actually running the test cases.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) steps: Vec&lt;TestCaseResult&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">Replay</span> {
-    <span class="doccomment">/// If `other` is longer than `self`, add the extra elements to `self`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">merge</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="ident">Replay</span>) {
-        <span class="kw">if</span> <span class="ident">other</span>.<span class="ident">steps</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">steps</span>.<span class="ident">len</span>() {
-            <span class="kw">let</span> <span class="ident">sl</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">steps</span>.<span class="ident">len</span>();
-            <span class="self">self</span>.<span class="ident">steps</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">other</span>.<span class="ident">steps</span>[<span class="ident">sl</span>..]);
+<span class="kw">impl </span>Replay {
+    <span class="doccomment">/// If `other` is longer than `self`, add the extra elements to `self`.
+    </span><span class="kw">pub fn </span>merge(<span class="kw-2">&amp;mut </span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Replay) {
+        <span class="kw">if </span>other.steps.len() &gt; <span class="self">self</span>.steps.len() {
+            <span class="kw">let </span>sl = <span class="self">self</span>.steps.len();
+            <span class="self">self</span>.steps.extend_from_slice(<span class="kw-2">&amp;</span>other.steps[sl..]);
         }
     }
 }
 
-<span class="doccomment">/// Result of loading a replay file.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum</span> <span class="ident">ReplayFileStatus</span> {
-    <span class="doccomment">/// The file is valid and represents a currently-in-progress test.</span>
-    <span class="ident">InProgress</span>(<span class="ident">Replay</span>),
-    <span class="doccomment">/// The file is valid, but indicates that all testing has completed.</span>
-    <span class="ident">Terminated</span>(<span class="ident">Replay</span>),
-    <span class="doccomment">/// The file is not parsable.</span>
-    <span class="ident">Corrupt</span>,
+<span class="doccomment">/// Result of loading a replay file.
+</span><span class="attribute">#[derive(Clone, Debug)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>ReplayFileStatus {
+    <span class="doccomment">/// The file is valid and represents a currently-in-progress test.
+    </span>InProgress(Replay),
+    <span class="doccomment">/// The file is valid, but indicates that all testing has completed.
+    </span>Terminated(Replay),
+    <span class="doccomment">/// The file is not parsable.
+    </span>Corrupt,
 }
 
-<span class="doccomment">/// Open the file in the usual read+append+create mode.</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">open_file</span>(<span class="ident">path</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">Path</span><span class="op">&gt;</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">fs::File</span><span class="op">&gt;</span> {
-    <span class="ident">fs::OpenOptions::new</span>()
-        .<span class="ident">read</span>(<span class="bool-val">true</span>)
-        .<span class="ident">append</span>(<span class="bool-val">true</span>)
-        .<span class="ident">create</span>(<span class="bool-val">true</span>)
-        .<span class="ident">truncate</span>(<span class="bool-val">false</span>)
-        .<span class="ident">open</span>(<span class="ident">path</span>)
+<span class="doccomment">/// Open the file in the usual read+append+create mode.
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>open_file(path: <span class="kw">impl </span>AsRef&lt;Path&gt;) -&gt; io::Result&lt;fs::File&gt; {
+    fs::OpenOptions::new()
+        .read(<span class="bool-val">true</span>)
+        .append(<span class="bool-val">true</span>)
+        .create(<span class="bool-val">true</span>)
+        .truncate(<span class="bool-val">false</span>)
+        .open(path)
 }
 
-<span class="kw">fn</span> <span class="ident">step_to_char</span>(<span class="ident">step</span>: <span class="kw-2">&amp;</span><span class="ident">TestCaseResult</span>) -&gt; <span class="ident">char</span> {
-    <span class="kw">match</span> <span class="kw-2">*</span><span class="ident">step</span> {
+<span class="kw">fn </span>step_to_char(step: <span class="kw-2">&amp;</span>TestCaseResult) -&gt; char {
+    <span class="kw">match </span><span class="kw-2">*</span>step {
         <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="string">&#39;+&#39;</span>,
-        <span class="prelude-val">Err</span>(<span class="ident">TestCaseError::Reject</span>(<span class="kw">_</span>)) =&gt; <span class="string">&#39;!&#39;</span>,
-        <span class="prelude-val">Err</span>(<span class="ident">TestCaseError::Fail</span>(<span class="kw">_</span>)) =&gt; <span class="string">&#39;-&#39;</span>,
+        <span class="prelude-val">Err</span>(TestCaseError::Reject(<span class="kw">_</span>)) =&gt; <span class="string">&#39;!&#39;</span>,
+        <span class="prelude-val">Err</span>(TestCaseError::Fail(<span class="kw">_</span>)) =&gt; <span class="string">&#39;-&#39;</span>,
     }
 }
 
-<span class="doccomment">/// Append the given step to the given output.</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">append</span>(
-    <span class="kw-2">mut</span> <span class="ident">file</span>: <span class="kw">impl</span> <span class="ident">Write</span>,
-    <span class="ident">step</span>: <span class="kw-2">&amp;</span><span class="ident">TestCaseResult</span>,
-) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="macro">write!</span>(<span class="ident">file</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">step_to_char</span>(<span class="ident">step</span>))
+<span class="doccomment">/// Append the given step to the given output.
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>append(
+    <span class="kw-2">mut </span>file: <span class="kw">impl </span>Write,
+    step: <span class="kw-2">&amp;</span>TestCaseResult,
+) -&gt; io::Result&lt;()&gt; {
+    <span class="macro">write!</span>(file, <span class="string">&quot;{}&quot;</span>, step_to_char(step))
 }
 
-<span class="doccomment">/// Append a no-op step to the given output.</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">ping</span>(<span class="kw-2">mut</span> <span class="ident">file</span>: <span class="kw">impl</span> <span class="ident">Write</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="macro">write!</span>(<span class="ident">file</span>, <span class="string">&quot; &quot;</span>)
+<span class="doccomment">/// Append a no-op step to the given output.
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>ping(<span class="kw-2">mut </span>file: <span class="kw">impl </span>Write) -&gt; io::Result&lt;()&gt; {
+    <span class="macro">write!</span>(file, <span class="string">&quot; &quot;</span>)
 }
 
-<span class="doccomment">/// Append a termination mark to the given output.</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">terminate</span>(<span class="kw-2">mut</span> <span class="ident">file</span>: <span class="kw">impl</span> <span class="ident">Write</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="macro">write!</span>(<span class="ident">file</span>, <span class="string">&quot;.&quot;</span>)
+<span class="doccomment">/// Append a termination mark to the given output.
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>terminate(<span class="kw-2">mut </span>file: <span class="kw">impl </span>Write) -&gt; io::Result&lt;()&gt; {
+    <span class="macro">write!</span>(file, <span class="string">&quot;.&quot;</span>)
 }
 
-<span class="kw">impl</span> <span class="ident">Replay</span> {
-    <span class="doccomment">/// Write the full state of this `Replay` to the given output.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">init_file</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">file</span>: <span class="kw">impl</span> <span class="ident">Write</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="macro">writeln!</span>(<span class="ident">file</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">SENTINEL</span>)<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(<span class="ident">file</span>, <span class="string">&quot;{}&quot;</span>, <span class="self">self</span>.<span class="ident">seed</span>.<span class="ident">to_persistence</span>())<span class="question-mark">?</span>;
+<span class="kw">impl </span>Replay {
+    <span class="doccomment">/// Write the full state of this `Replay` to the given output.
+    </span><span class="kw">pub fn </span>init_file(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>file: <span class="kw">impl </span>Write) -&gt; io::Result&lt;()&gt; {
+        <span class="macro">writeln!</span>(file, <span class="string">&quot;{}&quot;</span>, SENTINEL)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(file, <span class="string">&quot;{}&quot;</span>, <span class="self">self</span>.seed.to_persistence())<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">step_data</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="ident">::new</span>();
-        <span class="kw">for</span> <span class="ident">step</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">steps</span> {
-            <span class="ident">step_data</span>.<span class="ident">push</span>(<span class="ident">step_to_char</span>(<span class="ident">step</span>) <span class="kw">as</span> <span class="ident">u8</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>step_data = Vec::&lt;u8&gt;::new();
+        <span class="kw">for </span>step <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.steps {
+            step_data.push(step_to_char(step) <span class="kw">as </span>u8);
         }
 
-        <span class="ident">file</span>.<span class="ident">write_all</span>(<span class="kw-2">&amp;</span><span class="ident">step_data</span>)<span class="question-mark">?</span>;
+        file.write_all(<span class="kw-2">&amp;</span>step_data)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// Mark the replay as complete in the file.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">complete</span>(<span class="kw-2">mut</span> <span class="ident">file</span>: <span class="kw">impl</span> <span class="ident">Write</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="macro">write!</span>(<span class="ident">file</span>, <span class="string">&quot;.&quot;</span>)
+    <span class="doccomment">/// Mark the replay as complete in the file.
+    </span><span class="kw">pub fn </span>complete(<span class="kw-2">mut </span>file: <span class="kw">impl </span>Write) -&gt; io::Result&lt;()&gt; {
+        <span class="macro">write!</span>(file, <span class="string">&quot;.&quot;</span>)
     }
 
-    <span class="doccomment">/// Parse a `Replay` out of the given file.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The reader is implicitly seeked to the beginning before reading.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parse_from</span>(
-        <span class="kw-2">mut</span> <span class="ident">file</span>: <span class="kw">impl</span> <span class="ident">Read</span> <span class="op">+</span> <span class="ident">Seek</span>,
-    ) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">ReplayFileStatus</span><span class="op">&gt;</span> {
-        <span class="ident">file</span>.<span class="ident">seek</span>(<span class="ident">io::SeekFrom::Start</span>(<span class="number">0</span>))<span class="question-mark">?</span>;
+    <span class="doccomment">/// Parse a `Replay` out of the given file.
+    ///
+    /// The reader is implicitly seeked to the beginning before reading.
+    </span><span class="kw">pub fn </span>parse_from(
+        <span class="kw-2">mut </span>file: <span class="kw">impl </span>Read + Seek,
+    ) -&gt; io::Result&lt;ReplayFileStatus&gt; {
+        file.seek(io::SeekFrom::Start(<span class="number">0</span>))<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">reader</span> <span class="op">=</span> <span class="ident">io::BufReader::new</span>(<span class="kw-2">&amp;mut</span> <span class="ident">file</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">line</span> <span class="op">=</span> <span class="ident">String::new</span>();
+        <span class="kw">let </span><span class="kw-2">mut </span>reader = io::BufReader::new(<span class="kw-2">&amp;mut </span>file);
+        <span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
 
-        <span class="comment">// Ensure it starts with the sentinel. We do this since we rely on a</span>
-        <span class="comment">// named temporary file which could be in a location where another</span>
-        <span class="comment">// actor could replace it with, eg, a symlink to a location they don&#39;t</span>
-        <span class="comment">// control but we do. By rejecting a read from a file missing the</span>
-        <span class="comment">// sentinel, and not doing any writes if we can&#39;t read the file, we</span>
-        <span class="comment">// won&#39;t risk overwriting another file since the prospective attacker</span>
-        <span class="comment">// would need to be able to change the file to start with the sentinel</span>
-        <span class="comment">// themselves.</span>
-        <span class="comment">//</span>
-        <span class="comment">// There are still some possible symlink attacks that can work by</span>
-        <span class="comment">// tricking us into reading, but those are non-destructive things like</span>
-        <span class="comment">// interfering with a FIFO or Unix socket.</span>
-        <span class="ident">reader</span>.<span class="ident">read_line</span>(<span class="kw-2">&amp;mut</span> <span class="ident">line</span>)<span class="question-mark">?</span>;
-        <span class="kw">if</span> <span class="ident">SENTINEL</span> <span class="op">!</span><span class="op">=</span> <span class="ident">line</span>.<span class="ident">trim</span>() {
-            <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">ReplayFileStatus::Corrupt</span>);
+        <span class="comment">// Ensure it starts with the sentinel. We do this since we rely on a
+        // named temporary file which could be in a location where another
+        // actor could replace it with, eg, a symlink to a location they don&#39;t
+        // control but we do. By rejecting a read from a file missing the
+        // sentinel, and not doing any writes if we can&#39;t read the file, we
+        // won&#39;t risk overwriting another file since the prospective attacker
+        // would need to be able to change the file to start with the sentinel
+        // themselves.
+        //
+        // There are still some possible symlink attacks that can work by
+        // tricking us into reading, but those are non-destructive things like
+        // interfering with a FIFO or Unix socket.
+        </span>reader.read_line(<span class="kw-2">&amp;mut </span>line)<span class="question-mark">?</span>;
+        <span class="kw">if </span>SENTINEL != line.trim() {
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(ReplayFileStatus::Corrupt);
         }
 
-        <span class="ident">line</span>.<span class="ident">clear</span>();
-        <span class="ident">reader</span>.<span class="ident">read_line</span>(<span class="kw-2">&amp;mut</span> <span class="ident">line</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">seed</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">Seed::from_persistence</span>(<span class="kw-2">&amp;</span><span class="ident">line</span>) {
-            <span class="prelude-val">Some</span>(<span class="ident">seed</span>) =&gt; <span class="ident">seed</span>,
-            <span class="prelude-val">None</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">ReplayFileStatus::Corrupt</span>),
+        line.clear();
+        reader.read_line(<span class="kw-2">&amp;mut </span>line)<span class="question-mark">?</span>;
+        <span class="kw">let </span>seed = <span class="kw">match </span>Seed::from_persistence(<span class="kw-2">&amp;</span>line) {
+            <span class="prelude-val">Some</span>(seed) =&gt; seed,
+            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(ReplayFileStatus::Corrupt),
         };
 
-        <span class="ident">line</span>.<span class="ident">clear</span>();
-        <span class="ident">reader</span>.<span class="ident">read_line</span>(<span class="kw-2">&amp;mut</span> <span class="ident">line</span>)<span class="question-mark">?</span>;
+        line.clear();
+        reader.read_line(<span class="kw-2">&amp;mut </span>line)<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">steps</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-        <span class="kw">for</span> <span class="ident">ch</span> <span class="kw">in</span> <span class="ident">line</span>.<span class="ident">chars</span>() {
-            <span class="kw">match</span> <span class="ident">ch</span> {
-                <span class="string">&#39;+&#39;</span> =&gt; <span class="ident">steps</span>.<span class="ident">push</span>(<span class="prelude-val">Ok</span>(())),
-                <span class="string">&#39;-&#39;</span> =&gt; <span class="ident">steps</span>
-                    .<span class="ident">push</span>(<span class="prelude-val">Err</span>(<span class="ident">TestCaseError::fail</span>(<span class="string">&quot;failed in other process&quot;</span>))),
-                <span class="string">&#39;!&#39;</span> =&gt; <span class="ident">steps</span>.<span class="ident">push</span>(<span class="prelude-val">Err</span>(<span class="ident">TestCaseError::reject</span>(
+        <span class="kw">let </span><span class="kw-2">mut </span>steps = Vec::new();
+        <span class="kw">for </span>ch <span class="kw">in </span>line.chars() {
+            <span class="kw">match </span>ch {
+                <span class="string">&#39;+&#39; </span>=&gt; steps.push(<span class="prelude-val">Ok</span>(())),
+                <span class="string">&#39;-&#39; </span>=&gt; steps
+                    .push(<span class="prelude-val">Err</span>(TestCaseError::fail(<span class="string">&quot;failed in other process&quot;</span>))),
+                <span class="string">&#39;!&#39; </span>=&gt; steps.push(<span class="prelude-val">Err</span>(TestCaseError::reject(
                     <span class="string">&quot;rejected in other process&quot;</span>,
                 ))),
-                <span class="string">&#39;.&#39;</span> =&gt; {
-                    <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">ReplayFileStatus::Terminated</span>(<span class="ident">Replay</span> {
-                        <span class="ident">seed</span>,
-                        <span class="ident">steps</span>,
+                <span class="string">&#39;.&#39; </span>=&gt; {
+                    <span class="kw">return </span><span class="prelude-val">Ok</span>(ReplayFileStatus::Terminated(Replay {
+                        seed,
+                        steps,
                     }))
                 }
-                <span class="string">&#39; &#39;</span> =&gt; (),
-                <span class="kw">_</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">ReplayFileStatus::Corrupt</span>),
+                <span class="string">&#39; &#39; </span>=&gt; (),
+                <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(ReplayFileStatus::Corrupt),
             }
         }
 
-        <span class="prelude-val">Ok</span>(<span class="ident">ReplayFileStatus::InProgress</span>(<span class="ident">Replay</span> { <span class="ident">seed</span>, <span class="ident">steps</span> }))
+        <span class="prelude-val">Ok</span>(ReplayFileStatus::InProgress(Replay { seed, steps }))
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="proptest" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.63.0-nightly (fee3a459d 2022-06-05)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="proptest" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (02654a084 2022-08-30)" ></div></body></html>

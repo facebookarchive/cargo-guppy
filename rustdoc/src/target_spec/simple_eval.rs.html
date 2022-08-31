@@ -1,11 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `target-spec/src/simple_eval.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>simple_eval.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../target_spec/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../target_spec/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../target_spec/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><div id="settings-menu" tabindex="-1">
-                                <a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div>
-                        </div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `target-spec/src/simple_eval.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>simple_eval.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../target_spec/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../target_spec/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../target_spec/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -223,217 +216,217 @@
 <span id="216">216</span>
 <span id="217">217</span>
 <span id="218">218</span>
-</pre><pre class="rust"><code><span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
-<span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
+</pre><pre class="rust"><code><span class="comment">// Copyright (c) The cargo-guppy Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
 
-<span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">platform</span>::{<span class="ident">Platform</span>, <span class="ident">TargetFeatures</span>},
-    <span class="ident">Error</span>, <span class="ident">TargetSpec</span>,
+</span><span class="kw">use crate</span>::{
+    platform::{Platform, TargetFeatures},
+    Error, TargetSpec,
 };
 
-<span class="doccomment">/// Evaluates the given spec against the provided target and returns `Some(true)` on a successful</span>
-<span class="doccomment">/// match, and `Some(false)` on a failing match.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This defaults to treating target features as unknown, and returns `None` if the overall result</span>
-<span class="doccomment">/// is unknown.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// For more advanced uses, see [`TargetSpec::eval`].</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// For more information, see the crate-level documentation.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">eval</span>(<span class="ident">spec_or_triple</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">platform</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">target_spec</span> <span class="op">=</span> <span class="ident">spec_or_triple</span>.<span class="ident">parse</span>::<span class="op">&lt;</span><span class="ident">TargetSpec</span><span class="op">&gt;</span>()<span class="question-mark">?</span>;
-    <span class="kw">let</span> <span class="ident">platform</span> <span class="op">=</span> <span class="ident">Platform::new</span>(<span class="ident">platform</span>.<span class="ident">to_owned</span>(), <span class="ident">TargetFeatures::Unknown</span>)<span class="question-mark">?</span>;
-    <span class="prelude-val">Ok</span>(<span class="ident">target_spec</span>.<span class="ident">eval</span>(<span class="kw-2">&amp;</span><span class="ident">platform</span>))
+<span class="doccomment">/// Evaluates the given spec against the provided target and returns `Some(true)` on a successful
+/// match, and `Some(false)` on a failing match.
+///
+/// This defaults to treating target features as unknown, and returns `None` if the overall result
+/// is unknown.
+///
+/// For more advanced uses, see [`TargetSpec::eval`].
+///
+/// For more information, see the crate-level documentation.
+</span><span class="kw">pub fn </span>eval(spec_or_triple: <span class="kw-2">&amp;</span>str, platform: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;bool&gt;, Error&gt; {
+    <span class="kw">let </span>target_spec = spec_or_triple.parse::&lt;TargetSpec&gt;()<span class="question-mark">?</span>;
+    <span class="kw">let </span>platform = Platform::new(platform.to_owned(), TargetFeatures::Unknown)<span class="question-mark">?</span>;
+    <span class="prelude-val">Ok</span>(target_spec.eval(<span class="kw-2">&amp;</span>platform))
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_windows</span>() {
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_windows() {
         <span class="macro">assert_eq!</span>(
-            <span class="ident">eval</span>(<span class="string">&quot;cfg(windows)&quot;</span>, <span class="string">&quot;x86_64-pc-windows-msvc&quot;</span>),
+            eval(<span class="string">&quot;cfg(windows)&quot;</span>, <span class="string">&quot;x86_64-pc-windows-msvc&quot;</span>),
             <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="bool-val">true</span>)),
         );
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_not_target_os</span>() {
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_not_target_os() {
         <span class="macro">assert_eq!</span>(
-            <span class="ident">eval</span>(
+            eval(
                 <span class="string">&quot;cfg(not(target_os = \&quot;windows\&quot;))&quot;</span>,
-                <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>
-            ),
+                <span class="string">&quot;x86_64-unknown-linux-gnu&quot;
+            </span>),
             <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="bool-val">true</span>)),
         );
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_not_target_os_false</span>() {
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_not_target_os_false() {
         <span class="macro">assert_eq!</span>(
-            <span class="ident">eval</span>(
+            eval(
                 <span class="string">&quot;cfg(not(target_os = \&quot;windows\&quot;))&quot;</span>,
-                <span class="string">&quot;x86_64-pc-windows-msvc&quot;</span>
-            ),
+                <span class="string">&quot;x86_64-pc-windows-msvc&quot;
+            </span>),
             <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="bool-val">false</span>)),
         );
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_exact_triple</span>() {
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_exact_triple() {
         <span class="macro">assert_eq!</span>(
-            <span class="ident">eval</span>(<span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>, <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>),
+            eval(<span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>, <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>),
             <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="bool-val">true</span>)),
         );
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_redox</span>() {
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_redox() {
         <span class="macro">assert_eq!</span>(
-            <span class="ident">eval</span>(
+            eval(
                 <span class="string">&quot;cfg(any(unix, target_os = \&quot;redox\&quot;))&quot;</span>,
-                <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>
-            ),
+                <span class="string">&quot;x86_64-unknown-linux-gnu&quot;
+            </span>),
             <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="bool-val">true</span>)),
         );
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_bogus_families</span>() {
-        <span class="comment">// Known bogus families.</span>
-        <span class="kw">for</span> <span class="ident">family</span> <span class="kw">in</span> <span class="kw-2">&amp;</span>[<span class="string">&quot;test&quot;</span>, <span class="string">&quot;debug_assertions&quot;</span>, <span class="string">&quot;proc_macro&quot;</span>] {
-            <span class="kw">let</span> <span class="ident">cfg</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;cfg({})&quot;</span>, <span class="ident">family</span>);
-            <span class="kw">let</span> <span class="ident">cfg_not</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;cfg(not({}))&quot;</span>, <span class="ident">family</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">eval</span>(<span class="kw-2">&amp;</span><span class="ident">cfg</span>, <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>), <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="bool-val">false</span>)));
-            <span class="macro">assert_eq!</span>(<span class="ident">eval</span>(<span class="kw-2">&amp;</span><span class="ident">cfg_not</span>, <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>), <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="bool-val">true</span>)));
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_bogus_families() {
+        <span class="comment">// Known bogus families.
+        </span><span class="kw">for </span>family <span class="kw">in </span><span class="kw-2">&amp;</span>[<span class="string">&quot;test&quot;</span>, <span class="string">&quot;debug_assertions&quot;</span>, <span class="string">&quot;proc_macro&quot;</span>] {
+            <span class="kw">let </span>cfg = <span class="macro">format!</span>(<span class="string">&quot;cfg({})&quot;</span>, family);
+            <span class="kw">let </span>cfg_not = <span class="macro">format!</span>(<span class="string">&quot;cfg(not({}))&quot;</span>, family);
+            <span class="macro">assert_eq!</span>(eval(<span class="kw-2">&amp;</span>cfg, <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>), <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="bool-val">false</span>)));
+            <span class="macro">assert_eq!</span>(eval(<span class="kw-2">&amp;</span>cfg_not, <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>), <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="bool-val">true</span>)));
         }
 
-        <span class="comment">// Unknown bogus families.</span>
-        <span class="kw">let</span> <span class="ident">platform</span> <span class="op">=</span> <span class="ident">Platform::new</span>(<span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>, <span class="ident">TargetFeatures::Unknown</span>).<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">platform_with_flags</span> <span class="op">=</span> <span class="ident">platform</span>.<span class="ident">clone</span>();
-        <span class="ident">platform_with_flags</span>.<span class="ident">add_flags</span>([<span class="string">&quot;foo&quot;</span>, <span class="string">&quot;bar&quot;</span>].<span class="ident">iter</span>().<span class="ident">copied</span>());
+        <span class="comment">// Unknown bogus families.
+        </span><span class="kw">let </span>platform = Platform::new(<span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>, TargetFeatures::Unknown).unwrap();
+        <span class="kw">let </span><span class="kw-2">mut </span>platform_with_flags = platform.clone();
+        platform_with_flags.add_flags([<span class="string">&quot;foo&quot;</span>, <span class="string">&quot;bar&quot;</span>].iter().copied());
 
-        <span class="kw">for</span> <span class="ident">family</span> <span class="kw">in</span> <span class="kw-2">&amp;</span>[<span class="string">&quot;foo&quot;</span>, <span class="string">&quot;bar&quot;</span>] {
-            <span class="kw">let</span> <span class="ident">cfg</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;cfg({})&quot;</span>, <span class="ident">family</span>);
-            <span class="kw">let</span> <span class="ident">cfg_not</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;cfg(not({}))&quot;</span>, <span class="ident">family</span>);
+        <span class="kw">for </span>family <span class="kw">in </span><span class="kw-2">&amp;</span>[<span class="string">&quot;foo&quot;</span>, <span class="string">&quot;bar&quot;</span>] {
+            <span class="kw">let </span>cfg = <span class="macro">format!</span>(<span class="string">&quot;cfg({})&quot;</span>, family);
+            <span class="kw">let </span>cfg_not = <span class="macro">format!</span>(<span class="string">&quot;cfg(not({}))&quot;</span>, family);
 
-            <span class="comment">// eval always means flags are evaluated to false.</span>
-            <span class="macro">assert_eq!</span>(<span class="ident">eval</span>(<span class="kw-2">&amp;</span><span class="ident">cfg</span>, <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>), <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="bool-val">false</span>)));
-            <span class="macro">assert_eq!</span>(<span class="ident">eval</span>(<span class="kw-2">&amp;</span><span class="ident">cfg_not</span>, <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>), <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="bool-val">true</span>)));
+            <span class="comment">// eval always means flags are evaluated to false.
+            </span><span class="macro">assert_eq!</span>(eval(<span class="kw-2">&amp;</span>cfg, <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>), <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="bool-val">false</span>)));
+            <span class="macro">assert_eq!</span>(eval(<span class="kw-2">&amp;</span>cfg_not, <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>), <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="bool-val">true</span>)));
 
-            <span class="kw">let</span> <span class="ident">spec</span>: <span class="ident">TargetSpec</span> <span class="op">=</span> <span class="ident">cfg</span>.<span class="ident">parse</span>().<span class="ident">unwrap</span>();
-            <span class="kw">let</span> <span class="ident">spec_not</span>: <span class="ident">TargetSpec</span> <span class="op">=</span> <span class="ident">cfg_not</span>.<span class="ident">parse</span>().<span class="ident">unwrap</span>();
+            <span class="kw">let </span>spec: TargetSpec = cfg.parse().unwrap();
+            <span class="kw">let </span>spec_not: TargetSpec = cfg_not.parse().unwrap();
 
-            <span class="comment">// flag missing means false.</span>
-            <span class="macro">assert_eq!</span>(<span class="ident">spec</span>.<span class="ident">eval</span>(<span class="kw-2">&amp;</span><span class="ident">platform</span>), <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
-            <span class="macro">assert_eq!</span>(<span class="ident">spec_not</span>.<span class="ident">eval</span>(<span class="kw-2">&amp;</span><span class="ident">platform</span>), <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
+            <span class="comment">// flag missing means false.
+            </span><span class="macro">assert_eq!</span>(spec.eval(<span class="kw-2">&amp;</span>platform), <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+            <span class="macro">assert_eq!</span>(spec_not.eval(<span class="kw-2">&amp;</span>platform), <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
 
-            <span class="comment">// flag present means true.</span>
-            <span class="macro">assert_eq!</span>(<span class="ident">spec</span>.<span class="ident">eval</span>(<span class="kw-2">&amp;</span><span class="ident">platform_with_flags</span>), <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
-            <span class="macro">assert_eq!</span>(<span class="ident">spec_not</span>.<span class="ident">eval</span>(<span class="kw-2">&amp;</span><span class="ident">platform_with_flags</span>), <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+            <span class="comment">// flag present means true.
+            </span><span class="macro">assert_eq!</span>(spec.eval(<span class="kw-2">&amp;</span>platform_with_flags), <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
+            <span class="macro">assert_eq!</span>(spec_not.eval(<span class="kw-2">&amp;</span>platform_with_flags), <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
         }
 
-        <span class="kw">for</span> <span class="ident">family</span> <span class="kw">in</span> <span class="kw-2">&amp;</span>[<span class="string">&quot;baz&quot;</span>, <span class="string">&quot;nonsense&quot;</span>] {
-            <span class="kw">let</span> <span class="ident">cfg</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;cfg({})&quot;</span>, <span class="ident">family</span>);
-            <span class="kw">let</span> <span class="ident">cfg_not</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;cfg(not({}))&quot;</span>, <span class="ident">family</span>);
+        <span class="kw">for </span>family <span class="kw">in </span><span class="kw-2">&amp;</span>[<span class="string">&quot;baz&quot;</span>, <span class="string">&quot;nonsense&quot;</span>] {
+            <span class="kw">let </span>cfg = <span class="macro">format!</span>(<span class="string">&quot;cfg({})&quot;</span>, family);
+            <span class="kw">let </span>cfg_not = <span class="macro">format!</span>(<span class="string">&quot;cfg(not({}))&quot;</span>, family);
 
-            <span class="comment">// eval always means flags are evaluated to false.</span>
-            <span class="macro">assert_eq!</span>(<span class="ident">eval</span>(<span class="kw-2">&amp;</span><span class="ident">cfg</span>, <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>), <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="bool-val">false</span>)));
-            <span class="macro">assert_eq!</span>(<span class="ident">eval</span>(<span class="kw-2">&amp;</span><span class="ident">cfg_not</span>, <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>), <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="bool-val">true</span>)));
+            <span class="comment">// eval always means flags are evaluated to false.
+            </span><span class="macro">assert_eq!</span>(eval(<span class="kw-2">&amp;</span>cfg, <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>), <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="bool-val">false</span>)));
+            <span class="macro">assert_eq!</span>(eval(<span class="kw-2">&amp;</span>cfg_not, <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>), <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="bool-val">true</span>)));
 
-            <span class="kw">let</span> <span class="ident">spec</span>: <span class="ident">TargetSpec</span> <span class="op">=</span> <span class="ident">cfg</span>.<span class="ident">parse</span>().<span class="ident">unwrap</span>();
-            <span class="kw">let</span> <span class="ident">spec_not</span>: <span class="ident">TargetSpec</span> <span class="op">=</span> <span class="ident">cfg_not</span>.<span class="ident">parse</span>().<span class="ident">unwrap</span>();
+            <span class="kw">let </span>spec: TargetSpec = cfg.parse().unwrap();
+            <span class="kw">let </span>spec_not: TargetSpec = cfg_not.parse().unwrap();
 
-            <span class="comment">// flag missing means false.</span>
-            <span class="macro">assert_eq!</span>(<span class="ident">spec</span>.<span class="ident">eval</span>(<span class="kw-2">&amp;</span><span class="ident">platform</span>), <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
-            <span class="macro">assert_eq!</span>(<span class="ident">spec_not</span>.<span class="ident">eval</span>(<span class="kw-2">&amp;</span><span class="ident">platform</span>), <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
+            <span class="comment">// flag missing means false.
+            </span><span class="macro">assert_eq!</span>(spec.eval(<span class="kw-2">&amp;</span>platform), <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+            <span class="macro">assert_eq!</span>(spec_not.eval(<span class="kw-2">&amp;</span>platform), <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
 
-            <span class="comment">// flag still missing means false.</span>
-            <span class="macro">assert_eq!</span>(<span class="ident">spec</span>.<span class="ident">eval</span>(<span class="kw-2">&amp;</span><span class="ident">platform_with_flags</span>), <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
-            <span class="macro">assert_eq!</span>(<span class="ident">spec_not</span>.<span class="ident">eval</span>(<span class="kw-2">&amp;</span><span class="ident">platform_with_flags</span>), <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
+            <span class="comment">// flag still missing means false.
+            </span><span class="macro">assert_eq!</span>(spec.eval(<span class="kw-2">&amp;</span>platform_with_flags), <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+            <span class="macro">assert_eq!</span>(spec_not.eval(<span class="kw-2">&amp;</span>platform_with_flags), <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
         }
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_target_feature</span>() {
-        <span class="comment">// target features are unknown by default.</span>
-        <span class="macro">assert_eq!</span>(
-            <span class="ident">eval</span>(<span class="string">&quot;cfg(target_feature = \&quot;sse\&quot;)&quot;</span>, <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>),
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_target_feature() {
+        <span class="comment">// target features are unknown by default.
+        </span><span class="macro">assert_eq!</span>(
+            eval(<span class="string">&quot;cfg(target_feature = \&quot;sse\&quot;)&quot;</span>, <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>),
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
         );
         <span class="macro">assert_eq!</span>(
-            <span class="ident">eval</span>(
+            eval(
                 <span class="string">&quot;cfg(target_feature = \&quot;atomics\&quot;)&quot;</span>,
                 <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>,
             ),
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
         );
         <span class="macro">assert_eq!</span>(
-            <span class="ident">eval</span>(
+            eval(
                 <span class="string">&quot;cfg(not(target_feature = \&quot;fxsr\&quot;))&quot;</span>,
                 <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>,
             ),
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
         );
 
-        <span class="kw">fn</span> <span class="ident">eval_unknown</span>(<span class="ident">spec</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">platform</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
-            <span class="kw">let</span> <span class="ident">platform</span> <span class="op">=</span> <span class="ident">Platform::new</span>(
-                <span class="ident">platform</span>.<span class="ident">to_owned</span>(),
-                <span class="ident">TargetFeatures::features</span>([<span class="string">&quot;sse&quot;</span>, <span class="string">&quot;sse2&quot;</span>].<span class="ident">iter</span>().<span class="ident">copied</span>()),
+        <span class="kw">fn </span>eval_unknown(spec: <span class="kw-2">&amp;</span>str, platform: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;bool&gt; {
+            <span class="kw">let </span>platform = Platform::new(
+                platform.to_owned(),
+                TargetFeatures::features([<span class="string">&quot;sse&quot;</span>, <span class="string">&quot;sse2&quot;</span>].iter().copied()),
             )
-            .<span class="ident">expect</span>(<span class="string">&quot;platform should be found&quot;</span>);
-            <span class="kw">let</span> <span class="ident">spec</span>: <span class="ident">TargetSpec</span> <span class="op">=</span> <span class="ident">spec</span>.<span class="ident">parse</span>().<span class="ident">unwrap</span>();
-            <span class="ident">spec</span>.<span class="ident">eval</span>(<span class="kw-2">&amp;</span><span class="ident">platform</span>)
+            .expect(<span class="string">&quot;platform should be found&quot;</span>);
+            <span class="kw">let </span>spec: TargetSpec = spec.parse().unwrap();
+            spec.eval(<span class="kw-2">&amp;</span>platform)
         }
 
         <span class="macro">assert_eq!</span>(
-            <span class="ident">eval_unknown</span>(<span class="string">&quot;cfg(target_feature = \&quot;sse\&quot;)&quot;</span>, <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>),
+            eval_unknown(<span class="string">&quot;cfg(target_feature = \&quot;sse\&quot;)&quot;</span>, <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>),
             <span class="prelude-val">Some</span>(<span class="bool-val">true</span>),
         );
         <span class="macro">assert_eq!</span>(
-            <span class="ident">eval_unknown</span>(
+            eval_unknown(
                 <span class="string">&quot;cfg(not(target_feature = \&quot;sse\&quot;))&quot;</span>,
                 <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>,
             ),
             <span class="prelude-val">Some</span>(<span class="bool-val">false</span>),
         );
         <span class="macro">assert_eq!</span>(
-            <span class="ident">eval_unknown</span>(<span class="string">&quot;cfg(target_feature = \&quot;fxsr\&quot;)&quot;</span>, <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>),
+            eval_unknown(<span class="string">&quot;cfg(target_feature = \&quot;fxsr\&quot;)&quot;</span>, <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>),
             <span class="prelude-val">Some</span>(<span class="bool-val">false</span>),
         );
         <span class="macro">assert_eq!</span>(
-            <span class="ident">eval_unknown</span>(
+            eval_unknown(
                 <span class="string">&quot;cfg(not(target_feature = \&quot;fxsr\&quot;))&quot;</span>,
                 <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>,
             ),
             <span class="prelude-val">Some</span>(<span class="bool-val">true</span>),
         );
 
-        <span class="kw">fn</span> <span class="ident">eval_all</span>(<span class="ident">spec</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">platform</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
-            <span class="kw">let</span> <span class="ident">platform</span> <span class="op">=</span> <span class="ident">Platform::new</span>(<span class="ident">platform</span>.<span class="ident">to_owned</span>(), <span class="ident">TargetFeatures::All</span>)
-                .<span class="ident">expect</span>(<span class="string">&quot;platform should be found&quot;</span>);
-            <span class="kw">let</span> <span class="ident">spec</span>: <span class="ident">TargetSpec</span> <span class="op">=</span> <span class="ident">spec</span>.<span class="ident">parse</span>().<span class="ident">unwrap</span>();
-            <span class="ident">spec</span>.<span class="ident">eval</span>(<span class="kw-2">&amp;</span><span class="ident">platform</span>)
+        <span class="kw">fn </span>eval_all(spec: <span class="kw-2">&amp;</span>str, platform: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;bool&gt; {
+            <span class="kw">let </span>platform = Platform::new(platform.to_owned(), TargetFeatures::All)
+                .expect(<span class="string">&quot;platform should be found&quot;</span>);
+            <span class="kw">let </span>spec: TargetSpec = spec.parse().unwrap();
+            spec.eval(<span class="kw-2">&amp;</span>platform)
         }
 
         <span class="macro">assert_eq!</span>(
-            <span class="ident">eval_all</span>(<span class="string">&quot;cfg(target_feature = \&quot;sse\&quot;)&quot;</span>, <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>),
+            eval_all(<span class="string">&quot;cfg(target_feature = \&quot;sse\&quot;)&quot;</span>, <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>),
             <span class="prelude-val">Some</span>(<span class="bool-val">true</span>),
         );
         <span class="macro">assert_eq!</span>(
-            <span class="ident">eval_all</span>(
+            eval_all(
                 <span class="string">&quot;cfg(not(target_feature = \&quot;sse\&quot;))&quot;</span>,
                 <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>,
             ),
             <span class="prelude-val">Some</span>(<span class="bool-val">false</span>),
         );
         <span class="macro">assert_eq!</span>(
-            <span class="ident">eval_all</span>(<span class="string">&quot;cfg(target_feature = \&quot;fxsr\&quot;)&quot;</span>, <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>),
+            eval_all(<span class="string">&quot;cfg(target_feature = \&quot;fxsr\&quot;)&quot;</span>, <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>),
             <span class="prelude-val">Some</span>(<span class="bool-val">true</span>),
         );
         <span class="macro">assert_eq!</span>(
-            <span class="ident">eval_all</span>(
+            eval_all(
                 <span class="string">&quot;cfg(not(target_feature = \&quot;fxsr\&quot;))&quot;</span>,
                 <span class="string">&quot;x86_64-unknown-linux-gnu&quot;</span>,
             ),
@@ -442,5 +435,4 @@
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="target_spec" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.63.0-nightly (fee3a459d 2022-06-05)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="target_spec" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (02654a084 2022-08-30)" ></div></body></html>

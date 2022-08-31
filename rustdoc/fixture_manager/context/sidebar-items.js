@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["ContextItem",""],["GenerateContext",""]],"trait":[["ContextDiff",""],["ContextImpl",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["ContextItem",""],["GenerateContext",""]],"trait":[["ContextDiff",""],["ContextImpl",""]]};

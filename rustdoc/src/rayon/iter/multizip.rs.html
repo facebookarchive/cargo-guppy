@@ -1,11 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/rayon-1.5.3/src/iter/multizip.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>multizip.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../rayon/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><div id="settings-menu" tabindex="-1">
-                                <a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div>
-                        </div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/rayon-1.5.3/src/iter/multizip.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>multizip.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../rayon/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -343,344 +336,343 @@
 <span id="336">336</span>
 <span id="337">337</span>
 <span id="338">338</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">super</span>::plumbing</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::plumbing::<span class="kw-2">*</span>;
+<span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-<span class="doccomment">/// `MultiZip` is an iterator that zips up a tuple of parallel iterators to</span>
-<span class="doccomment">/// produce tuples of their items.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// It is created by calling `into_par_iter()` on a tuple of types that</span>
-<span class="doccomment">/// implement `IntoParallelIterator`, or `par_iter()`/`par_iter_mut()` with</span>
-<span class="doccomment">/// types that are iterable by reference.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The implementation currently support tuples up to length 12.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Examples</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">/// use rayon::prelude::*;</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// // This will iterate `r` by mutable reference, like `par_iter_mut()`, while</span>
-<span class="doccomment">/// // ranges are all iterated by value like `into_par_iter()`.</span>
-<span class="doccomment">/// // Note that the zipped iterator is only as long as the shortest input.</span>
-<span class="doccomment">/// let mut r = vec![0; 3];</span>
-<span class="doccomment">/// (&amp;mut r, 1..10, 10..100, 100..1000).into_par_iter()</span>
-<span class="doccomment">///     .for_each(|(r, x, y, z)| *r = x * y + z);</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// assert_eq!(&amp;r, &amp;[1 * 10 + 100, 2 * 11 + 101, 3 * 12 + 102]);</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// For a group that should all be iterated by reference, you can use a tuple reference.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">/// use rayon::prelude::*;</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// let xs: Vec&lt;_&gt; = (1..10).collect();</span>
-<span class="doccomment">/// let ys: Vec&lt;_&gt; = (10..100).collect();</span>
-<span class="doccomment">/// let zs: Vec&lt;_&gt; = (100..1000).collect();</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// // Reference each input separately with `IntoParallelIterator`:</span>
-<span class="doccomment">/// let r1: Vec&lt;_&gt; = (&amp;xs, &amp;ys, &amp;zs).into_par_iter()</span>
-<span class="doccomment">///     .map(|(x, y, z)| x * y + z)</span>
-<span class="doccomment">///     .collect();</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// // Reference them all together with `IntoParallelRefIterator`:</span>
-<span class="doccomment">/// let r2: Vec&lt;_&gt; = (xs, ys, zs).par_iter()</span>
-<span class="doccomment">///     .map(|(x, y, z)| x * y + z)</span>
-<span class="doccomment">///     .collect();</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// assert_eq!(r1, r2);</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Mutable references to a tuple will work similarly.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">/// use rayon::prelude::*;</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// let mut xs: Vec&lt;_&gt; = (1..4).collect();</span>
-<span class="doccomment">/// let mut ys: Vec&lt;_&gt; = (-4..-1).collect();</span>
-<span class="doccomment">/// let mut zs = vec![0; 3];</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// // Mutably reference each input separately with `IntoParallelIterator`:</span>
-<span class="doccomment">/// (&amp;mut xs, &amp;mut ys, &amp;mut zs).into_par_iter().for_each(|(x, y, z)| {</span>
-<span class="doccomment">///     *z += *x + *y;</span>
-<span class="doccomment">///     std::mem::swap(x, y);</span>
-<span class="doccomment">/// });</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// assert_eq!(xs, (vec![-4, -3, -2]));</span>
-<span class="doccomment">/// assert_eq!(ys, (vec![1, 2, 3]));</span>
-<span class="doccomment">/// assert_eq!(zs, (vec![-3, -1, 1]));</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// // Mutably reference them all together with `IntoParallelRefMutIterator`:</span>
-<span class="doccomment">/// let mut tuple = (xs, ys, zs);</span>
-<span class="doccomment">/// tuple.par_iter_mut().for_each(|(x, y, z)| {</span>
-<span class="doccomment">///     *z += *x + *y;</span>
-<span class="doccomment">///     std::mem::swap(x, y);</span>
-<span class="doccomment">/// });</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// assert_eq!(tuple, (vec![1, 2, 3], vec![-4, -3, -2], vec![-6, -2, 2]));</span>
-<span class="doccomment">/// ```</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MultiZip</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="ident">tuple</span>: <span class="ident">T</span>,
+<span class="doccomment">/// `MultiZip` is an iterator that zips up a tuple of parallel iterators to
+/// produce tuples of their items.
+///
+/// It is created by calling `into_par_iter()` on a tuple of types that
+/// implement `IntoParallelIterator`, or `par_iter()`/`par_iter_mut()` with
+/// types that are iterable by reference.
+///
+/// The implementation currently support tuples up to length 12.
+///
+/// # Examples
+///
+/// ```
+/// use rayon::prelude::*;
+///
+/// // This will iterate `r` by mutable reference, like `par_iter_mut()`, while
+/// // ranges are all iterated by value like `into_par_iter()`.
+/// // Note that the zipped iterator is only as long as the shortest input.
+/// let mut r = vec![0; 3];
+/// (&amp;mut r, 1..10, 10..100, 100..1000).into_par_iter()
+///     .for_each(|(r, x, y, z)| *r = x * y + z);
+///
+/// assert_eq!(&amp;r, &amp;[1 * 10 + 100, 2 * 11 + 101, 3 * 12 + 102]);
+/// ```
+///
+/// For a group that should all be iterated by reference, you can use a tuple reference.
+///
+/// ```
+/// use rayon::prelude::*;
+///
+/// let xs: Vec&lt;_&gt; = (1..10).collect();
+/// let ys: Vec&lt;_&gt; = (10..100).collect();
+/// let zs: Vec&lt;_&gt; = (100..1000).collect();
+///
+/// // Reference each input separately with `IntoParallelIterator`:
+/// let r1: Vec&lt;_&gt; = (&amp;xs, &amp;ys, &amp;zs).into_par_iter()
+///     .map(|(x, y, z)| x * y + z)
+///     .collect();
+///
+/// // Reference them all together with `IntoParallelRefIterator`:
+/// let r2: Vec&lt;_&gt; = (xs, ys, zs).par_iter()
+///     .map(|(x, y, z)| x * y + z)
+///     .collect();
+///
+/// assert_eq!(r1, r2);
+/// ```
+///
+/// Mutable references to a tuple will work similarly.
+///
+/// ```
+/// use rayon::prelude::*;
+///
+/// let mut xs: Vec&lt;_&gt; = (1..4).collect();
+/// let mut ys: Vec&lt;_&gt; = (-4..-1).collect();
+/// let mut zs = vec![0; 3];
+///
+/// // Mutably reference each input separately with `IntoParallelIterator`:
+/// (&amp;mut xs, &amp;mut ys, &amp;mut zs).into_par_iter().for_each(|(x, y, z)| {
+///     *z += *x + *y;
+///     std::mem::swap(x, y);
+/// });
+///
+/// assert_eq!(xs, (vec![-4, -3, -2]));
+/// assert_eq!(ys, (vec![1, 2, 3]));
+/// assert_eq!(zs, (vec![-3, -1, 1]));
+///
+/// // Mutably reference them all together with `IntoParallelRefMutIterator`:
+/// let mut tuple = (xs, ys, zs);
+/// tuple.par_iter_mut().for_each(|(x, y, z)| {
+///     *z += *x + *y;
+///     std::mem::swap(x, y);
+/// });
+///
+/// assert_eq!(tuple, (vec![1, 2, 3], vec![-4, -3, -2], vec![-6, -2, 2]));
+/// ```
+</span><span class="attribute">#[derive(Debug, Clone)]
+</span><span class="kw">pub struct </span>MultiZip&lt;T&gt; {
+    tuple: T,
 }
 
-<span class="comment">// These macros greedily consume 4 or 2 items first to achieve log2 nesting depth.</span>
-<span class="comment">// For example, 5 =&gt; 4,1 =&gt; (2,2),1.</span>
-<span class="comment">//</span>
-<span class="comment">// The tuples go up to 12, so we might want to greedily consume 8 too, but</span>
-<span class="comment">// the depth works out the same if we let that expand on the right:</span>
-<span class="comment">//      9 =&gt; 4,5 =&gt; (2,2),(4,1) =&gt; (2,2),((2,2),1)</span>
-<span class="comment">//     12 =&gt; 4,8 =&gt; (2,2),(4,4) =&gt; (2,2),((2,2),(2,2))</span>
-<span class="comment">//</span>
-<span class="comment">// But if we ever increase to 13, we would want to split 8,5 rather than 4,9.</span>
+<span class="comment">// These macros greedily consume 4 or 2 items first to achieve log2 nesting depth.
+// For example, 5 =&gt; 4,1 =&gt; (2,2),1.
+//
+// The tuples go up to 12, so we might want to greedily consume 8 too, but
+// the depth works out the same if we let that expand on the right:
+//      9 =&gt; 4,5 =&gt; (2,2),(4,1) =&gt; (2,2),((2,2),1)
+//     12 =&gt; 4,8 =&gt; (2,2),(4,4) =&gt; (2,2),((2,2),(2,2))
+//
+// But if we ever increase to 13, we would want to split 8,5 rather than 4,9.
 
-<span class="macro">macro_rules!</span> <span class="ident">reduce</span> {
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">a</span>:<span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">b</span>:<span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">c</span>:<span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">d</span>:<span class="ident">expr</span>, $( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>:<span class="ident">expr</span> ),<span class="op">+</span> =&gt; <span class="macro-nonterminal">$</span><span class="kw">fn</span>:<span class="macro-nonterminal">path</span>) =&gt; {
-        <span class="macro">reduce!</span>(<span class="macro">reduce!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">a</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">b</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">c</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">d</span> =&gt; <span class="macro-nonterminal">$</span><span class="kw">fn</span>),
-                <span class="macro">reduce!</span>($( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span> ),<span class="op">+</span> =&gt; <span class="macro-nonterminal">$</span><span class="kw">fn</span>)
+</span><span class="macro">macro_rules! </span>reduce {
+    (<span class="macro-nonterminal">$a</span>:expr, <span class="macro-nonterminal">$b</span>:expr, <span class="macro-nonterminal">$c</span>:expr, <span class="macro-nonterminal">$d</span>:expr, $( <span class="macro-nonterminal">$x</span>:expr ),+ =&gt; <span class="macro-nonterminal">$</span><span class="kw">fn</span>:<span class="macro-nonterminal">path</span>) =&gt; {
+        <span class="macro">reduce!</span>(<span class="macro">reduce!</span>(<span class="macro-nonterminal">$a</span>, <span class="macro-nonterminal">$b</span>, <span class="macro-nonterminal">$c</span>, <span class="macro-nonterminal">$d </span>=&gt; <span class="macro-nonterminal">$</span><span class="kw">fn</span>),
+                <span class="macro">reduce!</span>($( <span class="macro-nonterminal">$x </span>),+ =&gt; <span class="macro-nonterminal">$</span><span class="kw">fn</span>)
                 =&gt; <span class="macro-nonterminal">$</span><span class="kw">fn</span>)
     };
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">a</span>:<span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">b</span>:<span class="ident">expr</span>, $( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>:<span class="ident">expr</span> ),<span class="op">+</span> =&gt; <span class="macro-nonterminal">$</span><span class="kw">fn</span>:<span class="macro-nonterminal">path</span>) =&gt; {
-        <span class="macro">reduce!</span>(<span class="macro">reduce!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">a</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">b</span> =&gt; <span class="macro-nonterminal">$</span><span class="kw">fn</span>),
-                <span class="macro">reduce!</span>($( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span> ),<span class="op">+</span> =&gt; <span class="macro-nonterminal">$</span><span class="kw">fn</span>)
+    (<span class="macro-nonterminal">$a</span>:expr, <span class="macro-nonterminal">$b</span>:expr, $( <span class="macro-nonterminal">$x</span>:expr ),+ =&gt; <span class="macro-nonterminal">$</span><span class="kw">fn</span>:<span class="macro-nonterminal">path</span>) =&gt; {
+        <span class="macro">reduce!</span>(<span class="macro">reduce!</span>(<span class="macro-nonterminal">$a</span>, <span class="macro-nonterminal">$b </span>=&gt; <span class="macro-nonterminal">$</span><span class="kw">fn</span>),
+                <span class="macro">reduce!</span>($( <span class="macro-nonterminal">$x </span>),+ =&gt; <span class="macro-nonterminal">$</span><span class="kw">fn</span>)
                 =&gt; <span class="macro-nonterminal">$</span><span class="kw">fn</span>)
     };
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">a</span>:<span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">b</span>:<span class="ident">expr</span> =&gt; <span class="macro-nonterminal">$</span><span class="kw">fn</span>:<span class="macro-nonterminal">path</span>) =&gt; { <span class="macro-nonterminal">$</span><span class="kw">fn</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">a</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">b</span>) };
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">a</span>:<span class="ident">expr</span> =&gt; <span class="macro-nonterminal">$</span><span class="kw">fn</span>:<span class="macro-nonterminal">path</span>) =&gt; { <span class="macro-nonterminal">$</span><span class="macro-nonterminal">a</span> };
+    (<span class="macro-nonterminal">$a</span>:expr, <span class="macro-nonterminal">$b</span>:expr =&gt; <span class="macro-nonterminal">$</span><span class="kw">fn</span>:<span class="macro-nonterminal">path</span>) =&gt; { <span class="macro-nonterminal">$</span><span class="kw">fn</span>(<span class="macro-nonterminal">$a</span>, <span class="macro-nonterminal">$b</span>) };
+    (<span class="macro-nonterminal">$a</span>:expr =&gt; <span class="macro-nonterminal">$</span><span class="kw">fn</span>:<span class="macro-nonterminal">path</span>) =&gt; { <span class="macro-nonterminal">$a </span>};
 }
 
-<span class="macro">macro_rules!</span> <span class="ident">nest</span> {
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">A</span>:<span class="ident">tt</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">B</span>:<span class="ident">tt</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">C</span>:<span class="ident">tt</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">D</span>:<span class="ident">tt</span>, $( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">X</span>:<span class="ident">tt</span> ),<span class="op">+</span>) =&gt; {
-        (<span class="macro">nest!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">A</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">B</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">C</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">D</span>), <span class="macro">nest!</span>($( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">X</span> ),<span class="op">+</span>))
+<span class="macro">macro_rules! </span>nest {
+    (<span class="macro-nonterminal">$A</span>:tt, <span class="macro-nonterminal">$B</span>:tt, <span class="macro-nonterminal">$C</span>:tt, <span class="macro-nonterminal">$D</span>:tt, $( <span class="macro-nonterminal">$X</span>:tt ),+) =&gt; {
+        (<span class="macro">nest!</span>(<span class="macro-nonterminal">$A</span>, <span class="macro-nonterminal">$B</span>, <span class="macro-nonterminal">$C</span>, <span class="macro-nonterminal">$D</span>), <span class="macro">nest!</span>($( <span class="macro-nonterminal">$X </span>),+))
     };
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">A</span>:<span class="ident">tt</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">B</span>:<span class="ident">tt</span>, $( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">X</span>:<span class="ident">tt</span> ),<span class="op">+</span>) =&gt; {
-        ((<span class="macro-nonterminal">$</span><span class="macro-nonterminal">A</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">B</span>), <span class="macro">nest!</span>($( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">X</span> ),<span class="op">+</span>))
+    (<span class="macro-nonterminal">$A</span>:tt, <span class="macro-nonterminal">$B</span>:tt, $( <span class="macro-nonterminal">$X</span>:tt ),+) =&gt; {
+        ((<span class="macro-nonterminal">$A</span>, <span class="macro-nonterminal">$B</span>), <span class="macro">nest!</span>($( <span class="macro-nonterminal">$X </span>),+))
     };
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">A</span>:<span class="ident">tt</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">B</span>:<span class="ident">tt</span>) =&gt; { (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">A</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">B</span>) };
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">A</span>:<span class="ident">tt</span>) =&gt; { <span class="macro-nonterminal">$</span><span class="macro-nonterminal">A</span> };
+    (<span class="macro-nonterminal">$A</span>:tt, <span class="macro-nonterminal">$B</span>:tt) =&gt; { (<span class="macro-nonterminal">$A</span>, <span class="macro-nonterminal">$B</span>) };
+    (<span class="macro-nonterminal">$A</span>:tt) =&gt; { <span class="macro-nonterminal">$A </span>};
 }
 
-<span class="macro">macro_rules!</span> <span class="ident">flatten</span> {
-    ($( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span>:<span class="ident">ident</span> ),<span class="op">+</span>) =&gt; {{
-        <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">non_snake_case</span>)]</span>
-        <span class="kw">fn</span> <span class="ident">flatten</span><span class="op">&lt;</span>$( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span> ),<span class="op">+</span><span class="op">&gt;</span>(<span class="macro">nest!</span>($( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span> ),<span class="op">+</span>) : <span class="macro">nest!</span>($( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span> ),<span class="op">+</span>)) -&gt; ($( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span>, )<span class="op">+</span>) {
-            ($( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span>, )<span class="op">+</span>)
+<span class="macro">macro_rules! </span>flatten {
+    ($( <span class="macro-nonterminal">$T</span>:ident ),+) =&gt; {{
+        <span class="attribute">#[allow(non_snake_case)]
+        </span><span class="kw">fn </span>flatten&lt;$( <span class="macro-nonterminal">$T </span>),+&gt;(<span class="macro">nest!</span>($( <span class="macro-nonterminal">$T </span>),+) : <span class="macro">nest!</span>($( <span class="macro-nonterminal">$T </span>),+)) -&gt; ($( <span class="macro-nonterminal">$T</span>, )+) {
+            ($( <span class="macro-nonterminal">$T</span>, )+)
         }
-        <span class="ident">flatten</span>
+        flatten
     }};
 }
 
-<span class="macro">macro_rules!</span> <span class="ident">multizip_impls</span> {
+<span class="macro">macro_rules! </span>multizip_impls {
     ($(
-        <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Tuple</span>:<span class="ident">ident</span> {
-            $((<span class="macro-nonterminal">$</span><span class="macro-nonterminal">idx</span>:<span class="ident">tt</span>) -&gt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span>:<span class="ident">ident</span>)<span class="op">+</span>
+        <span class="macro-nonterminal">$Tuple</span>:ident {
+            $((<span class="macro-nonterminal">$idx</span>:tt) -&gt; <span class="macro-nonterminal">$T</span>:ident)+
         }
-    )<span class="op">+</span>) =&gt; {
+    )+) =&gt; {
         $(
-            <span class="kw">impl</span><span class="op">&lt;</span>$( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span>, )<span class="op">+</span><span class="op">&gt;</span> <span class="ident">IntoParallelIterator</span> <span class="kw">for</span> ($( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span>, )<span class="op">+</span>)
-            <span class="kw">where</span>
-                $(
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span>: <span class="ident">IntoParallelIterator</span>,
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T::Iter</span>: <span class="ident">IndexedParallelIterator</span>,
-                )<span class="op">+</span>
+            <span class="kw">impl</span>&lt;$( <span class="macro-nonterminal">$T</span>, )+&gt; IntoParallelIterator <span class="kw">for </span>($( <span class="macro-nonterminal">$T</span>, )+)
+            <span class="kw">where
+                </span>$(
+                    <span class="macro-nonterminal">$T</span>: IntoParallelIterator,
+                    <span class="macro-nonterminal">$T::Iter</span>: IndexedParallelIterator,
+                )+
             {
-                <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> ($( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T::Item</span>, )<span class="op">+</span>);
-                <span class="kw">type</span> <span class="ident">Iter</span> <span class="op">=</span> <span class="ident">MultiZip</span><span class="op">&lt;</span>($( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T::Iter</span>, )<span class="op">+</span>)<span class="op">&gt;</span>;
+                <span class="kw">type </span>Item = ($( <span class="macro-nonterminal">$T::Item</span>, )+);
+                <span class="kw">type </span>Iter = MultiZip&lt;($( <span class="macro-nonterminal">$T::Iter</span>, )+)&gt;;
 
-                <span class="kw">fn</span> <span class="ident">into_par_iter</span>(<span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::Iter</span> {
-                    <span class="ident">MultiZip</span> {
-                        <span class="ident">tuple</span>: ( $( <span class="self">self</span>.<span class="macro-nonterminal">$</span><span class="macro-nonterminal">idx</span>.<span class="ident">into_par_iter</span>(), )<span class="op">+</span> ),
+                <span class="kw">fn </span>into_par_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::Iter {
+                    MultiZip {
+                        tuple: ( $( <span class="self">self</span>.<span class="macro-nonterminal">$idx</span>.into_par_iter(), )+ ),
                     }
                 }
             }
 
-            <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, $( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span>, )<span class="op">+</span><span class="op">&gt;</span> <span class="ident">IntoParallelIterator</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> ($( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span>, )<span class="op">+</span>)
-            <span class="kw">where</span>
-                $(
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span>: <span class="ident">IntoParallelRefIterator</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T::Iter</span>: <span class="ident">IndexedParallelIterator</span>,
-                )<span class="op">+</span>
+            <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, $( <span class="macro-nonterminal">$T</span>, )+&gt; IntoParallelIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>($( <span class="macro-nonterminal">$T</span>, )+)
+            <span class="kw">where
+                </span>$(
+                    <span class="macro-nonterminal">$T</span>: IntoParallelRefIterator&lt;<span class="lifetime">&#39;a</span>&gt;,
+                    <span class="macro-nonterminal">$T::Iter</span>: IndexedParallelIterator,
+                )+
             {
-                <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> ($( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T::Item</span>, )<span class="op">+</span>);
-                <span class="kw">type</span> <span class="ident">Iter</span> <span class="op">=</span> <span class="ident">MultiZip</span><span class="op">&lt;</span>($( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T::Iter</span>, )<span class="op">+</span>)<span class="op">&gt;</span>;
+                <span class="kw">type </span>Item = ($( <span class="macro-nonterminal">$T::Item</span>, )+);
+                <span class="kw">type </span>Iter = MultiZip&lt;($( <span class="macro-nonterminal">$T::Iter</span>, )+)&gt;;
 
-                <span class="kw">fn</span> <span class="ident">into_par_iter</span>(<span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::Iter</span> {
-                    <span class="ident">MultiZip</span> {
-                        <span class="ident">tuple</span>: ( $( <span class="self">self</span>.<span class="macro-nonterminal">$</span><span class="macro-nonterminal">idx</span>.<span class="ident">par_iter</span>(), )<span class="op">+</span> ),
+                <span class="kw">fn </span>into_par_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::Iter {
+                    MultiZip {
+                        tuple: ( $( <span class="self">self</span>.<span class="macro-nonterminal">$idx</span>.par_iter(), )+ ),
                     }
                 }
             }
 
-            <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, $( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span>, )<span class="op">+</span><span class="op">&gt;</span> <span class="ident">IntoParallelIterator</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> ($( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span>, )<span class="op">+</span>)
-            <span class="kw">where</span>
-                $(
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span>: <span class="ident">IntoParallelRefMutIterator</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T::Iter</span>: <span class="ident">IndexedParallelIterator</span>,
-                )<span class="op">+</span>
+            <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, $( <span class="macro-nonterminal">$T</span>, )+&gt; IntoParallelIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>($( <span class="macro-nonterminal">$T</span>, )+)
+            <span class="kw">where
+                </span>$(
+                    <span class="macro-nonterminal">$T</span>: IntoParallelRefMutIterator&lt;<span class="lifetime">&#39;a</span>&gt;,
+                    <span class="macro-nonterminal">$T::Iter</span>: IndexedParallelIterator,
+                )+
             {
-                <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> ($( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T::Item</span>, )<span class="op">+</span>);
-                <span class="kw">type</span> <span class="ident">Iter</span> <span class="op">=</span> <span class="ident">MultiZip</span><span class="op">&lt;</span>($( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T::Iter</span>, )<span class="op">+</span>)<span class="op">&gt;</span>;
+                <span class="kw">type </span>Item = ($( <span class="macro-nonterminal">$T::Item</span>, )+);
+                <span class="kw">type </span>Iter = MultiZip&lt;($( <span class="macro-nonterminal">$T::Iter</span>, )+)&gt;;
 
-                <span class="kw">fn</span> <span class="ident">into_par_iter</span>(<span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::Iter</span> {
-                    <span class="ident">MultiZip</span> {
-                        <span class="ident">tuple</span>: ( $( <span class="self">self</span>.<span class="macro-nonterminal">$</span><span class="macro-nonterminal">idx</span>.<span class="ident">par_iter_mut</span>(), )<span class="op">+</span> ),
+                <span class="kw">fn </span>into_par_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::Iter {
+                    MultiZip {
+                        tuple: ( $( <span class="self">self</span>.<span class="macro-nonterminal">$idx</span>.par_iter_mut(), )+ ),
                     }
                 }
             }
 
-            <span class="kw">impl</span><span class="op">&lt;</span>$( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span>, )<span class="op">+</span><span class="op">&gt;</span> <span class="ident">ParallelIterator</span> <span class="kw">for</span> <span class="ident">MultiZip</span><span class="op">&lt;</span>($( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span>, )<span class="op">+</span>)<span class="op">&gt;</span>
-            <span class="kw">where</span>
-                $( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span>: <span class="ident">IndexedParallelIterator</span>, )<span class="op">+</span>
+            <span class="kw">impl</span>&lt;$( <span class="macro-nonterminal">$T</span>, )+&gt; ParallelIterator <span class="kw">for </span>MultiZip&lt;($( <span class="macro-nonterminal">$T</span>, )+)&gt;
+            <span class="kw">where
+                </span>$( <span class="macro-nonterminal">$T</span>: IndexedParallelIterator, )+
             {
-                <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> ($( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T::Item</span>, )<span class="op">+</span>);
+                <span class="kw">type </span>Item = ($( <span class="macro-nonterminal">$T::Item</span>, )+);
 
-                <span class="kw">fn</span> <span class="ident">drive_unindexed</span><span class="op">&lt;</span><span class="ident">CONSUMER</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">consumer</span>: <span class="ident">CONSUMER</span>) -&gt; <span class="ident">CONSUMER::Result</span>
-                <span class="kw">where</span>
-                    <span class="ident">CONSUMER</span>: <span class="ident">UnindexedConsumer</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span>,
+                <span class="kw">fn </span>drive_unindexed&lt;CONSUMER&gt;(<span class="self">self</span>, consumer: CONSUMER) -&gt; CONSUMER::Result
+                <span class="kw">where
+                    </span>CONSUMER: UnindexedConsumer&lt;<span class="self">Self</span>::Item&gt;,
                 {
-                    <span class="self">self</span>.<span class="ident">drive</span>(<span class="ident">consumer</span>)
+                    <span class="self">self</span>.drive(consumer)
                 }
 
-                <span class="kw">fn</span> <span class="ident">opt_len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-                    <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">len</span>())
+                <span class="kw">fn </span>opt_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
+                    <span class="prelude-val">Some</span>(<span class="self">self</span>.len())
                 }
             }
 
-            <span class="kw">impl</span><span class="op">&lt;</span>$( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span>, )<span class="op">+</span><span class="op">&gt;</span> <span class="ident">IndexedParallelIterator</span> <span class="kw">for</span> <span class="ident">MultiZip</span><span class="op">&lt;</span>($( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span>, )<span class="op">+</span>)<span class="op">&gt;</span>
-            <span class="kw">where</span>
-                $( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span>: <span class="ident">IndexedParallelIterator</span>, )<span class="op">+</span>
+            <span class="kw">impl</span>&lt;$( <span class="macro-nonterminal">$T</span>, )+&gt; IndexedParallelIterator <span class="kw">for </span>MultiZip&lt;($( <span class="macro-nonterminal">$T</span>, )+)&gt;
+            <span class="kw">where
+                </span>$( <span class="macro-nonterminal">$T</span>: IndexedParallelIterator, )+
             {
-                <span class="kw">fn</span> <span class="ident">drive</span><span class="op">&lt;</span><span class="ident">CONSUMER</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">consumer</span>: <span class="ident">CONSUMER</span>) -&gt; <span class="ident">CONSUMER::Result</span>
-                <span class="kw">where</span>
-                    <span class="ident">CONSUMER</span>: <span class="ident">Consumer</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span>,
+                <span class="kw">fn </span>drive&lt;CONSUMER&gt;(<span class="self">self</span>, consumer: CONSUMER) -&gt; CONSUMER::Result
+                <span class="kw">where
+                    </span>CONSUMER: Consumer&lt;<span class="self">Self</span>::Item&gt;,
                 {
-                    <span class="macro">reduce!</span>($( <span class="self">self</span>.<span class="ident">tuple</span>.<span class="macro-nonterminal">$</span><span class="macro-nonterminal">idx</span> ),<span class="op">+</span> =&gt; <span class="ident">IndexedParallelIterator::zip</span>)
-                        .<span class="ident">map</span>(<span class="macro">flatten!</span>($( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span> ),<span class="op">+</span>))
-                        .<span class="ident">drive</span>(<span class="ident">consumer</span>)
+                    <span class="macro">reduce!</span>($( <span class="self">self</span>.tuple.<span class="macro-nonterminal">$idx </span>),+ =&gt; IndexedParallelIterator::zip)
+                        .map(<span class="macro">flatten!</span>($( <span class="macro-nonterminal">$T </span>),+))
+                        .drive(consumer)
                 }
 
-                <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-                    <span class="macro">reduce!</span>($( <span class="self">self</span>.<span class="ident">tuple</span>.<span class="macro-nonterminal">$</span><span class="macro-nonterminal">idx</span>.<span class="ident">len</span>() ),<span class="op">+</span> =&gt; <span class="ident">Ord::min</span>)
+                <span class="kw">fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+                    <span class="macro">reduce!</span>($( <span class="self">self</span>.tuple.<span class="macro-nonterminal">$idx</span>.len() ),+ =&gt; Ord::min)
                 }
 
-                <span class="kw">fn</span> <span class="ident">with_producer</span><span class="op">&lt;</span><span class="ident">CB</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">callback</span>: <span class="ident">CB</span>) -&gt; <span class="ident">CB::Output</span>
-                <span class="kw">where</span>
-                    <span class="ident">CB</span>: <span class="ident">ProducerCallback</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span>,
+                <span class="kw">fn </span>with_producer&lt;CB&gt;(<span class="self">self</span>, callback: CB) -&gt; CB::Output
+                <span class="kw">where
+                    </span>CB: ProducerCallback&lt;<span class="self">Self</span>::Item&gt;,
                 {
-                    <span class="macro">reduce!</span>($( <span class="self">self</span>.<span class="ident">tuple</span>.<span class="macro-nonterminal">$</span><span class="macro-nonterminal">idx</span> ),<span class="op">+</span> =&gt; <span class="ident">IndexedParallelIterator::zip</span>)
-                        .<span class="ident">map</span>(<span class="macro">flatten!</span>($( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span> ),<span class="op">+</span>))
-                        .<span class="ident">with_producer</span>(<span class="ident">callback</span>)
+                    <span class="macro">reduce!</span>($( <span class="self">self</span>.tuple.<span class="macro-nonterminal">$idx </span>),+ =&gt; IndexedParallelIterator::zip)
+                        .map(<span class="macro">flatten!</span>($( <span class="macro-nonterminal">$T </span>),+))
+                        .with_producer(callback)
                 }
             }
-        )<span class="op">+</span>
+        )+
     }
 }
 
-<span class="macro">multizip_impls!</span> {
-    <span class="ident">Tuple1</span> {
-        (<span class="number">0</span>) -&gt; <span class="ident">A</span>
+<span class="macro">multizip_impls! </span>{
+    Tuple1 {
+        (<span class="number">0</span>) -&gt; A
     }
-    <span class="ident">Tuple2</span> {
-        (<span class="number">0</span>) -&gt; <span class="ident">A</span>
-        (<span class="number">1</span>) -&gt; <span class="ident">B</span>
+    Tuple2 {
+        (<span class="number">0</span>) -&gt; A
+        (<span class="number">1</span>) -&gt; B
     }
-    <span class="ident">Tuple3</span> {
-        (<span class="number">0</span>) -&gt; <span class="ident">A</span>
-        (<span class="number">1</span>) -&gt; <span class="ident">B</span>
-        (<span class="number">2</span>) -&gt; <span class="ident">C</span>
+    Tuple3 {
+        (<span class="number">0</span>) -&gt; A
+        (<span class="number">1</span>) -&gt; B
+        (<span class="number">2</span>) -&gt; C
     }
-    <span class="ident">Tuple4</span> {
-        (<span class="number">0</span>) -&gt; <span class="ident">A</span>
-        (<span class="number">1</span>) -&gt; <span class="ident">B</span>
-        (<span class="number">2</span>) -&gt; <span class="ident">C</span>
-        (<span class="number">3</span>) -&gt; <span class="ident">D</span>
+    Tuple4 {
+        (<span class="number">0</span>) -&gt; A
+        (<span class="number">1</span>) -&gt; B
+        (<span class="number">2</span>) -&gt; C
+        (<span class="number">3</span>) -&gt; D
     }
-    <span class="ident">Tuple5</span> {
-        (<span class="number">0</span>) -&gt; <span class="ident">A</span>
-        (<span class="number">1</span>) -&gt; <span class="ident">B</span>
-        (<span class="number">2</span>) -&gt; <span class="ident">C</span>
-        (<span class="number">3</span>) -&gt; <span class="ident">D</span>
-        (<span class="number">4</span>) -&gt; <span class="ident">E</span>
+    Tuple5 {
+        (<span class="number">0</span>) -&gt; A
+        (<span class="number">1</span>) -&gt; B
+        (<span class="number">2</span>) -&gt; C
+        (<span class="number">3</span>) -&gt; D
+        (<span class="number">4</span>) -&gt; E
     }
-    <span class="ident">Tuple6</span> {
-        (<span class="number">0</span>) -&gt; <span class="ident">A</span>
-        (<span class="number">1</span>) -&gt; <span class="ident">B</span>
-        (<span class="number">2</span>) -&gt; <span class="ident">C</span>
-        (<span class="number">3</span>) -&gt; <span class="ident">D</span>
-        (<span class="number">4</span>) -&gt; <span class="ident">E</span>
-        (<span class="number">5</span>) -&gt; <span class="ident">F</span>
+    Tuple6 {
+        (<span class="number">0</span>) -&gt; A
+        (<span class="number">1</span>) -&gt; B
+        (<span class="number">2</span>) -&gt; C
+        (<span class="number">3</span>) -&gt; D
+        (<span class="number">4</span>) -&gt; E
+        (<span class="number">5</span>) -&gt; F
     }
-    <span class="ident">Tuple7</span> {
-        (<span class="number">0</span>) -&gt; <span class="ident">A</span>
-        (<span class="number">1</span>) -&gt; <span class="ident">B</span>
-        (<span class="number">2</span>) -&gt; <span class="ident">C</span>
-        (<span class="number">3</span>) -&gt; <span class="ident">D</span>
-        (<span class="number">4</span>) -&gt; <span class="ident">E</span>
-        (<span class="number">5</span>) -&gt; <span class="ident">F</span>
-        (<span class="number">6</span>) -&gt; <span class="ident">G</span>
+    Tuple7 {
+        (<span class="number">0</span>) -&gt; A
+        (<span class="number">1</span>) -&gt; B
+        (<span class="number">2</span>) -&gt; C
+        (<span class="number">3</span>) -&gt; D
+        (<span class="number">4</span>) -&gt; E
+        (<span class="number">5</span>) -&gt; F
+        (<span class="number">6</span>) -&gt; G
     }
-    <span class="ident">Tuple8</span> {
-        (<span class="number">0</span>) -&gt; <span class="ident">A</span>
-        (<span class="number">1</span>) -&gt; <span class="ident">B</span>
-        (<span class="number">2</span>) -&gt; <span class="ident">C</span>
-        (<span class="number">3</span>) -&gt; <span class="ident">D</span>
-        (<span class="number">4</span>) -&gt; <span class="ident">E</span>
-        (<span class="number">5</span>) -&gt; <span class="ident">F</span>
-        (<span class="number">6</span>) -&gt; <span class="ident">G</span>
-        (<span class="number">7</span>) -&gt; <span class="ident">H</span>
+    Tuple8 {
+        (<span class="number">0</span>) -&gt; A
+        (<span class="number">1</span>) -&gt; B
+        (<span class="number">2</span>) -&gt; C
+        (<span class="number">3</span>) -&gt; D
+        (<span class="number">4</span>) -&gt; E
+        (<span class="number">5</span>) -&gt; F
+        (<span class="number">6</span>) -&gt; G
+        (<span class="number">7</span>) -&gt; H
     }
-    <span class="ident">Tuple9</span> {
-        (<span class="number">0</span>) -&gt; <span class="ident">A</span>
-        (<span class="number">1</span>) -&gt; <span class="ident">B</span>
-        (<span class="number">2</span>) -&gt; <span class="ident">C</span>
-        (<span class="number">3</span>) -&gt; <span class="ident">D</span>
-        (<span class="number">4</span>) -&gt; <span class="ident">E</span>
-        (<span class="number">5</span>) -&gt; <span class="ident">F</span>
-        (<span class="number">6</span>) -&gt; <span class="ident">G</span>
-        (<span class="number">7</span>) -&gt; <span class="ident">H</span>
-        (<span class="number">8</span>) -&gt; <span class="ident">I</span>
+    Tuple9 {
+        (<span class="number">0</span>) -&gt; A
+        (<span class="number">1</span>) -&gt; B
+        (<span class="number">2</span>) -&gt; C
+        (<span class="number">3</span>) -&gt; D
+        (<span class="number">4</span>) -&gt; E
+        (<span class="number">5</span>) -&gt; F
+        (<span class="number">6</span>) -&gt; G
+        (<span class="number">7</span>) -&gt; H
+        (<span class="number">8</span>) -&gt; I
     }
-    <span class="ident">Tuple10</span> {
-        (<span class="number">0</span>) -&gt; <span class="ident">A</span>
-        (<span class="number">1</span>) -&gt; <span class="ident">B</span>
-        (<span class="number">2</span>) -&gt; <span class="ident">C</span>
-        (<span class="number">3</span>) -&gt; <span class="ident">D</span>
-        (<span class="number">4</span>) -&gt; <span class="ident">E</span>
-        (<span class="number">5</span>) -&gt; <span class="ident">F</span>
-        (<span class="number">6</span>) -&gt; <span class="ident">G</span>
-        (<span class="number">7</span>) -&gt; <span class="ident">H</span>
-        (<span class="number">8</span>) -&gt; <span class="ident">I</span>
-        (<span class="number">9</span>) -&gt; <span class="ident">J</span>
+    Tuple10 {
+        (<span class="number">0</span>) -&gt; A
+        (<span class="number">1</span>) -&gt; B
+        (<span class="number">2</span>) -&gt; C
+        (<span class="number">3</span>) -&gt; D
+        (<span class="number">4</span>) -&gt; E
+        (<span class="number">5</span>) -&gt; F
+        (<span class="number">6</span>) -&gt; G
+        (<span class="number">7</span>) -&gt; H
+        (<span class="number">8</span>) -&gt; I
+        (<span class="number">9</span>) -&gt; J
     }
-    <span class="ident">Tuple11</span> {
-        (<span class="number">0</span>) -&gt; <span class="ident">A</span>
-        (<span class="number">1</span>) -&gt; <span class="ident">B</span>
-        (<span class="number">2</span>) -&gt; <span class="ident">C</span>
-        (<span class="number">3</span>) -&gt; <span class="ident">D</span>
-        (<span class="number">4</span>) -&gt; <span class="ident">E</span>
-        (<span class="number">5</span>) -&gt; <span class="ident">F</span>
-        (<span class="number">6</span>) -&gt; <span class="ident">G</span>
-        (<span class="number">7</span>) -&gt; <span class="ident">H</span>
-        (<span class="number">8</span>) -&gt; <span class="ident">I</span>
-        (<span class="number">9</span>) -&gt; <span class="ident">J</span>
-        (<span class="number">10</span>) -&gt; <span class="ident">K</span>
+    Tuple11 {
+        (<span class="number">0</span>) -&gt; A
+        (<span class="number">1</span>) -&gt; B
+        (<span class="number">2</span>) -&gt; C
+        (<span class="number">3</span>) -&gt; D
+        (<span class="number">4</span>) -&gt; E
+        (<span class="number">5</span>) -&gt; F
+        (<span class="number">6</span>) -&gt; G
+        (<span class="number">7</span>) -&gt; H
+        (<span class="number">8</span>) -&gt; I
+        (<span class="number">9</span>) -&gt; J
+        (<span class="number">10</span>) -&gt; K
     }
-    <span class="ident">Tuple12</span> {
-        (<span class="number">0</span>) -&gt; <span class="ident">A</span>
-        (<span class="number">1</span>) -&gt; <span class="ident">B</span>
-        (<span class="number">2</span>) -&gt; <span class="ident">C</span>
-        (<span class="number">3</span>) -&gt; <span class="ident">D</span>
-        (<span class="number">4</span>) -&gt; <span class="ident">E</span>
-        (<span class="number">5</span>) -&gt; <span class="ident">F</span>
-        (<span class="number">6</span>) -&gt; <span class="ident">G</span>
-        (<span class="number">7</span>) -&gt; <span class="ident">H</span>
-        (<span class="number">8</span>) -&gt; <span class="ident">I</span>
-        (<span class="number">9</span>) -&gt; <span class="ident">J</span>
-        (<span class="number">10</span>) -&gt; <span class="ident">K</span>
-        (<span class="number">11</span>) -&gt; <span class="ident">L</span>
+    Tuple12 {
+        (<span class="number">0</span>) -&gt; A
+        (<span class="number">1</span>) -&gt; B
+        (<span class="number">2</span>) -&gt; C
+        (<span class="number">3</span>) -&gt; D
+        (<span class="number">4</span>) -&gt; E
+        (<span class="number">5</span>) -&gt; F
+        (<span class="number">6</span>) -&gt; G
+        (<span class="number">7</span>) -&gt; H
+        (<span class="number">8</span>) -&gt; I
+        (<span class="number">9</span>) -&gt; J
+        (<span class="number">10</span>) -&gt; K
+        (<span class="number">11</span>) -&gt; L
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="rayon" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.63.0-nightly (fee3a459d 2022-06-05)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="rayon" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (02654a084 2022-08-30)" ></div></body></html>

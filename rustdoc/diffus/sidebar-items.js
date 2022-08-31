@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["diffable_impls",""],["edit",""],["same",""]],"trait":[["Diffable",""],["Same",""]]});
+window.SIDEBAR_ITEMS = {"mod":[["diffable_impls",""],["edit",""],["same",""]],"trait":[["Diffable",""],["Same",""]]};

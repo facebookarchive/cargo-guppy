@@ -1,11 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/rayon-1.5.3/src/iter/panic_fuse.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>panic_fuse.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
-    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a><h2 class="location"></h2>
-    </nav>
-    <nav class="sidebar"><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../rayon/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><div id="settings-menu" tabindex="-1">
-                                <a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div>
-                        </div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/rayon-1.5.3/src/iter/panic_fuse.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>panic_fuse.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../rayon/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../rayon/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -347,348 +340,347 @@
 <span id="340">340</span>
 <span id="341">341</span>
 <span id="342">342</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">super</span>::plumbing</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident">std::sync::atomic</span>::{<span class="ident">AtomicBool</span>, <span class="ident">Ordering</span>};
-<span class="kw">use</span> <span class="ident">std::thread</span>;
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::plumbing::<span class="kw-2">*</span>;
+<span class="kw">use super</span>::<span class="kw-2">*</span>;
+<span class="kw">use </span>std::sync::atomic::{AtomicBool, Ordering};
+<span class="kw">use </span>std::thread;
 
-<span class="doccomment">/// `PanicFuse` is an adaptor that wraps an iterator with a fuse in case</span>
-<span class="doccomment">/// of panics, to halt all threads as soon as possible.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This struct is created by the [`panic_fuse()`] method on [`ParallelIterator`]</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [`panic_fuse()`]: trait.ParallelIterator.html#method.panic_fuse</span>
-<span class="doccomment">/// [`ParallelIterator`]: trait.ParallelIterator.html</span>
-<span class="attribute">#[<span class="ident">must_use</span> <span class="op">=</span> <span class="string">&quot;iterator adaptors are lazy and do nothing unless consumed&quot;</span>]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PanicFuse</span><span class="op">&lt;</span><span class="ident">I</span>: <span class="ident">ParallelIterator</span><span class="op">&gt;</span> {
-    <span class="ident">base</span>: <span class="ident">I</span>,
+<span class="doccomment">/// `PanicFuse` is an adaptor that wraps an iterator with a fuse in case
+/// of panics, to halt all threads as soon as possible.
+///
+/// This struct is created by the [`panic_fuse()`] method on [`ParallelIterator`]
+///
+/// [`panic_fuse()`]: trait.ParallelIterator.html#method.panic_fuse
+/// [`ParallelIterator`]: trait.ParallelIterator.html
+</span><span class="attribute">#[must_use = <span class="string">&quot;iterator adaptors are lazy and do nothing unless consumed&quot;</span>]
+#[derive(Debug, Clone)]
+</span><span class="kw">pub struct </span>PanicFuse&lt;I: ParallelIterator&gt; {
+    base: I,
 }
 
-<span class="doccomment">/// Helper that sets a bool to `true` if dropped while unwinding.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
-<span class="kw">struct</span> <span class="ident">Fuse</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">AtomicBool</span>);
+<span class="doccomment">/// Helper that sets a bool to `true` if dropped while unwinding.
+</span><span class="attribute">#[derive(Clone)]
+</span><span class="kw">struct </span>Fuse&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>AtomicBool);
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">Fuse</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="kw">if</span> <span class="ident">thread::panicking</span>() {
-            <span class="self">self</span>.<span class="number">0</span>.<span class="ident">store</span>(<span class="bool-val">true</span>, <span class="ident">Ordering::Relaxed</span>);
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Drop <span class="kw">for </span>Fuse&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">if </span>thread::panicking() {
+            <span class="self">self</span>.<span class="number">0</span>.store(<span class="bool-val">true</span>, Ordering::Relaxed);
         }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Fuse</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">panicked</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>)
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Fuse&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>panicked(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.<span class="number">0</span>.load(Ordering::Relaxed)
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span> <span class="ident">PanicFuse</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">I</span>: <span class="ident">ParallelIterator</span>,
+<span class="kw">impl</span>&lt;I&gt; PanicFuse&lt;I&gt;
+<span class="kw">where
+    </span>I: ParallelIterator,
 {
-    <span class="doccomment">/// Creates a new `PanicFuse` iterator.</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">base</span>: <span class="ident">I</span>) -&gt; <span class="ident">PanicFuse</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span> {
-        <span class="ident">PanicFuse</span> { <span class="ident">base</span> }
+    <span class="doccomment">/// Creates a new `PanicFuse` iterator.
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new(base: I) -&gt; PanicFuse&lt;I&gt; {
+        PanicFuse { base }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span> <span class="ident">ParallelIterator</span> <span class="kw">for</span> <span class="ident">PanicFuse</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">I</span>: <span class="ident">ParallelIterator</span>,
+<span class="kw">impl</span>&lt;I&gt; ParallelIterator <span class="kw">for </span>PanicFuse&lt;I&gt;
+<span class="kw">where
+    </span>I: ParallelIterator,
 {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">I::Item</span>;
+    <span class="kw">type </span>Item = I::Item;
 
-    <span class="kw">fn</span> <span class="ident">drive_unindexed</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">consumer</span>: <span class="ident">C</span>) -&gt; <span class="ident">C::Result</span>
-    <span class="kw">where</span>
-        <span class="ident">C</span>: <span class="ident">UnindexedConsumer</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span>,
+    <span class="kw">fn </span>drive_unindexed&lt;C&gt;(<span class="self">self</span>, consumer: C) -&gt; C::Result
+    <span class="kw">where
+        </span>C: UnindexedConsumer&lt;<span class="self">Self</span>::Item&gt;,
     {
-        <span class="kw">let</span> <span class="ident">panicked</span> <span class="op">=</span> <span class="ident">AtomicBool::new</span>(<span class="bool-val">false</span>);
-        <span class="kw">let</span> <span class="ident">consumer1</span> <span class="op">=</span> <span class="ident">PanicFuseConsumer</span> {
-            <span class="ident">base</span>: <span class="ident">consumer</span>,
-            <span class="ident">fuse</span>: <span class="ident">Fuse</span>(<span class="kw-2">&amp;</span><span class="ident">panicked</span>),
+        <span class="kw">let </span>panicked = AtomicBool::new(<span class="bool-val">false</span>);
+        <span class="kw">let </span>consumer1 = PanicFuseConsumer {
+            base: consumer,
+            fuse: Fuse(<span class="kw-2">&amp;</span>panicked),
         };
-        <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">drive_unindexed</span>(<span class="ident">consumer1</span>)
+        <span class="self">self</span>.base.drive_unindexed(consumer1)
     }
 
-    <span class="kw">fn</span> <span class="ident">opt_len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">opt_len</span>()
+    <span class="kw">fn </span>opt_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
+        <span class="self">self</span>.base.opt_len()
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span> <span class="ident">IndexedParallelIterator</span> <span class="kw">for</span> <span class="ident">PanicFuse</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">I</span>: <span class="ident">IndexedParallelIterator</span>,
+<span class="kw">impl</span>&lt;I&gt; IndexedParallelIterator <span class="kw">for </span>PanicFuse&lt;I&gt;
+<span class="kw">where
+    </span>I: IndexedParallelIterator,
 {
-    <span class="kw">fn</span> <span class="ident">drive</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">consumer</span>: <span class="ident">C</span>) -&gt; <span class="ident">C::Result</span>
-    <span class="kw">where</span>
-        <span class="ident">C</span>: <span class="ident">Consumer</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span>,
+    <span class="kw">fn </span>drive&lt;C&gt;(<span class="self">self</span>, consumer: C) -&gt; C::Result
+    <span class="kw">where
+        </span>C: Consumer&lt;<span class="self">Self</span>::Item&gt;,
     {
-        <span class="kw">let</span> <span class="ident">panicked</span> <span class="op">=</span> <span class="ident">AtomicBool::new</span>(<span class="bool-val">false</span>);
-        <span class="kw">let</span> <span class="ident">consumer1</span> <span class="op">=</span> <span class="ident">PanicFuseConsumer</span> {
-            <span class="ident">base</span>: <span class="ident">consumer</span>,
-            <span class="ident">fuse</span>: <span class="ident">Fuse</span>(<span class="kw-2">&amp;</span><span class="ident">panicked</span>),
+        <span class="kw">let </span>panicked = AtomicBool::new(<span class="bool-val">false</span>);
+        <span class="kw">let </span>consumer1 = PanicFuseConsumer {
+            base: consumer,
+            fuse: Fuse(<span class="kw-2">&amp;</span>panicked),
         };
-        <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">drive</span>(<span class="ident">consumer1</span>)
+        <span class="self">self</span>.base.drive(consumer1)
     }
 
-    <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">len</span>()
+    <span class="kw">fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.base.len()
     }
 
-    <span class="kw">fn</span> <span class="ident">with_producer</span><span class="op">&lt;</span><span class="ident">CB</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">callback</span>: <span class="ident">CB</span>) -&gt; <span class="ident">CB::Output</span>
-    <span class="kw">where</span>
-        <span class="ident">CB</span>: <span class="ident">ProducerCallback</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span>,
+    <span class="kw">fn </span>with_producer&lt;CB&gt;(<span class="self">self</span>, callback: CB) -&gt; CB::Output
+    <span class="kw">where
+        </span>CB: ProducerCallback&lt;<span class="self">Self</span>::Item&gt;,
     {
-        <span class="kw">return</span> <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">with_producer</span>(<span class="ident">Callback</span> { <span class="ident">callback</span> });
+        <span class="kw">return </span><span class="self">self</span>.base.with_producer(Callback { callback });
 
-        <span class="kw">struct</span> <span class="ident">Callback</span><span class="op">&lt;</span><span class="ident">CB</span><span class="op">&gt;</span> {
-            <span class="ident">callback</span>: <span class="ident">CB</span>,
+        <span class="kw">struct </span>Callback&lt;CB&gt; {
+            callback: CB,
         }
 
-        <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">CB</span><span class="op">&gt;</span> <span class="ident">ProducerCallback</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Callback</span><span class="op">&lt;</span><span class="ident">CB</span><span class="op">&gt;</span>
-        <span class="kw">where</span>
-            <span class="ident">CB</span>: <span class="ident">ProducerCallback</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
+        <span class="kw">impl</span>&lt;T, CB&gt; ProducerCallback&lt;T&gt; <span class="kw">for </span>Callback&lt;CB&gt;
+        <span class="kw">where
+            </span>CB: ProducerCallback&lt;T&gt;,
         {
-            <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">CB::Output</span>;
+            <span class="kw">type </span>Output = CB::Output;
 
-            <span class="kw">fn</span> <span class="ident">callback</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">base</span>: <span class="ident">P</span>) -&gt; <span class="ident">CB::Output</span>
-            <span class="kw">where</span>
-                <span class="ident">P</span>: <span class="ident">Producer</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">T</span><span class="op">&gt;</span>,
+            <span class="kw">fn </span>callback&lt;P&gt;(<span class="self">self</span>, base: P) -&gt; CB::Output
+            <span class="kw">where
+                </span>P: Producer&lt;Item = T&gt;,
             {
-                <span class="kw">let</span> <span class="ident">panicked</span> <span class="op">=</span> <span class="ident">AtomicBool::new</span>(<span class="bool-val">false</span>);
-                <span class="kw">let</span> <span class="ident">producer</span> <span class="op">=</span> <span class="ident">PanicFuseProducer</span> {
-                    <span class="ident">base</span>,
-                    <span class="ident">fuse</span>: <span class="ident">Fuse</span>(<span class="kw-2">&amp;</span><span class="ident">panicked</span>),
+                <span class="kw">let </span>panicked = AtomicBool::new(<span class="bool-val">false</span>);
+                <span class="kw">let </span>producer = PanicFuseProducer {
+                    base,
+                    fuse: Fuse(<span class="kw-2">&amp;</span>panicked),
                 };
-                <span class="self">self</span>.<span class="ident">callback</span>.<span class="ident">callback</span>(<span class="ident">producer</span>)
+                <span class="self">self</span>.callback.callback(producer)
             }
         }
     }
 }
 
-<span class="doccomment">/// ////////////////////////////////////////////////////////////////////////</span>
-<span class="doccomment">/// Producer implementation</span>
+<span class="doccomment">/// ////////////////////////////////////////////////////////////////////////
+/// Producer implementation
 
-<span class="kw">struct</span> <span class="ident">PanicFuseProducer</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">P</span><span class="op">&gt;</span> {
-    <span class="ident">base</span>: <span class="ident">P</span>,
-    <span class="ident">fuse</span>: <span class="ident">Fuse</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+</span><span class="kw">struct </span>PanicFuseProducer&lt;<span class="lifetime">&#39;a</span>, P&gt; {
+    base: P,
+    fuse: Fuse&lt;<span class="lifetime">&#39;a</span>&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">P</span><span class="op">&gt;</span> <span class="ident">Producer</span> <span class="kw">for</span> <span class="ident">PanicFuseProducer</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">P</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Producer</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, P&gt; Producer <span class="kw">for </span>PanicFuseProducer&lt;<span class="lifetime">&#39;a</span>, P&gt;
+<span class="kw">where
+    </span>P: Producer,
 {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">P::Item</span>;
-    <span class="kw">type</span> <span class="ident">IntoIter</span> <span class="op">=</span> <span class="ident">PanicFuseIter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">P::IntoIter</span><span class="op">&gt;</span>;
+    <span class="kw">type </span>Item = P::Item;
+    <span class="kw">type </span>IntoIter = PanicFuseIter&lt;<span class="lifetime">&#39;a</span>, P::IntoIter&gt;;
 
-    <span class="kw">fn</span> <span class="ident">into_iter</span>(<span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::IntoIter</span> {
-        <span class="ident">PanicFuseIter</span> {
-            <span class="ident">base</span>: <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">into_iter</span>(),
-            <span class="ident">fuse</span>: <span class="self">self</span>.<span class="ident">fuse</span>,
+    <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
+        PanicFuseIter {
+            base: <span class="self">self</span>.base.into_iter(),
+            fuse: <span class="self">self</span>.fuse,
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">min_len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">min_len</span>()
+    <span class="kw">fn </span>min_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.base.min_len()
     }
-    <span class="kw">fn</span> <span class="ident">max_len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">max_len</span>()
+    <span class="kw">fn </span>max_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.base.max_len()
     }
 
-    <span class="kw">fn</span> <span class="ident">split_at</span>(<span class="self">self</span>, <span class="ident">index</span>: <span class="ident">usize</span>) -&gt; (<span class="self">Self</span>, <span class="self">Self</span>) {
-        <span class="kw">let</span> (<span class="ident">left</span>, <span class="ident">right</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">split_at</span>(<span class="ident">index</span>);
+    <span class="kw">fn </span>split_at(<span class="self">self</span>, index: usize) -&gt; (<span class="self">Self</span>, <span class="self">Self</span>) {
+        <span class="kw">let </span>(left, right) = <span class="self">self</span>.base.split_at(index);
         (
-            <span class="ident">PanicFuseProducer</span> {
-                <span class="ident">base</span>: <span class="ident">left</span>,
-                <span class="ident">fuse</span>: <span class="self">self</span>.<span class="ident">fuse</span>.<span class="ident">clone</span>(),
+            PanicFuseProducer {
+                base: left,
+                fuse: <span class="self">self</span>.fuse.clone(),
             },
-            <span class="ident">PanicFuseProducer</span> {
-                <span class="ident">base</span>: <span class="ident">right</span>,
-                <span class="ident">fuse</span>: <span class="self">self</span>.<span class="ident">fuse</span>,
+            PanicFuseProducer {
+                base: right,
+                fuse: <span class="self">self</span>.fuse,
             },
         )
     }
 
-    <span class="kw">fn</span> <span class="ident">fold_with</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">folder</span>: <span class="ident">G</span>) -&gt; <span class="ident">G</span>
-    <span class="kw">where</span>
-        <span class="ident">G</span>: <span class="ident">Folder</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span>,
+    <span class="kw">fn </span>fold_with&lt;G&gt;(<span class="self">self</span>, folder: G) -&gt; G
+    <span class="kw">where
+        </span>G: Folder&lt;<span class="self">Self</span>::Item&gt;,
     {
-        <span class="kw">let</span> <span class="ident">folder1</span> <span class="op">=</span> <span class="ident">PanicFuseFolder</span> {
-            <span class="ident">base</span>: <span class="ident">folder</span>,
-            <span class="ident">fuse</span>: <span class="self">self</span>.<span class="ident">fuse</span>,
+        <span class="kw">let </span>folder1 = PanicFuseFolder {
+            base: folder,
+            fuse: <span class="self">self</span>.fuse,
         };
-        <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">fold_with</span>(<span class="ident">folder1</span>).<span class="ident">base</span>
+        <span class="self">self</span>.base.fold_with(folder1).base
     }
 }
 
-<span class="kw">struct</span> <span class="ident">PanicFuseIter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">I</span><span class="op">&gt;</span> {
-    <span class="ident">base</span>: <span class="ident">I</span>,
-    <span class="ident">fuse</span>: <span class="ident">Fuse</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+<span class="kw">struct </span>PanicFuseIter&lt;<span class="lifetime">&#39;a</span>, I&gt; {
+    base: I,
+    fuse: Fuse&lt;<span class="lifetime">&#39;a</span>&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">I</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">PanicFuseIter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">I</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">I</span>: <span class="ident">Iterator</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, I&gt; Iterator <span class="kw">for </span>PanicFuseIter&lt;<span class="lifetime">&#39;a</span>, I&gt;
+<span class="kw">where
+    </span>I: Iterator,
 {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">I::Item</span>;
+    <span class="kw">type </span>Item = I::Item;
 
-    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">fuse</span>.<span class="ident">panicked</span>() {
-            <span class="prelude-val">None</span>
-        } <span class="kw">else</span> {
-            <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">next</span>()
+    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
+        <span class="kw">if </span><span class="self">self</span>.fuse.panicked() {
+            <span class="prelude-val">None
+        </span>} <span class="kw">else </span>{
+            <span class="self">self</span>.base.next()
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">size_hint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) {
-        <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">size_hint</span>()
+    <span class="kw">fn </span>size_hint(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (usize, <span class="prelude-ty">Option</span>&lt;usize&gt;) {
+        <span class="self">self</span>.base.size_hint()
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">I</span><span class="op">&gt;</span> <span class="ident">DoubleEndedIterator</span> <span class="kw">for</span> <span class="ident">PanicFuseIter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">I</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">I</span>: <span class="ident">DoubleEndedIterator</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, I&gt; DoubleEndedIterator <span class="kw">for </span>PanicFuseIter&lt;<span class="lifetime">&#39;a</span>, I&gt;
+<span class="kw">where
+    </span>I: DoubleEndedIterator,
 {
-    <span class="kw">fn</span> <span class="ident">next_back</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">fuse</span>.<span class="ident">panicked</span>() {
-            <span class="prelude-val">None</span>
-        } <span class="kw">else</span> {
-            <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">next_back</span>()
+    <span class="kw">fn </span>next_back(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
+        <span class="kw">if </span><span class="self">self</span>.fuse.panicked() {
+            <span class="prelude-val">None
+        </span>} <span class="kw">else </span>{
+            <span class="self">self</span>.base.next_back()
         }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">I</span><span class="op">&gt;</span> <span class="ident">ExactSizeIterator</span> <span class="kw">for</span> <span class="ident">PanicFuseIter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">I</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">I</span>: <span class="ident">ExactSizeIterator</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, I&gt; ExactSizeIterator <span class="kw">for </span>PanicFuseIter&lt;<span class="lifetime">&#39;a</span>, I&gt;
+<span class="kw">where
+    </span>I: ExactSizeIterator,
 {
-    <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">len</span>()
+    <span class="kw">fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.base.len()
     }
 }
 
-<span class="doccomment">/// ////////////////////////////////////////////////////////////////////////</span>
-<span class="doccomment">/// Consumer implementation</span>
+<span class="doccomment">/// ////////////////////////////////////////////////////////////////////////
+/// Consumer implementation
 
-<span class="kw">struct</span> <span class="ident">PanicFuseConsumer</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">C</span><span class="op">&gt;</span> {
-    <span class="ident">base</span>: <span class="ident">C</span>,
-    <span class="ident">fuse</span>: <span class="ident">Fuse</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+</span><span class="kw">struct </span>PanicFuseConsumer&lt;<span class="lifetime">&#39;a</span>, C&gt; {
+    base: C,
+    fuse: Fuse&lt;<span class="lifetime">&#39;a</span>&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>, <span class="ident">C</span><span class="op">&gt;</span> <span class="ident">Consumer</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">PanicFuseConsumer</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">C</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">C</span>: <span class="ident">Consumer</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T, C&gt; Consumer&lt;T&gt; <span class="kw">for </span>PanicFuseConsumer&lt;<span class="lifetime">&#39;a</span>, C&gt;
+<span class="kw">where
+    </span>C: Consumer&lt;T&gt;,
 {
-    <span class="kw">type</span> <span class="ident">Folder</span> <span class="op">=</span> <span class="ident">PanicFuseFolder</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">C::Folder</span><span class="op">&gt;</span>;
-    <span class="kw">type</span> <span class="ident">Reducer</span> <span class="op">=</span> <span class="ident">PanicFuseReducer</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">C::Reducer</span><span class="op">&gt;</span>;
-    <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> <span class="ident">C::Result</span>;
+    <span class="kw">type </span>Folder = PanicFuseFolder&lt;<span class="lifetime">&#39;a</span>, C::Folder&gt;;
+    <span class="kw">type </span>Reducer = PanicFuseReducer&lt;<span class="lifetime">&#39;a</span>, C::Reducer&gt;;
+    <span class="kw">type </span><span class="prelude-ty">Result </span>= C::Result;
 
-    <span class="kw">fn</span> <span class="ident">split_at</span>(<span class="self">self</span>, <span class="ident">index</span>: <span class="ident">usize</span>) -&gt; (<span class="self">Self</span>, <span class="self">Self</span>, <span class="ident"><span class="self">Self</span>::Reducer</span>) {
-        <span class="kw">let</span> (<span class="ident">left</span>, <span class="ident">right</span>, <span class="ident">reducer</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">split_at</span>(<span class="ident">index</span>);
+    <span class="kw">fn </span>split_at(<span class="self">self</span>, index: usize) -&gt; (<span class="self">Self</span>, <span class="self">Self</span>, <span class="self">Self</span>::Reducer) {
+        <span class="kw">let </span>(left, right, reducer) = <span class="self">self</span>.base.split_at(index);
         (
-            <span class="ident">PanicFuseConsumer</span> {
-                <span class="ident">base</span>: <span class="ident">left</span>,
-                <span class="ident">fuse</span>: <span class="self">self</span>.<span class="ident">fuse</span>.<span class="ident">clone</span>(),
+            PanicFuseConsumer {
+                base: left,
+                fuse: <span class="self">self</span>.fuse.clone(),
             },
-            <span class="ident">PanicFuseConsumer</span> {
-                <span class="ident">base</span>: <span class="ident">right</span>,
-                <span class="ident">fuse</span>: <span class="self">self</span>.<span class="ident">fuse</span>.<span class="ident">clone</span>(),
+            PanicFuseConsumer {
+                base: right,
+                fuse: <span class="self">self</span>.fuse.clone(),
             },
-            <span class="ident">PanicFuseReducer</span> {
-                <span class="ident">base</span>: <span class="ident">reducer</span>,
-                <span class="ident">_fuse</span>: <span class="self">self</span>.<span class="ident">fuse</span>,
+            PanicFuseReducer {
+                base: reducer,
+                _fuse: <span class="self">self</span>.fuse,
             },
         )
     }
 
-    <span class="kw">fn</span> <span class="ident">into_folder</span>(<span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::Folder</span> {
-        <span class="ident">PanicFuseFolder</span> {
-            <span class="ident">base</span>: <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">into_folder</span>(),
-            <span class="ident">fuse</span>: <span class="self">self</span>.<span class="ident">fuse</span>,
+    <span class="kw">fn </span>into_folder(<span class="self">self</span>) -&gt; <span class="self">Self</span>::Folder {
+        PanicFuseFolder {
+            base: <span class="self">self</span>.base.into_folder(),
+            fuse: <span class="self">self</span>.fuse,
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">full</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">fuse</span>.<span class="ident">panicked</span>() <span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">full</span>()
+    <span class="kw">fn </span>full(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.fuse.panicked() || <span class="self">self</span>.base.full()
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>, <span class="ident">C</span><span class="op">&gt;</span> <span class="ident">UnindexedConsumer</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">PanicFuseConsumer</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">C</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">C</span>: <span class="ident">UnindexedConsumer</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T, C&gt; UnindexedConsumer&lt;T&gt; <span class="kw">for </span>PanicFuseConsumer&lt;<span class="lifetime">&#39;a</span>, C&gt;
+<span class="kw">where
+    </span>C: UnindexedConsumer&lt;T&gt;,
 {
-    <span class="kw">fn</span> <span class="ident">split_off_left</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">PanicFuseConsumer</span> {
-            <span class="ident">base</span>: <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">split_off_left</span>(),
-            <span class="ident">fuse</span>: <span class="self">self</span>.<span class="ident">fuse</span>.<span class="ident">clone</span>(),
+    <span class="kw">fn </span>split_off_left(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        PanicFuseConsumer {
+            base: <span class="self">self</span>.base.split_off_left(),
+            fuse: <span class="self">self</span>.fuse.clone(),
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">to_reducer</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::Reducer</span> {
-        <span class="ident">PanicFuseReducer</span> {
-            <span class="ident">base</span>: <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">to_reducer</span>(),
-            <span class="ident">_fuse</span>: <span class="self">self</span>.<span class="ident">fuse</span>.<span class="ident">clone</span>(),
+    <span class="kw">fn </span>to_reducer(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span>::Reducer {
+        PanicFuseReducer {
+            base: <span class="self">self</span>.base.to_reducer(),
+            _fuse: <span class="self">self</span>.fuse.clone(),
         }
     }
 }
 
-<span class="kw">struct</span> <span class="ident">PanicFuseFolder</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">C</span><span class="op">&gt;</span> {
-    <span class="ident">base</span>: <span class="ident">C</span>,
-    <span class="ident">fuse</span>: <span class="ident">Fuse</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+<span class="kw">struct </span>PanicFuseFolder&lt;<span class="lifetime">&#39;a</span>, C&gt; {
+    base: C,
+    fuse: Fuse&lt;<span class="lifetime">&#39;a</span>&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>, <span class="ident">C</span><span class="op">&gt;</span> <span class="ident">Folder</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">PanicFuseFolder</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">C</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">C</span>: <span class="ident">Folder</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T, C&gt; Folder&lt;T&gt; <span class="kw">for </span>PanicFuseFolder&lt;<span class="lifetime">&#39;a</span>, C&gt;
+<span class="kw">where
+    </span>C: Folder&lt;T&gt;,
 {
-    <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> <span class="ident">C::Result</span>;
+    <span class="kw">type </span><span class="prelude-ty">Result </span>= C::Result;
 
-    <span class="kw">fn</span> <span class="ident">consume</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">item</span>: <span class="ident">T</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">base</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">consume</span>(<span class="ident">item</span>);
-        <span class="self">self</span>
-    }
+    <span class="kw">fn </span>consume(<span class="kw-2">mut </span><span class="self">self</span>, item: T) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.base = <span class="self">self</span>.base.consume(item);
+        <span class="self">self
+    </span>}
 
-    <span class="kw">fn</span> <span class="ident">consume_iter</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">iter</span>: <span class="ident">I</span>) -&gt; <span class="self">Self</span>
-    <span class="kw">where</span>
-        <span class="ident">I</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">T</span><span class="op">&gt;</span>,
+    <span class="kw">fn </span>consume_iter&lt;I&gt;(<span class="kw-2">mut </span><span class="self">self</span>, iter: I) -&gt; <span class="self">Self
+    </span><span class="kw">where
+        </span>I: IntoIterator&lt;Item = T&gt;,
     {
-        <span class="kw">fn</span> <span class="ident">cool</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">fuse</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Fuse</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="kw">impl</span> <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">T</span>) -&gt; <span class="ident">bool</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
-            <span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="op">!</span><span class="ident">fuse</span>.<span class="ident">panicked</span>()
+        <span class="kw">fn </span>cool&lt;<span class="lifetime">&#39;a</span>, T&gt;(fuse: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Fuse&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span>T) -&gt; bool + <span class="lifetime">&#39;a </span>{
+            <span class="kw">move </span>|<span class="kw">_</span>| !fuse.panicked()
         }
 
-        <span class="self">self</span>.<span class="ident">base</span> <span class="op">=</span> {
-            <span class="kw">let</span> <span class="ident">fuse</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">fuse</span>;
-            <span class="kw">let</span> <span class="ident">iter</span> <span class="op">=</span> <span class="ident">iter</span>.<span class="ident">into_iter</span>().<span class="ident">take_while</span>(<span class="ident">cool</span>(<span class="ident">fuse</span>));
-            <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">consume_iter</span>(<span class="ident">iter</span>)
+        <span class="self">self</span>.base = {
+            <span class="kw">let </span>fuse = <span class="kw-2">&amp;</span><span class="self">self</span>.fuse;
+            <span class="kw">let </span>iter = iter.into_iter().take_while(cool(fuse));
+            <span class="self">self</span>.base.consume_iter(iter)
         };
-        <span class="self">self</span>
+        <span class="self">self
+    </span>}
+
+    <span class="kw">fn </span>complete(<span class="self">self</span>) -&gt; C::Result {
+        <span class="self">self</span>.base.complete()
     }
 
-    <span class="kw">fn</span> <span class="ident">complete</span>(<span class="self">self</span>) -&gt; <span class="ident">C::Result</span> {
-        <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">complete</span>()
-    }
-
-    <span class="kw">fn</span> <span class="ident">full</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">fuse</span>.<span class="ident">panicked</span>() <span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">full</span>()
+    <span class="kw">fn </span>full(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.fuse.panicked() || <span class="self">self</span>.base.full()
     }
 }
 
-<span class="kw">struct</span> <span class="ident">PanicFuseReducer</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">C</span><span class="op">&gt;</span> {
-    <span class="ident">base</span>: <span class="ident">C</span>,
-    <span class="ident">_fuse</span>: <span class="ident">Fuse</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+<span class="kw">struct </span>PanicFuseReducer&lt;<span class="lifetime">&#39;a</span>, C&gt; {
+    base: C,
+    _fuse: Fuse&lt;<span class="lifetime">&#39;a</span>&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>, <span class="ident">C</span><span class="op">&gt;</span> <span class="ident">Reducer</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">PanicFuseReducer</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">C</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">C</span>: <span class="ident">Reducer</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T, C&gt; Reducer&lt;T&gt; <span class="kw">for </span>PanicFuseReducer&lt;<span class="lifetime">&#39;a</span>, C&gt;
+<span class="kw">where
+    </span>C: Reducer&lt;T&gt;,
 {
-    <span class="kw">fn</span> <span class="ident">reduce</span>(<span class="self">self</span>, <span class="ident">left</span>: <span class="ident">T</span>, <span class="ident">right</span>: <span class="ident">T</span>) -&gt; <span class="ident">T</span> {
-        <span class="self">self</span>.<span class="ident">base</span>.<span class="ident">reduce</span>(<span class="ident">left</span>, <span class="ident">right</span>)
+    <span class="kw">fn </span>reduce(<span class="self">self</span>, left: T, right: T) -&gt; T {
+        <span class="self">self</span>.base.reduce(left, right)
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="rayon" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.63.0-nightly (fee3a459d 2022-06-05)" ></div>
-</body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="rayon" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (02654a084 2022-08-30)" ></div></body></html>

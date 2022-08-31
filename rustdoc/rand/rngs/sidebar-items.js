@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["adapter","Wrappers / adapters forming RNGs"],["mock","Mock random number generator"]],"struct":[["OsRng","A random number generator that retrieves randomness from the operating system."]]});
+window.SIDEBAR_ITEMS = {"mod":[["adapter","Wrappers / adapters forming RNGs"],["mock","Mock random number generator"]],"struct":[["OsRng","A random number generator that retrieves randomness from the operating system."]]};

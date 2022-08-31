@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["BitSet",""],["Difference",""],["Intersection",""],["Iter","An iterator for `BitSet`."],["SymmetricDifference",""],["Union",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["BitSet",""],["Difference",""],["Intersection",""],["Iter","An iterator for `BitSet`."],["SymmetricDifference",""],["Union",""]]};

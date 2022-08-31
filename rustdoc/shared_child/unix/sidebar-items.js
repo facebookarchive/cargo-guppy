@@ -1,1 +1,1 @@
-initSidebarItems({"trait":[["SharedChildExt",""]]});
+window.SIDEBAR_ITEMS = {"trait":[["SharedChildExt",""]]};

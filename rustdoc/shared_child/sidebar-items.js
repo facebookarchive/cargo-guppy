@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["unix","Unix-only extensions, for sending signals."]],"struct":[["SharedChild",""]]});
+window.SIDEBAR_ITEMS = {"mod":[["unix","Unix-only extensions, for sending signals."]],"struct":[["SharedChild",""]]};
