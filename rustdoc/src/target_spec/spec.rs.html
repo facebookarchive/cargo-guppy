@@ -255,6 +255,16 @@
 <span id="255">255</span>
 <span id="256">256</span>
 <span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
@@ -351,7 +361,9 @@
     </span><span class="kw">pub fn </span>new(input: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
         <span class="kw">let </span>expr = Expression::parse(input)
             .map_err(|err| Error::InvalidExpression(ExpressionParseError::new(err)))<span class="question-mark">?</span>;
-        <span class="self">Self</span>::verify_expr(expr)
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+            inner: Arc::new(expr),
+        })
     }
 
     <span class="doccomment">/// Returns the string that was parsed into `self`.
@@ -384,23 +396,10 @@
                     </span><span class="prelude-val">Some</span>(platform.has_flag(flag))
                 }
                 Predicate::KeyValue { .. } =&gt; {
-                    <span class="macro">unreachable!</span>(<span class="string">&quot;these predicates are disallowed in TargetExpression::verify_expr&quot;</span>)
+                    <span class="comment">// This is always interpreted by Cargo as false.
+                    </span><span class="prelude-val">Some</span>(<span class="bool-val">false</span>)
                 }
             }
-        })
-    }
-
-    <span class="doccomment">/// Verify this `cfg()` expression.
-    </span><span class="kw">fn </span>verify_expr(expr: Expression) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
-        <span class="comment">// Error out on unknown key-value pairs. Everything else is recognized (though
-        // DebugAssertions/ProcMacro etc always returns false, and flags return false by default).
-        </span><span class="kw">for </span>pred <span class="kw">in </span>expr.predicates() {
-            <span class="kw">if let </span>Predicate::KeyValue { key, .. } = pred {
-                <span class="kw">return </span><span class="prelude-val">Err</span>(Error::UnknownPredicate(key.to_string()));
-            }
-        }
-        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
-            inner: Arc::new(expr),
         })
     }
 }
@@ -494,9 +493,30 @@
 
     <span class="attribute">#[test]
     </span><span class="kw">fn </span>test_unknown_predicate() {
-        <span class="kw">let </span>err =
-            TargetSpec::new(<span class="string">&quot;cfg(bogus_key = \&quot;bogus_value\&quot;)&quot;</span>).expect_err(<span class="string">&quot;unknown predicate&quot;</span>);
-        <span class="macro">assert_eq!</span>(err, Error::UnknownPredicate(<span class="string">&quot;bogus_key&quot;</span>.to_string()));
+        <span class="kw">let </span>expr = <span class="kw">match </span>TargetSpec::new(<span class="string">&quot;cfg(bogus_key = \&quot;bogus_value\&quot;)&quot;</span>)
+            .expect(<span class="string">&quot;unknown predicate should parse&quot;</span>)
+        {
+            TargetSpec::Triple(triple) =&gt; {
+                <span class="macro">panic!</span>(<span class="string">&quot;expected spec, got triple: {:?}&quot;</span>, triple)
+            }
+            TargetSpec::Expression(expr) =&gt; expr,
+        };
+        <span class="macro">assert_eq!</span>(
+            expr.inner.predicates().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
+            <span class="macro">vec!</span>[Predicate::KeyValue {
+                key: <span class="string">&quot;bogus_key&quot;</span>,
+                val: <span class="string">&quot;bogus_value&quot;
+            </span>}],
+        );
+
+        <span class="kw">let </span>platform = Platform::current().unwrap();
+        <span class="comment">// This should always evaluate to false.
+        </span><span class="macro">assert_eq!</span>(expr.eval(<span class="kw-2">&amp;</span>platform), <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+
+        <span class="kw">let </span>expr = TargetSpec::new(<span class="string">&quot;cfg(not(bogus_key = \&quot;bogus_value\&quot;))&quot;</span>)
+            .expect(<span class="string">&quot;unknown predicate should parse&quot;</span>);
+        <span class="comment">// This is a cfg(not()), so it should always evaluate to true.
+        </span><span class="macro">assert_eq!</span>(expr.eval(<span class="kw-2">&amp;</span>platform), <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
     }
 
     <span class="attribute">#[test]
