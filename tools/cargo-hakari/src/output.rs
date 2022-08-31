@@ -121,7 +121,7 @@ fn stderr_supports_color() -> bool {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[must_use]
 pub enum Color {
     Auto,
