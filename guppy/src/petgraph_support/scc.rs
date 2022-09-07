@@ -71,7 +71,8 @@ impl<Ix: IndexType> Sccs<Ix> {
         G: 'a + IntoNodeIdentifiers + IntoNeighborsDirected<NodeId = NodeIndex<Ix>>,
         Ix: IndexType,
     {
-        // Consider each SCC as one logical node.
+        // Run this algorithm on the condensation graph, which consider each SCCs as one logical
+        // node.
         let mut external_sccs = FixedBitSet::with_capacity(self.sccs.len());
         let mut internal_sccs = FixedBitSet::with_capacity(self.sccs.len());
         graph
